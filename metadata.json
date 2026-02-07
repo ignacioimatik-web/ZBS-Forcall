@@ -1,0 +1,10 @@
+{
+  "name": "Gestión Salud Forcall",
+  "description": "Plataforma de gestión de reuniones y sesiones clínicas para el equipo de atención primaria de la zona rural de Forcall",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "permissions": [
+    "notifications"
+  ]
+}
