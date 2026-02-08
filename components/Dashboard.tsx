@@ -45,29 +45,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const getGreeting = () => {
     if (!user) return 'Bienvenido/a';
-    const name = user.name;
-    const role = user.role;
+    const { name, role } = user;
 
-    // 1. Caso Invitado
-    if (name === 'Invitado') return `Bienvenido/a ${name}`;
+    // 1. Caso Invitado (Género neutro)
+    if (name.toLowerCase().includes('invitado')) return `Bienvenido/a, ${name}`;
 
-    // 2. Caso Doctores (por prefijo)
-    if (name.startsWith('Dra.')) return `Bienvenida ${name}`;
-    if (name.startsWith('Dr.')) return `Bienvenido ${name}`;
+    // 2. Detección por prefijos médicos (App.tsx genera nombres como "Dra Elena...")
+    if (name.includes('Dra')) return `Bienvenida, ${name}`;
+    if (name.includes('Dr')) return `Bienvenido, ${name}`;
 
-    // 3. Caso Enfermería (por Rol o por nombre conocido si es coordinadora)
-    const knownNurses = ['Xelo Carbó', 'Rosa', 'Maite'];
-    if (role === 'Enfermera' || knownNurses.some(n => name.includes(n))) {
-      return `Bienvenida ${name}`;
-    }
+    // 3. Nombres femeninos conocidos del equipo Forcall
+    const femaleNames = ['Elena', 'Delia', 'Xelo', 'Rosa', 'Maite', 'Silvia', 'Pilar'];
+    if (femaleNames.some(fn => name.includes(fn))) return `Bienvenida, ${name}`;
 
-    // 4. Caso Administrativo
-    if (role === 'Administrador' || name === 'Joan') {
-      return `Bienvenido ${name}`;
-    }
+    // 4. Nombres masculinos conocidos del equipo Forcall
+    const maleNames = ['Fernando', 'Jorge', 'Frank', 'Ilie', 'Joan', 'Vicente', 'Carlos'];
+    if (maleNames.some(mn => name.includes(mn))) return `Bienvenido, ${name}`;
 
-    // 5. Fallback por rol genérico
-    return `${(role as string) === 'Enfermera' ? 'Bienvenida' : 'Bienvenido'} ${name}`;
+    // 5. Fallback por rol
+    if (role === 'Enfermera') return `Bienvenida, ${name}`;
+    if (role === 'Administrador') return `Bienvenido, ${name}`;
+
+    return `Hola, ${name}`;
   };
 
   return (
