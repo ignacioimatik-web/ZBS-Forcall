@@ -39,8 +39,8 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
   const getStartingDayIndex = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    return firstDay === 0 ? 6 : firstDay - 1;
+    const firstDay = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon...
+    return firstDay === 0 ? 6 : firstDay - 1; // Mon=0, Sun=6
   };
 
   const days = getDaysInMonth(currentMonth);
@@ -180,7 +180,6 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                    {isFestivo && (
                      <div className="absolute top-2 right-2 flex flex-col items-end">
                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-sm shadow-red-200"></span>
-                       {/* Tooltip visible on Hover */}
                        <div className="absolute top-4 right-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-50 pointer-events-none">
                           <div className="bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl shadow-2xl border border-white/10 whitespace-nowrap">
                             {holidayName}
@@ -194,8 +193,8 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                    {dayGuardias.map(g => (
                      <div 
                         key={g.id} 
-                        className={`text-[9px] font-black py-1.5 px-2 rounded-lg flex justify-between items-center group/item shadow-sm border ${
-                          g.type === 'Médica' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'
+                        className={`text-[11px] font-black py-2 px-3 rounded-lg flex justify-between items-center group/item shadow-sm border ${
+                          g.type === 'Médica' ? 'bg-green-50 text-green-900 border-green-200' : 'bg-red-50 text-red-900 border-red-200'
                         }`}
                       >
                         <div className="truncate uppercase tracking-tighter">
@@ -218,7 +217,6 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         </div>
       </div>
 
-      {/* Leyenda Visual */}
       <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-wrap gap-8 justify-center no-print">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-slate-100 rounded border border-gray-200"></div>

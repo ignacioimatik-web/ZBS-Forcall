@@ -2,15 +2,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
-import { SessionManager } from './components/SessionManager';
 import { UnifiedCalendar } from './components/UnifiedCalendar';
 import { CalendariosView } from './components/CalendariosView';
 import { NotificationToast } from './components/NotificationToast';
 import { LoginScreen } from './components/LoginScreen';
 import { AlertasView } from './components/AlertasView';
-import { AvisosView } from './components/AvisosView';
 import { TranscriptionTool } from './components/TranscriptionTool';
-import { SesionesView } from './components/SesionesView';
 import { Meeting, MeetingType, User, UserRole, Guardia, ManualHoliday, Libranza, Dobla } from './types';
 
 const generateMockData = (): Meeting[] => {
@@ -33,59 +30,38 @@ const generateMockData = (): Meeting[] => {
     description: 'Revisión de objetivos mensuales y coordinación.'
   });
 
-  meetings.push({
-    id: 'clinic-1',
-    title: 'Manejo de la EPOC en Entorno Rural',
-    type: MeetingType.CLINICAL,
-    date: addDays(today, 1), 
-    time: '08:30',
-    speaker: 'Dr. Martínez',
-    isConfirmed: true,
-    description: 'Sesión sobre nuevos inhaladores y manejo domiciliario.',
-    proposals: [
-      { id: '1', author: 'Enf. Sara', text: '¿Podemos moverlo al viernes?', date: '2023-10-01' }
-    ]
-  });
-
   return meetings;
 };
 
 const generateMockGuardias = (): Guardia[] => {
   const guardias: Guardia[] = [];
-  const year = 2026;
-  const month = 1; 
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const doctors = ["Dra. Elena Benages", "Dra. Delia Mestre", "Dr. Fernando Sierra", "Dr. Jorge Ramón", "Dr. Frank Castillo", "Dr. Ilie Popov"];
+  const nurses = ["Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
 
-  const febGuardias = [
-    "Dra. Elena Benages", "Dr. Jorge Ramón", "Dr. Ilie Popov", "Dr. Frank Castillo",
-    "Dra. Elena Benages", "Dr. Ilie Popov", "Dr. Frank Castillo", "Dr. Ilie Popov",
-    "Dra. Elena Benages", "Dr. Fernando Sierra", "Dr. Frank Castillo", "Dr. Ilie Popov",
-    "Dr. Fernando Sierra", "Dr. Ilie Popov", "Dr. Fernando Sierra", "Dr. Frank Castillo",
-    "Dr. Ilie Popov", "Dr. Fernando Sierra", "Dra. Elena Benages", "Dr. Ilie Popov",
-    "Dr. Fernando Sierra", "Dr. Frank Castillo", "Dra. Elena Benages", "Dr. Fernando Sierra",
-    "Dr. Ilie Popov", "Dr. Jorge Ramón", "Dr. Frank Castillo", "Dr. Ilie Popov"
-  ];
-
-  febGuardias.forEach((name, index) => {
-    guardias.push({
-      id: `feb26-g-${index + 1}`,
-      date: new Date(year, month, index + 1),
-      time: '08:00',
-      type: 'Médica',
-      personnelName: name
-    });
-  });
-
-  const enfermeras = ["Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
-  for(let i=1; i<=28; i++) {
-    guardias.push({
-      id: `feb26-e-${i}`,
-      date: new Date(year, month, i),
-      time: '08:00',
-      type: 'Enfermería',
-      personnelName: enfermeras[i % enfermeras.length]
-    });
+  for (let mOffset = 0; mOffset <= 1; mOffset++) {
+    const targetMonth = month + mOffset;
+    const daysInMonth = new Date(year, targetMonth + 1, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, targetMonth, day);
+      guardias.push({
+        id: `g-med-${year}-${targetMonth}-${day}`,
+        date,
+        time: '08:00',
+        type: 'Médica',
+        personnelName: doctors[day % doctors.length]
+      });
+      guardias.push({
+        id: `g-enf-${year}-${targetMonth}-${day}`,
+        date,
+        time: '08:00',
+        type: 'Enfermería',
+        personnelName: nurses[day % nurses.length]
+      });
+    }
   }
-
   return guardias;
 }
 
@@ -101,7 +77,6 @@ const App: React.FC = () => {
   const [doblas, setDoblas] = useState<Dobla[]>([]);
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     setMeetings(generateMockData());
@@ -150,10 +125,6 @@ const App: React.FC = () => {
   const handleDeleteGuardia = (id: string) => setGuardias(prev => prev.filter(g => g.id !== id));
   const handleDeleteLibranza = (id: string) => setLibranzas(prev => prev.filter(l => l.id !== id));
   const handleDeleteDobla = (id: string) => setDoblas(prev => prev.filter(d => d.id !== id));
-  const handleDeleteMeeting = (id: string) => setMeetings(prev => prev.filter(m => m.id !== id));
-  
-  const handleAddManualHoliday = (newHoliday: ManualHoliday) => setManualHolidays(prev => [...prev, newHoliday]);
-  const handleDeleteManualHoliday = (date: Date) => setManualHolidays(prev => prev.filter(h => h.date.toDateString() !== date.toDateString()));
 
   const handleLoginSuccess = (method: string, email: string, role: UserRole, phone?: string) => {
     setCurrentUser({
@@ -167,11 +138,6 @@ const App: React.FC = () => {
     setAuthStep('app');
   };
 
-  const handleNavigateToSession = (id: string) => {
-    setSelectedSessionId(id);
-    setActiveTab('Sesiones');
-  };
-
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard':
@@ -183,28 +149,12 @@ const App: React.FC = () => {
           onNavigate={setActiveTab} 
           onAddGuardia={handleUpsertGuardia}
           onDeleteGuardia={handleDeleteGuardia}
-          onNavigateToSession={handleNavigateToSession}
           onAddMeeting={handleUpsertSession}
           onAddLibranza={handleUpsertLibranza}
           onAddDobla={handleUpsertDobla}
           onDeleteLibranza={handleDeleteLibranza}
           onDeleteDobla={handleDeleteDobla}
           user={currentUser} 
-        />;
-      case 'Sesiones':
-        return <SesionesView 
-          meetings={meetings}
-          guardias={guardias}
-          libranzas={libranzas}
-          doblas={doblas}
-          onAddMeeting={handleUpsertSession}
-          onUpdateMeeting={handleUpsertSession}
-          onDeleteMeeting={handleDeleteMeeting}
-          onCancelMeeting={(id, reason) => {
-            const m = meetings.find(x => x.id === id);
-            if (m) handleUpsertSession({...m, isCancelled: true, cancellationReason: reason});
-          }}
-          user={currentUser}
         />;
       case 'Guardias':
         return (
@@ -221,14 +171,11 @@ const App: React.FC = () => {
             onAddDobla={handleUpsertDobla}
             onDeleteDobla={handleDeleteDobla}
             onAddMeeting={handleUpsertSession}
-            onNavigateToSession={handleNavigateToSession}
             user={currentUser}
           />
         );
       case 'Dictado':
         return <TranscriptionTool />;
-      case 'Avisos':
-        return <AvisosView currentUser={currentUser} />;
       case 'Alertas':
         return <AlertasView />;
       default:
