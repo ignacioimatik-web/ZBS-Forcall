@@ -20,9 +20,9 @@ export interface Meeting {
   title: string;
   type: MeetingType;
   date: Date;
-  time?: string; // Formato HH:mm
+  time?: string;
   speaker?: string; 
-  location?: string; // Campo para ubicación física o virtual
+  location?: string;
   description?: string;
   isConfirmed: boolean;
   presentationUrl?: string; 
@@ -52,6 +52,9 @@ export interface Guardia {
   time?: string; 
   type: PersonnelType;
   personnelName: string;
+  isChange?: boolean;
+  modifiedBy?: string;
+  modifiedAt?: Date;
 }
 
 export interface Libranza {
@@ -59,6 +62,7 @@ export interface Libranza {
   date: Date;
   type: PersonnelType;
   personnelName: string;
+  isChange?: boolean;
 }
 
 export interface Dobla {
@@ -67,6 +71,7 @@ export interface Dobla {
   time?: string;
   type: PersonnelType;
   personnelName: string;
+  isChange?: boolean;
 }
 
 export interface ManualHoliday {
@@ -83,4 +88,19 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
   isUrgent?: boolean;
+}
+
+export interface AuditLog {
+  id: string;
+  type: 'VALIDACION' | 'CAMBIO' | 'PERMUTA';
+  user: string;
+  timestamp: Date;
+  description: string;
+  category: string;
+  details?: {
+    from: string;
+    to: string;
+    date1: Date;
+    date2: Date;
+  };
 }

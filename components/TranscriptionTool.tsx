@@ -2,294 +2,125 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
+declare var html2pdf: any;
+
 export const TranscriptionTool: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const [transcription, setTranscription] = useState('');
+  const [summary, setSummary] = useState('');
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioURL, setAudioURL] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) window.clearInterval(timerRef.current);
-    };
-  }, []);
+  useEffect(() => { return () => { if (timerRef.current) window.clearInterval(timerRef.current); }; }, []);
 
   const startRecording = async () => {
-    try {
-      setError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        const url = URL.createObjectURL(audioBlob);
-        setAudioURL(url);
-        handleTranscription(audioBlob);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      setRecordingTime(0);
-      timerRef.current = window.setInterval(() => {
-        setRecordingTime((prev) => prev + 1);
-      }, 1000);
-    } catch (err) {
-      console.error("Error al acceder al micrófono:", err);
-      setError("No se pudo acceder al micrófono. Por favor, asegúrate de dar los permisos necesarios.");
-    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorderRef.current = mediaRecorder; chunksRef.current = [];
+    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+    mediaRecorder.onstop = async () => {
+      const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+      setAudioURL(URL.createObjectURL(blob));
+      handleTranscription(blob);
+    };
+    mediaRecorder.start(); setIsRecording(true); setRecordingTime(0);
+    timerRef.current = window.setInterval(() => setRecordingTime(p => p + 1), 1000);
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-      setIsRecording(false);
-      if (timerRef.current) window.clearInterval(timerRef.current);
-    }
-  };
-
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = (reader.result as string).split(',')[1];
-        resolve(base64String);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  const handleTranscription = async (audioBlob: Blob) => {
+  const handleTranscription = async (blob: Blob) => {
     setIsTranscribing(true);
     try {
-      const base64Audio = await blobToBase64(audioBlob);
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const res = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: [{ parts: [{ inlineData: { mimeType: "audio/webm", data: base64 } }, { text: "Transcribe el audio clínico a texto estructurado en español." }] }]
+        });
+        setTranscription(res.text || '');
+      };
+    } finally { setIsTranscribing(false); }
+  };
+
+  const handleSummarize = async () => {
+    if (!transcription || isSummarizing) return;
+    setIsSummarizing(true);
+    try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [
-          {
-            parts: [
-              {
-                inlineData: {
-                  mimeType: "audio/webm",
-                  data: base64Audio
-                }
-              },
-              {
-                text: "Transcribe este audio médico o clínico a texto claro y estructurado en español. Si hay términos técnicos, asegúrate de escribirlos correctamente. Devuelve solo la transcripción."
-              }
-            ]
-          }
-        ]
+      const res = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Genera un resumen clínico ejecutivo estructurado (puntos clave, diagnóstico diferencial, plan actuación) de esta transcripción: "${transcription}"`
       });
-
-      setTranscription(response.text || "No se detectó habla clara.");
-    } catch (err) {
-      console.error("Error en la transcripción:", err);
-      setError("Error al transcribir el audio. Inténtalo de nuevo.");
-    } finally {
-      setIsTranscribing(false);
-    }
+      setSummary(res.text || '');
+    } catch (e) { console.error(e); } finally { setIsSummarizing(false); }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const savePDF = (id: string, name: string) => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    html2pdf().set({ margin: 10, filename: `${name}.pdf`, html2canvas: { scale: 2 }, jsPDF: { orientation: 'portrait' } }).from(element).save();
   };
 
-  const handleExportPDF = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    window.print();
-  };
-
-  const handleSendEmail = () => {
-    const subject = encodeURIComponent("Dictado Clínico - ZBS Forcall");
-    const body = encodeURIComponent(transcription);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  const sendEmail = (txt: string) => {
+    window.location.href = `mailto:?subject=Informe Clinico Forcall&body=${encodeURIComponent(txt)}`;
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-12">
-      {/* CABECERA DE INFORME PARA IMPRESIÓN */}
-      <div className="print-only mb-10 border-b-2 border-gray-900 pb-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-black uppercase">Informe de Dictado Clínico</h1>
-            <p className="text-lg font-bold text-gray-700">Zona Básica de Salud Forcall</p>
-          </div>
-          <div className="text-right">
-            <p className="font-bold">FECHA: {new Date().toLocaleDateString()}</p>
-            <p className="text-xs text-gray-500 uppercase tracking-widest font-black">Validado por IA Gemini</p>
-          </div>
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      <div className="bg-emerald-800 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 no-print">
+        <div>
+          <h2 className="text-2xl font-black flex items-center gap-2"><span className="material-symbols-outlined text-3xl">mic</span> Dictado Inteligente</h2>
+          <p className="text-xs opacity-70 font-bold uppercase tracking-widest mt-1">IA Generativa ZBS Forcall</p>
+        </div>
+        <div className="flex flex-col items-center">
+          <button onClick={isRecording ? () => mediaRecorderRef.current?.stop() : startRecording} className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-white text-emerald-800 hover:scale-110'}`}>
+            <span className="material-symbols-outlined text-3xl">{isRecording ? 'stop' : 'mic'}</span>
+          </button>
+          <span className="text-xs font-mono mt-2 font-black">{Math.floor(recordingTime/60)}:{(recordingTime%60).toString().padStart(2,'0')}</span>
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-emerald-800 to-teal-700 rounded-3xl p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-center gap-6 no-print">
-        <div className="flex-1">
-          <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            <span className="material-symbols-outlined text-4xl">mic</span>
-            Dictado Inteligente
-          </h2>
-          <p className="opacity-80 mt-2 font-medium">Graba notas clínicas, actas o avisos y transcríbelos automáticamente con IA.</p>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-           {!isRecording ? (
-             <button 
-               onClick={startRecording}
-               className="w-20 h-20 bg-white text-emerald-700 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all group shadow-emerald-900/40"
-             >
-               <span className="material-symbols-outlined text-4xl group-hover:scale-110 transition-transform">mic</span>
-             </button>
-           ) : (
-             <button 
-               onClick={stopRecording}
-               className="w-20 h-20 bg-red-500 text-white rounded-full flex items-center justify-center shadow-2xl animate-pulse active:scale-95 transition-all"
-             >
-               <span className="material-symbols-outlined text-4xl">stop</span>
-             </button>
-           )}
-           <span className={`text-xl font-mono font-black ${isRecording ? 'text-white' : 'text-white/50'}`}>
-             {formatTime(recordingTime)}
-           </span>
-        </div>
-      </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 p-4 rounded-2xl flex items-center gap-3 text-red-800 shadow-sm animate-shake no-print">
-          <span className="material-symbols-outlined">error</span>
-          <p className="text-sm font-bold">{error}</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[400px] print:border-0 print:shadow-none">
-            <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center no-print">
-               <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                 <span className="material-symbols-outlined text-emerald-600">description</span>
-                 Transcripción
-               </h3>
-               {isTranscribing && (
-                 <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase tracking-widest animate-pulse">
-                   <span className="material-symbols-outlined text-sm animate-spin">sync</span>
-                   Procesando con IA...
-                 </div>
-               )}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Transcripción */}
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
+          <div className="p-4 bg-gray-50 border-b flex justify-between items-center no-print">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Transcripción Original</span>
+            <div className="flex gap-2">
+              {transcription && <button onClick={handleSummarize} className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase flex items-center gap-1 active:scale-95"><span className="material-symbols-outlined text-sm">auto_awesome</span> RESUMIR IA</button>}
+              <button onClick={() => savePDF('trans-area', 'transcripcion')} className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-black uppercase">GUARDAR PDF</button>
             </div>
-            
-            <div className="p-8 flex-1 relative print:p-0">
-              {transcription ? (
-                <div className="space-y-4">
-                  <textarea 
-                    value={transcription}
-                    onChange={(e) => setTranscription(e.target.value)}
-                    className="w-full h-full min-h-[300px] border-none focus:ring-0 text-gray-800 leading-relaxed font-medium resize-none text-lg scrollbar-hide bg-transparent print:hidden"
-                  />
-                  {/* Vista alternativa para impresión que hereda el texto */}
-                  <div className="hidden print:block text-gray-900 text-lg leading-relaxed whitespace-pre-wrap font-serif italic">
-                    {transcription}
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300 opacity-50 p-12 text-center no-print">
-                   <span className="material-symbols-outlined text-6xl mb-4">text_snippet</span>
-                   <p className="text-sm font-bold uppercase tracking-widest">Inicia la grabación para transcribir</p>
-                </div>
-              )}
-            </div>
+          </div>
+          <div id="trans-area" className="p-6 flex-1 overflow-y-auto">
+            {isTranscribing ? <div className="h-full flex flex-col items-center justify-center text-gray-300 gap-2"><span className="material-symbols-outlined animate-spin text-4xl">sync</span><p className="text-[10px] font-black uppercase">IA Procesando audio...</p></div> : 
+             <textarea value={transcription} onChange={(e) => setTranscription(e.target.value)} className="w-full h-full resize-none border-none focus:ring-0 text-sm font-medium leading-relaxed text-gray-800" placeholder="El texto aparecerá aquí..." />}
+          </div>
+        </div>
 
-            {transcription && (
-              <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-3 justify-end no-print">
-                 <button 
-                   onClick={() => navigator.clipboard.writeText(transcription)}
-                   className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-100 transition-all flex items-center gap-2"
-                 >
-                   <span className="material-symbols-outlined text-sm">content_copy</span>
-                   Copiar
-                 </button>
-                 <button 
-                   onClick={handleSendEmail}
-                   className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-100 transition-all flex items-center gap-2"
-                 >
-                   <span className="material-symbols-outlined text-sm">mail</span>
-                   Email
-                 </button>
-                 <button 
-                   onClick={handleExportPDF}
-                   className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md hover:bg-emerald-700 transition-all flex items-center gap-2 active:scale-95"
-                 >
-                   <span className="material-symbols-outlined text-sm">print</span>
-                   Imprimir / PDF
-                 </button>
+        {/* Resumen IA */}
+        {(summary || isSummarizing) && (
+          <div className="bg-indigo-50/30 rounded-3xl shadow-lg border border-indigo-100 flex flex-col animate-slide-in-up">
+            <div className="p-4 bg-indigo-100/30 border-b border-indigo-100 flex justify-between items-center no-print">
+              <span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">Resumen Ejecutivo Estructurado (IA)</span>
+              <div className="flex gap-2">
+                <button onClick={() => navigator.clipboard.writeText(summary)} className="p-2 bg-white text-indigo-600 rounded-lg border border-indigo-100"><span className="material-symbols-outlined text-sm">content_copy</span></button>
+                <button onClick={() => sendEmail(summary)} className="p-2 bg-white text-indigo-600 rounded-lg border border-indigo-100"><span className="material-symbols-outlined text-sm">mail</span></button>
+                <button onClick={() => savePDF('sum-area', 'resumen_clínico')} className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase shadow-md">PDF RESUMEN</button>
               </div>
-            )}
-          </div>
-          
-          <div className="print-only mt-20 border-t border-gray-300 pt-10 text-center">
-            <div className="flex justify-around">
-               <div className="w-48 border-t border-gray-900 pt-2 text-xs font-bold uppercase">Firma del Facultativo</div>
-               <div className="w-48 border-t border-gray-900 pt-2 text-xs font-bold uppercase">Sello de la ZBS</div>
+            </div>
+            <div id="sum-area" className="p-6">
+               {isSummarizing ? <div className="flex flex-col items-center py-12 text-indigo-400 gap-2"><span className="material-symbols-outlined animate-bounce text-4xl">psychology</span><p className="text-[10px] font-black uppercase tracking-widest">IA Analizando transcripción...</p></div> : 
+                <div className="prose prose-sm font-medium text-gray-800 whitespace-pre-wrap">{summary}</div>}
             </div>
           </div>
-        </div>
-
-        <div className="space-y-6 no-print">
-           <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm">
-             <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4">
-               <span className="material-symbols-outlined text-teal-600">help</span>
-               Instrucciones
-             </h3>
-             <ul className="space-y-4 text-xs text-gray-600">
-               <li className="flex gap-3">
-                 <span className="bg-teal-50 text-teal-700 w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-black">1</span>
-                 <p>Pulsa el botón circular para empezar a dictar.</p>
-               </li>
-               <li className="flex gap-3">
-                 <span className="bg-teal-50 text-teal-700 w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-black">2</span>
-                 <p>Vuelve a pulsar para detener y transcribir con IA.</p>
-               </li>
-               <li className="flex gap-3">
-                 <span className="bg-teal-50 text-teal-700 w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-black">3</span>
-                 <p>Utiliza el botón de imprimir para generar un reporte profesional.</p>
-               </li>
-             </ul>
-           </div>
-
-           {audioURL && (
-             <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm animate-slide-in-up no-print">
-               <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm uppercase">
-                 <span className="material-symbols-outlined text-emerald-500">audiotrack</span>
-                 Grabación Original
-               </h3>
-               <audio src={audioURL} controls className="w-full h-10" />
-             </div>
-           )}
-
-           <div className="bg-emerald-50 rounded-3xl p-6 border border-emerald-100 no-print">
-             <div className="flex items-center gap-3 mb-2 text-emerald-900">
-               <span className="material-symbols-outlined">security</span>
-               <h4 className="font-bold text-sm">Privacidad LOPD</h4>
-             </div>
-             <p className="text-[10px] text-emerald-800 leading-relaxed opacity-80">
-               Asegúrate de no dictar datos personales identificables (DNI, Nombre Completo) de pacientes si vas a exportar el informe fuera de la red segura.
-             </p>
-           </div>
-        </div>
+        )}
       </div>
     </div>
   );
