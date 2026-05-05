@@ -194,7 +194,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                      <div 
                         key={g.id} 
                         className={`text-[11px] font-black py-2 px-3 rounded-lg flex justify-between items-center group/item shadow-sm border ${
-                          g.type === 'Médica' ? 'bg-green-50 text-green-900 border-green-200' : 'bg-red-50 text-red-900 border-red-200'
+                          g.type === 'Médica' ? 'bg-blue-50 text-blue-900 border-blue-200' : 'bg-red-50 text-red-900 border-red-200'
                         }`}
                       >
                         <div className="truncate uppercase tracking-tighter">
@@ -227,7 +227,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
           <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Día Festivo</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-100 rounded border border-green-200"></div>
+          <div className="w-4 h-4 bg-blue-100 rounded border border-blue-200"></div>
           <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Guardia Médica</span>
         </div>
         <div className="flex items-center gap-2">
@@ -258,7 +258,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-green-700 uppercase tracking-widest ml-1 flex items-center gap-2">
+                <label className="text-[10px] font-black text-blue-700 uppercase tracking-widest ml-1 flex items-center gap-2">
                   <span className="material-symbols-outlined text-sm">stethoscope</span> Personal Médico
                 </label>
                 <input
@@ -266,7 +266,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                   value={formData.doctorName}
                   onChange={(e) => setFormData({ ...formData, doctorName: e.target.value })}
                   placeholder="Nombre del doctor/a"
-                  className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-green-50 transition-all font-bold text-sm"
+                  className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50 transition-all font-bold text-sm"
                 />
               </div>
 
