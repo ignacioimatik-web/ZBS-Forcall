@@ -66,7 +66,7 @@ export function useGuardias(): UseGuardiasResult {
           personnel_name: guardia.personnelName,
           type: guardia.type,
           is_change: guardia.isChange || false,
-          modified_by: guardia.modifiedBy || null,
+          modified_by: null,
           modified_at: guardia.modifiedAt?.toISOString() || null
         })
         .select()
@@ -106,7 +106,7 @@ export function useGuardias(): UseGuardiasResult {
           personnel_name: guardia.personnelName,
           type: guardia.type,
           is_change: guardia.isChange || false,
-          modified_by: guardia.modifiedBy || null,
+          modified_by: null,
           modified_at: guardia.modifiedAt?.toISOString() || null
         })
         .eq('id', guardia.id);
