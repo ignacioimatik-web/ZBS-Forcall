@@ -17,14 +17,16 @@ import { useMeetings } from './hooks/useMeetings';
 
 const App: React.FC = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
-  const { guardias, addGuardia, updateGuardia, deleteGuardia } = useGuardias();
-  const { libranzas, addLibranza, updateLibranza, deleteLibranza } = useLibranzas();
-  const { doblas, addDobla, updateDobla, deleteDobla } = useDoblas();
-  const { meetings, addMeeting, updateMeeting, deleteMeeting } = useMeetings();
+  const { guardias, addGuardia, updateGuardia, deleteGuardia, isLoading: guardiasLoading } = useGuardias();
+  const { libranzas, addLibranza, updateLibranza, deleteLibranza, isLoading: libranzasLoading } = useLibranzas();
+  const { doblas, addDobla, updateDobla, deleteDobla, isLoading: doblasLoading } = useDoblas();
+  const { meetings, addMeeting, updateMeeting, deleteMeeting, isLoading: meetingsLoading } = useMeetings();
   
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
+
+  const isDataLoading = guardiasLoading || libranzasLoading || doblasLoading || meetingsLoading;
 
   const handleLogout = useCallback(async (reason?: string) => {
     await signOut();
@@ -131,6 +133,11 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in">
       <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} />
+      {isDataLoading && (
+        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">
+          <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
+        </div>
+      )}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {renderContent()}
       </main>
