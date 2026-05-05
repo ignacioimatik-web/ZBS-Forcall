@@ -37,7 +37,9 @@ export function useDoblas(): UseDoblasResult {
         time: undefined,
         type: row.type as 'Médica' | 'Enfermería',
         personnelName: row.personnel_name,
-        isChange: row.is_change
+        isChange: row.is_change,
+        modifiedBy: row.modified_by || undefined,
+        modifiedAt: row.modified_at ? new Date(row.modified_at) : undefined
       }));
 
       setDoblas(mapped);
@@ -78,7 +80,9 @@ export function useDoblas(): UseDoblasResult {
         date: new Date(data.date),
         type: data.type as 'Médica' | 'Enfermería',
         personnelName: data.personnel_name,
-        isChange: data.is_change
+        isChange: data.is_change,
+        modifiedBy: data.modified_by || undefined,
+        modifiedAt: data.modified_at ? new Date(data.modified_at) : undefined
       };
 
       setDoblas(prev => [...prev, newDobla]);
