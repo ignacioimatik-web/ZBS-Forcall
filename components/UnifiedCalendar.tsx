@@ -84,7 +84,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     if (firstSwapTarget?.id === ev.id) return 'bg-indigo-700 text-white border-indigo-900 ring-4 ring-indigo-200 animate-pulse z-50';
     if (ev.isChange) return 'bg-orange-600 text-white border-orange-700 shadow-md ring-1 ring-orange-200';
     if (ev.type === 'Médica') return 'bg-blue-100 text-blue-900 border-blue-300';
-    if (ev.type === 'Enfermería') return 'bg-rose-100 text-rose-900 border-rose-300';
+    if (ev.type === 'Enfermería') return 'bg-red-100 text-red-900 border-red-300';
     if (ev.id && String(ev.id).includes('lib')) return 'bg-blue-100 text-blue-900 border-blue-300';
     if (ev.id && String(ev.id).includes('dob')) return 'bg-orange-100 text-orange-900 border-orange-300';
     return 'bg-sky-100 text-sky-900 border-sky-300';
