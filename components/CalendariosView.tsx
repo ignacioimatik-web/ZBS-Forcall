@@ -1,9 +1,7 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { Meeting, User, Guardia, Libranza, Dobla, ManualHoliday, AuditLog } from '../types';
-
-declare var html2pdf: any;
+import { exportCalendarToPDF } from '../lib/pdfExport';
 
 interface CalendariosViewProps {
   meetings: Meeting[]; guardias: Guardia[]; libranzas: Libranza[]; doblas: Dobla[]; manualHolidays: ManualHoliday[];
@@ -60,46 +58,59 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const handleSwapEvents = (ev1: any, ev2: any) => {
     const p1 = ev1.personnelName;
     const p2 = ev2.personnelName;
-    if (String(ev1.id).includes('lib')) props.onDeleteLibranza(ev1.id); else if (String(ev1.id).includes('dob')) props.onDeleteDobla(ev1.id); else props.onDeleteGuardia(ev1.id);
-    if (String(ev2.id).includes('lib')) props.onDeleteLibranza(ev2.id); else if (String(ev2.id).includes('dob')) props.onDeleteDobla(ev2.id); else props.onDeleteGuardia(ev2.id);
-    const newEv1 = { ...ev1, id: 'sw-' + Math.random(), personnelName: p2, isChange: !isCoordinator, modifiedBy: null, modifiedAt: new Date() };
-    const newEv2 = { ...ev2, id: 'sw-' + Math.random(), personnelName: p1, isChange: !isCoordinator, modifiedBy: null, modifiedAt: new Date() };
-    if (String(ev1.id).includes('lib')) { props.onAddLibranza(newEv1); props.onAddLibranza(newEv2); } else if (String(ev1.id).includes('dob')) { props.onAddDobla(newEv1); props.onAddDobla(newEv2); } else { props.onAddGuardia(newEv1); props.onAddGuardia(newEv2); }
-    const newLog: AuditLog = { id: Date.now().toString(), type: 'PERMUTA', user: props.user?.name || 'Usuario', timestamp: new Date(), description: `Intercambio confirmado entre ${p1} y ${p2}.`, category: activeSub, details: { from: p1, to: p2, date1: ev1.date, date2: ev2.date } };
+    
+    // Borrar eventos originales usando _kind
+    if (ev1._kind === 'libranza') props.onDeleteLibranza(ev1.id);
+    else if (ev1._kind === 'dobla') props.onDeleteDobla(ev1.id);
+    else if (ev1._kind === 'guardia') props.onDeleteGuardia(ev1.id);
+    
+    if (ev2._kind === 'libranza') props.onDeleteLibranza(ev2.id);
+    else if (ev2._kind === 'dobla') props.onDeleteDobla(ev2.id);
+    else if (ev2._kind === 'guardia') props.onDeleteGuardia(ev2.id);
+    
+    // Crear nuevos eventos SIN id (dejar que Supabase genere UUID)
+    const { id: _id1, _kind: _k1, ...ev1Rest } = ev1;
+    const { id: _id2, _kind: _k2, ...ev2Rest } = ev2;
+    
+    const newEv1 = { ...ev1Rest, personnelName: p2, isChange: !isCoordinator, modifiedBy: props.user?.name || null, modifiedAt: new Date() };
+    const newEv2 = { ...ev2Rest, personnelName: p1, isChange: !isCoordinator, modifiedBy: props.user?.name || null, modifiedAt: new Date() };
+    
+    // Agregar según _kind original
+    if (ev1._kind === 'libranza') { props.onAddLibranza(newEv1); props.onAddLibranza(newEv2); }
+    else if (ev1._kind === 'dobla') { props.onAddDobla(newEv1); props.onAddDobla(newEv2); }
+    else if (ev1._kind === 'guardia') { props.onAddGuardia(newEv1); props.onAddGuardia(newEv2); }
+    
+    const newLog: AuditLog = { 
+      id: Date.now().toString(), 
+      type: 'PERMUTA', 
+      user: props.user?.name || 'Usuario', 
+      timestamp: new Date(), 
+      description: `Intercambio confirmado entre ${p1} y ${p2}.`, 
+      category: activeSub, 
+      details: { from: p1, to: p2, date1: ev1.date, date2: ev2.date } 
+    };
     setAuditLogs(prev => [newLog, ...prev]);
     setSwapMode(false);
   };
 
   const handleDownloadRegistry = () => {
-    const element = document.getElementById('registro-permutas-container');
-    if (!element) return;
-    const opt = {
-      margin: 10,
-      filename: `Registro_Permutas_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
-    html2pdf().set(opt).from(element).save();
+    exportCalendarToPDF({
+      elementId: 'registro-permutas-container',
+      filename: `Registro_Permutas_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`
+    });
   };
 
   const handleDownloadActiveCalendar = () => {
-    const element = document.getElementById('view-calendar');
-    if (!element) return;
-    const opt = {
-      margin: 10,
-      filename: `Calendario_${activeSub}_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
-    html2pdf().set(opt).from(element).save();
+    exportCalendarToPDF({
+      elementId: 'view-calendar',
+      filename: `Calendario_${activeSub}_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`
+    });
   };
 
   const subNav = [
     { id: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20' },
     { id: 'Enfermería', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20' },
-    { id: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20' },
+    { id: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20' },
     { id: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20' }
   ];
 
@@ -224,7 +235,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                 permutaHistory.map(log => (
                   <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-5"><div className="flex flex-col"><span className="text-sm font-black text-gray-800">{log.timestamp.toLocaleDateString('es-ES')}</span></div></td>
-                    <td className="px-6 py-5"><span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${log.category === 'Medicina' ? 'bg-blue-50 text-blue-700 border-blue-100' : log.category === 'Enfermería' ? 'bg-red-50 text-red-700 border-red-100' : log.category === 'Libranzas' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>{log.category}</span></td>
+                    <td className="px-6 py-5"><span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${log.category === 'Medicina' ? 'bg-blue-50 text-blue-700 border-blue-100' : log.category === 'Enfermería' ? 'bg-red-50 text-red-700 border-red-100' : log.category === 'Libranzas' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>{log.category}</span></td>
                     <td className="px-6 py-5"><div className="flex items-center gap-3"><span className="text-sm font-black text-indigo-700">{log.details?.from}</span><span className="material-symbols-outlined text-gray-300 text-sm">sync_alt</span><span className="text-sm font-black text-indigo-700">{log.details?.to}</span></div></td>
                     <td className="px-6 py-5"><div className="flex gap-2"><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">Día {log.details?.date1.getDate()}</span><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">Día {log.details?.date2.getDate()}</span></div></td>
                     <td className="px-6 py-5 text-right"><span className="text-xs font-black text-gray-600 uppercase tracking-tighter">{log.user}</span></td>
