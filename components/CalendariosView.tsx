@@ -95,8 +95,8 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   };
 
   const subNav = [
-    { id: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-emerald-200 ring-emerald-500/20' },
-    { id: 'Enfermería', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-rose-500 to-rose-700 text-white shadow-rose-200 ring-rose-500/20' },
+    { id: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20' },
+    { id: 'Enfermería', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20' },
     { id: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20' },
     { id: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20' }
   ];
@@ -222,7 +222,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                 permutaHistory.map(log => (
                   <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-5"><div className="flex flex-col"><span className="text-sm font-black text-gray-800">{log.timestamp.toLocaleDateString('es-ES')}</span></div></td>
-                    <td className="px-6 py-5"><span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${log.category === 'Medicina' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : log.category === 'Enfermería' ? 'bg-rose-50 text-rose-700 border-rose-100' : log.category === 'Libranzas' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>{log.category}</span></td>
+                    <td className="px-6 py-5"><span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${log.category === 'Medicina' ? 'bg-blue-50 text-blue-700 border-blue-100' : log.category === 'Enfermería' ? 'bg-red-50 text-red-700 border-red-100' : log.category === 'Libranzas' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>{log.category}</span></td>
                     <td className="px-6 py-5"><div className="flex items-center gap-3"><span className="text-sm font-black text-indigo-700">{log.details?.from}</span><span className="material-symbols-outlined text-gray-300 text-sm">sync_alt</span><span className="text-sm font-black text-indigo-700">{log.details?.to}</span></div></td>
                     <td className="px-6 py-5"><div className="flex gap-2"><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">Día {log.details?.date1.getDate()}</span><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">Día {log.details?.date2.getDate()}</span></div></td>
                     <td className="px-6 py-5 text-right"><span className="text-xs font-black text-gray-600 uppercase tracking-tighter">{log.user}</span></td>
