@@ -2,8 +2,7 @@
 import React from 'react';
 import { Meeting, User, Guardia, Libranza, Dobla } from '../types';
 import { UnifiedCalendar } from './UnifiedCalendar';
-
-declare var html2pdf: any;
+import { exportCalendarToPDF } from '../lib/pdfExport';
 
 interface DashboardProps {
   meetings: Meeting[];
@@ -39,21 +38,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const stats = [
     { label: 'Med', count: guardias.filter(g => g.type === 'Médica').length, icon: 'stethoscope', color: 'text-blue-500' },
     { label: 'Enf', count: guardias.filter(g => g.type === 'Enfermería').length, icon: 'vaccines', color: 'text-red-500' },
-    { label: 'Lib', count: libranzas.length, icon: 'beach_access', color: 'text-orange-500' },
-    { label: 'Ref', count: doblas.length, icon: 'dynamic_feed', color: 'text-stone-500' }
+    { label: 'Lib', count: libranzas.length, icon: 'beach_access', color: 'text-green-500' },
+    { label: 'Ref', count: doblas.length, icon: 'dynamic_feed', color: 'text-orange-500' }
   ];
 
   const handleDownloadDashboard = () => {
-    const element = document.getElementById('dashboard-calendar');
-    if (!element) return;
-    const opt = {
-      margin: 10,
-      filename: `Calendario_General_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
-    html2pdf().set(opt).from(element).save();
+    exportCalendarToPDF({
+      elementId: 'dashboard-calendar',
+      filename: `Calendario_General_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`
+    });
   };
 
   const getGreeting = () => {
