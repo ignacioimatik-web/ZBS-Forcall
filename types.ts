@@ -113,6 +113,8 @@ export interface Libranza {
   type: PersonnelType;
   personnelName: string;
   isChange?: boolean;
+  modifiedBy?: string;
+  modifiedAt?: Date;
 }
 
 export interface Dobla {
@@ -122,6 +124,8 @@ export interface Dobla {
   type: PersonnelType;
   personnelName: string;
   isChange?: boolean;
+  modifiedBy?: string;
+  modifiedAt?: Date;
 }
 
 export interface ManualHoliday {
