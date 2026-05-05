@@ -24,7 +24,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const isCoordinator = props.user?.role === 'Coordinador';
   const doctors = ["Dra. Elena Benages", "Dra. Delia Mestre", "Dr. Fernando Sierra", "Dr. Jorge Ramón", "Dr. Frank Castillo", "Dr. Ilie Popov", "Dr. Martínez"];
   const nurses = ["Xelo Carbó", "Rosa", "Maite", "Enf. Sara", "Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
-  const currentPersonnel = activeSub === 'Enfermería' ? nurses : doctors;
+  const currentPersonnel = activeSub === 'Enfermería' ? nurses : activeSub === 'Medicina' ? doctors : [...doctors, ...nurses];
 
   useEffect(() => {
     const initLog: AuditLog = { 
@@ -44,12 +44,14 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
 
   const handleSaveBulk = () => {
     if (!bulkPersonnel || bulkDates.length === 0) return;
+    const isNurse = nurses.includes(bulkPersonnel);
+    const personnelType = isNurse ? 'Enfermería' : 'Médica';
     bulkDates.forEach(date => {
       const common = { id: Math.random().toString(36).substr(2, 9), date, personnelName: bulkPersonnel, isChange: !isCoordinator, modifiedBy: null, modifiedAt: new Date() };
       if (activeSub === 'Medicina') props.onAddGuardia({ ...common, type: 'Médica' } as any);
       else if (activeSub === 'Enfermería') props.onAddGuardia({ ...common, type: 'Enfermería' } as any);
-      else if (activeSub === 'Libranzas') props.onAddLibranza({ ...common, id: 'lib-' + common.id } as any);
-      else if (activeSub === 'Refuerzo') props.onAddDobla({ ...common, id: 'dob-' + common.id } as any);
+      else if (activeSub === 'Libranzas') props.onAddLibranza({ ...common, id: 'lib-' + common.id, type: personnelType } as any);
+      else if (activeSub === 'Refuerzo') props.onAddDobla({ ...common, id: 'dob-' + common.id, type: personnelType } as any);
     });
     setAuditLogs(prev => [{ id: Date.now().toString(), type: 'CAMBIO', user: props.user?.name || 'Usuario', timestamp: new Date(), description: `Asignación masiva: ${bulkPersonnel} (${bulkDates.length} turnos) en ${activeSub}.`, category: activeSub }, ...prev]);
     setBulkDates([]); setBulkPersonnel(null);
