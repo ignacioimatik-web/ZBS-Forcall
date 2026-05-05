@@ -62,7 +62,7 @@ export function useGuardias(): UseGuardiasResult {
       const { data, error: insertError } = await supabase
         .from('guardias')
         .insert({
-          date: guardia.date.toISOString().split('T')[0],
+          date: `${guardia.date.getFullYear()}-${String(guardia.date.getMonth() + 1).padStart(2, '0')}-${String(guardia.date.getDate()).padStart(2, '0')}`,
           personnel_name: guardia.personnelName,
           type: guardia.type,
           is_change: guardia.isChange || false,
@@ -102,7 +102,7 @@ export function useGuardias(): UseGuardiasResult {
       const { error: updateError } = await supabase
         .from('guardias')
         .update({
-          date: guardia.date.toISOString().split('T')[0],
+          date: `${guardia.date.getFullYear()}-${String(guardia.date.getMonth() + 1).padStart(2, '0')}-${String(guardia.date.getDate()).padStart(2, '0')}`,
           personnel_name: guardia.personnelName,
           type: guardia.type,
           is_change: guardia.isChange || false,

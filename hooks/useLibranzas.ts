@@ -58,7 +58,7 @@ export function useLibranzas(): UseLibranzasResult {
       const { data, error: insertError } = await supabase
         .from('libranzas')
         .insert({
-          date: libranza.date.toISOString().split('T')[0],
+          date: `${libranza.date.getFullYear()}-${String(libranza.date.getMonth() + 1).padStart(2, '0')}-${String(libranza.date.getDate()).padStart(2, '0')}`,
           personnel_name: libranza.personnelName,
           type: libranza.type,
           is_change: libranza.isChange || false
@@ -94,7 +94,7 @@ export function useLibranzas(): UseLibranzasResult {
       const { error: updateError } = await supabase
         .from('libranzas')
         .update({
-          date: libranza.date.toISOString().split('T')[0],
+          date: `${libranza.date.getFullYear()}-${String(libranza.date.getMonth() + 1).padStart(2, '0')}-${String(libranza.date.getDate()).padStart(2, '0')}`,
           personnel_name: libranza.personnelName,
           type: libranza.type,
           is_change: libranza.isChange || false
