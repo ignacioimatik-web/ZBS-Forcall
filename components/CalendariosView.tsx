@@ -45,7 +45,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const handleSaveBulk = () => {
     if (!bulkPersonnel || bulkDates.length === 0) return;
     bulkDates.forEach(date => {
-      const common = { id: Math.random().toString(36).substr(2, 9), date, personnelName: bulkPersonnel, isChange: !isCoordinator, modifiedBy: props.user?.name, modifiedAt: new Date() };
+      const common = { id: Math.random().toString(36).substr(2, 9), date, personnelName: bulkPersonnel, isChange: !isCoordinator, modifiedBy: null, modifiedAt: new Date() };
       if (activeSub === 'Medicina') props.onAddGuardia({ ...common, type: 'Médica' } as any);
       else if (activeSub === 'Enfermería') props.onAddGuardia({ ...common, type: 'Enfermería' } as any);
       else if (activeSub === 'Libranzas') props.onAddLibranza({ ...common, id: 'lib-' + common.id } as any);
@@ -60,8 +60,8 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     const p2 = ev2.personnelName;
     if (ev1.type) props.onDeleteGuardia(ev1.id); else if (String(ev1.id).includes('lib')) props.onDeleteLibranza(ev1.id); else props.onDeleteDobla(ev1.id);
     if (ev2.type) props.onDeleteGuardia(ev2.id); else if (String(ev2.id).includes('lib')) props.onDeleteLibranza(ev2.id); else props.onDeleteDobla(ev2.id);
-    const newEv1 = { ...ev1, id: 'sw-' + Math.random(), personnelName: p2, isChange: !isCoordinator, modifiedBy: props.user?.name, modifiedAt: new Date() };
-    const newEv2 = { ...ev2, id: 'sw-' + Math.random(), personnelName: p1, isChange: !isCoordinator, modifiedBy: props.user?.name, modifiedAt: new Date() };
+    const newEv1 = { ...ev1, id: 'sw-' + Math.random(), personnelName: p2, isChange: !isCoordinator, modifiedBy: null, modifiedAt: new Date() };
+    const newEv2 = { ...ev2, id: 'sw-' + Math.random(), personnelName: p1, isChange: !isCoordinator, modifiedBy: null, modifiedAt: new Date() };
     if (ev1.type) { props.onAddGuardia(newEv1); props.onAddGuardia(newEv2); } else if (String(ev1.id).includes('lib')) { props.onAddLibranza(newEv1); props.onAddLibranza(newEv2); } else { props.onAddDobla(newEv1); props.onAddDobla(newEv2); }
     const newLog: AuditLog = { id: Date.now().toString(), type: 'PERMUTA', user: props.user?.name || 'Usuario', timestamp: new Date(), description: `Intercambio confirmado entre ${p1} y ${p2}.`, category: activeSub, details: { from: p1, to: p2, date1: ev1.date, date2: ev2.date } };
     setAuditLogs(prev => [newLog, ...prev]);
