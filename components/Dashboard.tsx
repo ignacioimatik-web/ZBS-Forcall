@@ -37,7 +37,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   user 
 }) => {
   const stats = [
-    { label: 'Med', count: guardias.filter(g => g.type === 'Médica').length, icon: 'stethoscope', color: 'text-green-500' },
+    { label: 'Med', count: guardias.filter(g => g.type === 'Médica').length, icon: 'stethoscope', color: 'text-blue-500' },
     { label: 'Enf', count: guardias.filter(g => g.type === 'Enfermería').length, icon: 'vaccines', color: 'text-red-500' },
     { label: 'Lib', count: libranzas.length, icon: 'beach_access', color: 'text-orange-500' },
     { label: 'Ref', count: doblas.length, icon: 'dynamic_feed', color: 'text-stone-500' }
