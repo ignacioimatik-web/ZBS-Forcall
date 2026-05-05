@@ -118,7 +118,7 @@ export const AlertasView: React.FC = () => {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash-exp",
         contents: "Resumen de alertas sanitarias, vialidad (Puertos Querol y Torremiró) y avisos 112 en la comarca de Els Ports (Castellón) para hoy.",
         config: { tools: [{ googleSearch: {} }] },
       });
