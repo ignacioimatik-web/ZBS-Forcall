@@ -59,7 +59,7 @@ export function useDoblas(): UseDoblasResult {
       const { data, error: insertError } = await supabase
         .from('doblas')
         .insert({
-          date: dobla.date.toISOString().split('T')[0],
+          date: `${dobla.date.getFullYear()}-${String(dobla.date.getMonth() + 1).padStart(2, '0')}-${String(dobla.date.getDate()).padStart(2, '0')}`,
           personnel_name: dobla.personnelName,
           type: dobla.type,
           is_change: dobla.isChange || false
@@ -95,7 +95,7 @@ export function useDoblas(): UseDoblasResult {
       const { error: updateError } = await supabase
         .from('doblas')
         .update({
-          date: dobla.date.toISOString().split('T')[0],
+          date: `${dobla.date.getFullYear()}-${String(dobla.date.getMonth() + 1).padStart(2, '0')}-${String(dobla.date.getDate()).padStart(2, '0')}`,
           personnel_name: dobla.personnelName,
           type: dobla.type,
           is_change: dobla.isChange || false
