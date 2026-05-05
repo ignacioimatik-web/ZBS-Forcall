@@ -1,3 +1,4 @@
+import type { AppRole } from './lib/database.types';
 
 export enum MeetingType {
   TEAM = 'Reunión de Equipo',
@@ -32,6 +33,7 @@ export interface Meeting {
   cancellationReason?: string;
 }
 
+// Mapeo de roles UI heredados a nuevos roles Supabase
 export type UserRole = 'Administrador' | 'Coordinador' | 'Médico' | 'Enfermera';
 
 export interface User {
@@ -42,6 +44,54 @@ export interface User {
   role: UserRole;
   avatarUrl?: string;
   is2FAEnabled: boolean;
+}
+
+// Nuevos tipos Supabase
+export type { AppRole };
+
+export interface Profile {
+  id: string;
+  email: string;
+  full_name: string;
+  role: AppRole;
+  staff_group: 'medico' | 'enfermeria' | null;
+  is_active: boolean;
+  phone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Helper para convertir de AppRole a UserRole legacy
+export function appRoleToUserRole(appRole: AppRole): UserRole {
+  switch (appRole) {
+    case 'admin':
+      return 'Administrador';
+    case 'coordinador_medico':
+    case 'coordinadora_enfermeria':
+      return 'Coordinador';
+    case 'medico':
+      return 'Médico';
+    case 'enfermera':
+      return 'Enfermera';
+    default:
+      return 'Médico';
+  }
+}
+
+// Helper para convertir de UserRole legacy a AppRole
+export function userRoleToAppRole(userRole: UserRole, isNursing: boolean = false): AppRole {
+  switch (userRole) {
+    case 'Administrador':
+      return 'admin';
+    case 'Coordinador':
+      return isNursing ? 'coordinadora_enfermeria' : 'coordinador_medico';
+    case 'Médico':
+      return 'medico';
+    case 'Enfermera':
+      return 'enfermera';
+    default:
+      return 'medico';
+  }
 }
 
 export type PersonnelType = 'Médica' | 'Enfermería';

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { UnifiedCalendar } from './components/UnifiedCalendar';
@@ -8,135 +8,65 @@ import { NotificationToast } from './components/NotificationToast';
 import { LoginScreen } from './components/LoginScreen';
 import { AlertasView } from './components/AlertasView';
 import { TranscriptionTool } from './components/TranscriptionTool';
-import { Meeting, MeetingType, User, UserRole, Guardia, ManualHoliday, Libranza, Dobla } from './types';
-
-const generateMockData = (): Meeting[] => {
-  const today = new Date();
-  const meetings: Meeting[] = [];
-  const addDays = (d: Date, days: number) => {
-    const copy = new Date(d);
-    copy.setDate(d.getDate() + days);
-    return copy;
-  };
-
-  meetings.push({
-    id: 'team-1',
-    title: 'Reunión General de Zona',
-    type: MeetingType.TEAM,
-    date: addDays(today, 5),
-    time: '13:30',
-    speaker: 'Dra. Elena Benages',
-    isConfirmed: true,
-    description: 'Revisión de objetivos mensuales y coordinación.'
-  });
-
-  return meetings;
-};
-
-const generateMockGuardias = (): Guardia[] => {
-  const guardias: Guardia[] = [];
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const doctors = ["Dra. Elena Benages", "Dra. Delia Mestre", "Dr. Fernando Sierra", "Dr. Jorge Ramón", "Dr. Frank Castillo", "Dr. Ilie Popov"];
-  const nurses = ["Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
-
-  for (let mOffset = 0; mOffset <= 1; mOffset++) {
-    const targetMonth = month + mOffset;
-    const daysInMonth = new Date(year, targetMonth + 1, 0).getDate();
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, targetMonth, day);
-      guardias.push({
-        id: `g-med-${year}-${targetMonth}-${day}`,
-        date,
-        time: '08:00',
-        type: 'Médica',
-        personnelName: doctors[day % doctors.length]
-      });
-      guardias.push({
-        id: `g-enf-${year}-${targetMonth}-${day}`,
-        date,
-        time: '08:00',
-        type: 'Enfermería',
-        personnelName: nurses[day % nurses.length]
-      });
-    }
-  }
-  return guardias;
-}
-
-type AuthStep = 'login' | 'app';
+import { ManualHoliday } from './types';
+import { useAuth } from './hooks/useAuth';
+import { useGuardias } from './hooks/useGuardias';
+import { useLibranzas } from './hooks/useLibranzas';
+import { useDoblas } from './hooks/useDoblas';
+import { useMeetings } from './hooks/useMeetings';
 
 const App: React.FC = () => {
-  const [authStep, setAuthStep] = useState<AuthStep>('login');
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { user, isLoading: authLoading, signOut } = useAuth();
+  const { guardias, addGuardia, updateGuardia, deleteGuardia } = useGuardias();
+  const { libranzas, addLibranza, updateLibranza, deleteLibranza } = useLibranzas();
+  const { doblas, addDobla, updateDobla, deleteDobla } = useDoblas();
+  const { meetings, addMeeting, updateMeeting, deleteMeeting } = useMeetings();
+  
   const [activeTab, setActiveTab] = useState('Dashboard');
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [guardias, setGuardias] = useState<Guardia[]>([]);
-  const [libranzas, setLibranzas] = useState<Libranza[]>([]);
-  const [doblas, setDoblas] = useState<Dobla[]>([]);
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
 
-  useEffect(() => {
-    setMeetings(generateMockData());
-    setGuardias(generateMockGuardias());
-  }, []);
-
-  const handleLogout = useCallback((reason?: string) => {
-    setCurrentUser(null);
-    setAuthStep('login');
+  const handleLogout = useCallback(async (reason?: string) => {
+    await signOut();
     setActiveTab('Dashboard');
     if (reason) setNotification(reason);
-  }, []);
+  }, [signOut]);
 
-  const handleUpsertSession = (session: Meeting) => {
-    setMeetings(prev => {
-      const exists = prev.find(m => m.id === session.id);
-      if (exists) return prev.map(m => m.id === session.id ? session : m);
-      return [...prev, session];
-    });
-  };
+  const handleUpsertSession = useCallback(async (session: any) => {
+    const existing = meetings.find(m => m.id === session.id);
+    if (existing) {
+      await updateMeeting(session);
+    } else {
+      await addMeeting(session);
+    }
+  }, [meetings, addMeeting, updateMeeting]);
 
-  const handleUpsertGuardia = (guardia: Guardia) => {
-    setGuardias(prev => {
-      const exists = prev.find(g => g.id === guardia.id);
-      if (exists) return prev.map(g => g.id === guardia.id ? guardia : g);
-      return [...prev, guardia];
-    });
-  };
+  const handleUpsertGuardia = useCallback(async (guardia: any) => {
+    const existing = guardias.find(g => g.id === guardia.id);
+    if (existing) {
+      await updateGuardia(guardia);
+    } else {
+      await addGuardia(guardia);
+    }
+  }, [guardias, addGuardia, updateGuardia]);
 
-  const handleUpsertLibranza = (libranza: Libranza) => {
-    setLibranzas(prev => {
-      const exists = prev.find(l => l.id === libranza.id);
-      if (exists) return prev.map(l => l.id === libranza.id ? libranza : l);
-      return [...prev, libranza];
-    });
-  };
+  const handleUpsertLibranza = useCallback(async (libranza: any) => {
+    const existing = libranzas.find(l => l.id === libranza.id);
+    if (existing) {
+      await updateLibranza(libranza);
+    } else {
+      await addLibranza(libranza);
+    }
+  }, [libranzas, addLibranza, updateLibranza]);
 
-  const handleUpsertDobla = (dobla: Dobla) => {
-    setDoblas(prev => {
-      const exists = prev.find(d => d.id === dobla.id);
-      if (exists) return prev.map(d => d.id === dobla.id ? dobla : d);
-      return [...prev, dobla];
-    });
-  };
-
-  const handleDeleteGuardia = (id: string) => setGuardias(prev => prev.filter(g => g.id !== id));
-  const handleDeleteLibranza = (id: string) => setLibranzas(prev => prev.filter(l => l.id !== id));
-  const handleDeleteDobla = (id: string) => setDoblas(prev => prev.filter(d => d.id !== id));
-
-  const handleLoginSuccess = (method: string, email: string, role: UserRole, phone?: string) => {
-    setCurrentUser({
-      id: 'user-1',
-      name: email.split('@')[0].split('.').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
-      email: email,
-      phone: phone,
-      role: role,
-      is2FAEnabled: false
-    });
-    setAuthStep('app');
-  };
+  const handleUpsertDobla = useCallback(async (dobla: any) => {
+    const existing = doblas.find(d => d.id === dobla.id);
+    if (existing) {
+      await updateDobla(dobla);
+    } else {
+      await addDobla(dobla);
+    }
+  }, [doblas, addDobla, updateDobla]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -148,13 +78,13 @@ const App: React.FC = () => {
           doblas={doblas}
           onNavigate={setActiveTab} 
           onAddGuardia={handleUpsertGuardia}
-          onDeleteGuardia={handleDeleteGuardia}
+          onDeleteGuardia={deleteGuardia}
           onAddMeeting={handleUpsertSession}
           onAddLibranza={handleUpsertLibranza}
           onAddDobla={handleUpsertDobla}
-          onDeleteLibranza={handleDeleteLibranza}
-          onDeleteDobla={handleDeleteDobla}
-          user={currentUser} 
+          onDeleteLibranza={deleteLibranza}
+          onDeleteDobla={deleteDobla}
+          user={user} 
         />;
       case 'Guardias':
         return (
@@ -165,13 +95,13 @@ const App: React.FC = () => {
             doblas={doblas}
             manualHolidays={manualHolidays}
             onAddGuardia={handleUpsertGuardia}
-            onDeleteGuardia={handleDeleteGuardia}
+            onDeleteGuardia={deleteGuardia}
             onAddLibranza={handleUpsertLibranza}
-            onDeleteLibranza={handleDeleteLibranza}
+            onDeleteLibranza={deleteLibranza}
             onAddDobla={handleUpsertDobla}
-            onDeleteDobla={handleDeleteDobla}
+            onDeleteDobla={deleteDobla}
             onAddMeeting={handleUpsertSession}
-            user={currentUser}
+            user={user}
           />
         );
       case 'Dictado':
@@ -183,7 +113,20 @@ const App: React.FC = () => {
     }
   };
 
-  if (authStep === 'login') return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-forcall-600"></div>
+          <p className="mt-4 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen onLoginSuccess={() => {}} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in">

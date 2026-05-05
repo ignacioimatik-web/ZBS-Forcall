@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { User, ChatMessage } from '../types';
+import { User } from '../types';
+import { useAvisos } from '../hooks/useAvisos';
 
 interface AvisosViewProps {
   currentUser: User | null;
 }
 
 export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { avisos: messages, addAviso, isLoading } = useAvisos('avisos');
   const [inputText, setInputText] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -70,12 +71,6 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
     if ('Notification' in window) {
       setPermisoEstado(Notification.permission);
     }
-
-    const mockMessages: ChatMessage[] = [
-      { id: '1', channelId: 'avisos', senderId: 'system', senderName: 'SISTEMA', text: 'Bienvenido al canal de Avisos Urgentes. Los mensajes marcados como urgentes se enviarán vía SMS a todo el equipo.', timestamp: new Date(Date.now() - 3600000) },
-      { id: '2', channelId: 'avisos', senderId: 'coord-1', senderName: 'Dra. Elena Benages', text: 'Recordatorio: Mañana la carretera CV-124 estará cortada por obras a la altura de Cinctorres entre las 9 y las 11.', timestamp: new Date(Date.now() - 1800000), isUrgent: true }
-    ];
-    setMessages(mockMessages);
   }, []);
 
   useEffect(() => {
@@ -87,21 +82,10 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
     if (!inputText.trim() || isSending || !canSend) return;
 
     setIsSending(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
 
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      channelId: 'avisos',
-      senderId: currentUser?.id || 'anon',
-      senderName: currentUser?.name || 'Usuario',
-      text: inputText,
-      timestamp: new Date(),
-      isUrgent: isUrgent
-    };
-
-    setMessages(prev => [...prev, newMessage]);
+    const result = await addAviso(inputText, isUrgent);
     
-    if (isUrgent) {
+    if (result && isUrgent) {
       enviarAvisoGrupo(inputText);
       setShowNotification({ 
         title: 'AVISO URGENTE EMITIDO', 
