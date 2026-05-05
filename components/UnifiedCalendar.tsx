@@ -63,30 +63,51 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     let events: any[] = [];
     if (activeCategory === 'Todo') {
       events = [
-        ...guardias.filter(g => g.date.toDateString() === dStr),
-        ...libranzas.filter(l => l.date.toDateString() === dStr),
-        ...doblas.filter(d => d.date.toDateString() === dStr),
-        ...meetings.filter(m => m.date.toDateString() === dStr)
+        ...guardias.filter(g => g.date.toDateString() === dStr).map(g => ({ ...g, _kind: 'guardia' })),
+        ...libranzas.filter(l => l.date.toDateString() === dStr).map(l => ({ ...l, _kind: 'libranza' })),
+        ...doblas.filter(d => d.date.toDateString() === dStr).map(d => ({ ...d, _kind: 'dobla' })),
+        ...meetings.filter(m => m.date.toDateString() === dStr).map(m => ({ ...m, _kind: 'meeting' }))
       ];
     } else if (activeCategory === 'Medicina') {
-      events = guardias.filter(g => g.date.toDateString() === dStr && g.type === 'Médica');
+      events = guardias.filter(g => g.date.toDateString() === dStr && g.type === 'Médica').map(g => ({ ...g, _kind: 'guardia' }));
     } else if (activeCategory === 'Enfermería') {
-      events = guardias.filter(g => g.date.toDateString() === dStr && g.type === 'Enfermería');
+      events = guardias.filter(g => g.date.toDateString() === dStr && g.type === 'Enfermería').map(g => ({ ...g, _kind: 'guardia' }));
     } else if (activeCategory === 'Libranzas') {
-      events = libranzas.filter(l => l.date.toDateString() === dStr);
+      events = libranzas.filter(l => l.date.toDateString() === dStr).map(l => ({ ...l, _kind: 'libranza' }));
     } else if (activeCategory === 'Refuerzo') {
-      events = doblas.filter(d => d.date.toDateString() === dStr);
+      events = doblas.filter(d => d.date.toDateString() === dStr).map(d => ({ ...d, _kind: 'dobla' }));
     }
     return { events, holiday: getHolidayName(date) };
   };
 
   const getEventStyle = (ev: any) => {
+    // Swap target siempre tiene prioridad visual
     if (firstSwapTarget?.id === ev.id) return 'bg-indigo-700 text-white border-indigo-900 ring-4 ring-indigo-200 animate-pulse z-50';
-    if (ev.isChange) return 'bg-orange-600 text-white border-orange-700 shadow-md ring-1 ring-orange-200';
-    if (ev.type === 'Médica') return 'bg-blue-100 text-blue-900 border-blue-300';
-    if (ev.type === 'Enfermería') return 'bg-red-100 text-red-900 border-red-300';
-    if (ev.id && String(ev.id).includes('lib')) return 'bg-green-100 text-green-900 border-green-300';
-    if (ev.id && String(ev.id).includes('dob')) return 'bg-orange-100 text-orange-900 border-orange-300';
+    
+    // Discriminar por _kind primero (libranzas y doblas)
+    if (ev._kind === 'libranza') {
+      const base = 'bg-green-100 text-green-900 border-green-300';
+      return ev.isChange ? `${base} ring-2 ring-orange-400` : base;
+    }
+    if (ev._kind === 'dobla') {
+      const base = 'bg-orange-100 text-orange-900 border-orange-300';
+      return ev.isChange ? `${base} ring-2 ring-orange-400` : base;
+    }
+    if (ev._kind === 'meeting') {
+      return 'bg-sky-100 text-sky-900 border-sky-300';
+    }
+    
+    // Guardias: discriminar por type
+    if (ev.type === 'Médica') {
+      const base = 'bg-blue-100 text-blue-900 border-blue-300';
+      return ev.isChange ? `${base} ring-2 ring-orange-400` : base;
+    }
+    if (ev.type === 'Enfermería') {
+      const base = 'bg-red-100 text-red-900 border-red-300';
+      return ev.isChange ? `${base} ring-2 ring-orange-400` : base;
+    }
+    
+    // Fallback
     return 'bg-sky-100 text-sky-900 border-sky-300';
   };
 
@@ -201,7 +222,12 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                   <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-4 py-3 md:px-3 md:py-2 rounded-2xl text-[14px] md:text-[11px] font-black border leading-tight transition-all relative flex items-center justify-between shadow-sm ${getEventStyle(ev)} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
                     <span className="whitespace-normal break-words pr-2">{ev.personnelName || ev.title}</span>
                     {canEdit && !bulkMode && !swapMode && (
-                      <button onClick={(e) => { e.stopPropagation(); if (ev.type) onDeleteGuardia(ev.id); else if (String(ev.id).includes('lib')) onDeleteLibranza(ev.id); else if (String(ev.id).includes('dob')) onDeleteDobla(ev.id); }} className="md:opacity-0 group-hover:opacity-100 text-inherit hover:text-red-600 transition-opacity shrink-0 p-1">
+                      <button onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (ev._kind === 'libranza') onDeleteLibranza(ev.id); 
+                        else if (ev._kind === 'dobla') onDeleteDobla(ev.id); 
+                        else if (ev._kind === 'guardia') onDeleteGuardia(ev.id);
+                      }} className="md:opacity-0 group-hover:opacity-100 text-inherit hover:text-red-600 transition-opacity shrink-0 p-1">
                         <span className="material-symbols-outlined text-[18px]">close</span>
                       </button>
                     )}
