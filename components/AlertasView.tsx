@@ -33,11 +33,23 @@ interface ForecastDay {
   condition: 'Sunny' | 'Cloudy' | 'Rain' | 'Snow';
 }
 
+interface CivilProtectionUpdate {
+  title: string;
+  summary: string;
+  level: 'Verde' | 'Amarillo' | 'Naranja' | 'Rojo';
+  updatedAt: string;
+  sourceUrl: string;
+  mapUrl: string;
+}
+
 export const AlertasView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<string>('');
   const [sources, setSources] = useState<GroundingSource[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [civilProtectionLoading, setCivilProtectionLoading] = useState(false);
+  const [civilProtectionError, setCivilProtectionError] = useState<string | null>(null);
+  const [civilProtectionUpdate, setCivilProtectionUpdate] = useState<CivilProtectionUpdate | null>(null);
   const [isSourcesOpen, setIsSourcesOpen] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
@@ -109,6 +121,7 @@ export const AlertasView: React.FC = () => {
     }
     const timer = setTimeout(() => setWeatherLoading(false), 500);
     fetchAlerts();
+    fetchCivilProtectionStatus();
     return () => clearTimeout(timer);
   }, []);
 
@@ -134,6 +147,63 @@ export const AlertasView: React.FC = () => {
     }
   };
 
+  const fetchCivilProtectionStatus = async () => {
+    setCivilProtectionLoading(true);
+    setCivilProtectionError(null);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash-exp",
+        contents: `
+Analiza únicamente información oficial y actualizada de 112 Comunitat Valenciana y Generalitat Valenciana sobre Protección Civil para la comarca de Els Ports (Castellón, Comunitat Valenciana).
+
+Necesito una respuesta JSON con este formato exacto:
+{
+  "title": "string",
+  "summary": "string",
+  "level": "Verde|Amarillo|Naranja|Rojo",
+  "updatedAt": "string",
+  "sourceUrl": "string"
+}
+
+Instrucciones:
+- Resume el estado operativo actual de Protección Civil para Els Ports.
+- Si no existe mención literal a Els Ports, usa la referencia oficial aplicable a Castellón interior norte y dilo claramente.
+- No inventes datos.
+- sourceUrl debe ser una URL oficial de 112cv.gva.es o gva.es.
+- updatedAt debe ser legible en castellano.
+        `,
+        config: { tools: [{ googleSearch: {} }] },
+      });
+
+      const rawText = response.text || '';
+      const jsonText = rawText.match(/\{[\s\S]*\}/)?.[0];
+
+      if (!jsonText) {
+        throw new Error('No se pudo interpretar la respuesta oficial.');
+      }
+
+      const parsed = JSON.parse(jsonText) as Omit<CivilProtectionUpdate, 'mapUrl'>;
+      setCivilProtectionUpdate({
+        ...parsed,
+        mapUrl: 'https://www.112cv.gva.es/WebPublica-MapasOnLineV2/portadaCastellano.jsf',
+      });
+    } catch (err) {
+      setCivilProtectionError('No se ha podido actualizar la información oficial de Protección Civil.');
+      setCivilProtectionUpdate({
+        title: 'Protección Civil Els Ports',
+        summary: 'Consulta el mapa oficial de 112 Comunitat Valenciana para revisar en tiempo real preemergencias, emergencias meteorológicas y alertas activas aplicables a Els Ports y al interior norte de Castellón.',
+        level: 'Verde',
+        updatedAt: 'Consulta manual requerida',
+        sourceUrl: 'https://www.112cv.gva.es/es/preemergencias-meteorologicas',
+        mapUrl: 'https://www.112cv.gva.es/WebPublica-MapasOnLineV2/portadaCastellano.jsf',
+      });
+    } finally {
+      setCivilProtectionLoading(false);
+    }
+  };
+
   const toggleCategory = (index: number) => {
     setCategories(prev => prev.map((cat, i) => 
       i === index ? { ...cat, isOpen: !cat.isOpen } : cat
@@ -147,6 +217,19 @@ export const AlertasView: React.FC = () => {
       case 'Snow': return { icon: 'ac_unit', color: 'text-cyan-500', bg: 'bg-cyan-50' };
       case 'Wind': return { icon: 'air', color: 'text-teal-600', bg: 'bg-teal-100' };
       default: return { icon: 'thermostat', color: 'text-gray-400', bg: 'bg-gray-100' };
+    }
+  };
+
+  const getLevelClasses = (level: CivilProtectionUpdate['level']) => {
+    switch (level) {
+      case 'Rojo':
+        return 'bg-red-100 text-red-700 border-red-200';
+      case 'Naranja':
+        return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'Amarillo':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
+      default:
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
     }
   };
 
@@ -197,6 +280,82 @@ export const AlertasView: React.FC = () => {
                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">{p.content}</p>
                 </div>
               ))}
+            </div>
+
+            <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-black text-gray-800 text-xs uppercase tracking-widest flex items-center gap-2">
+                    <span className="material-symbols-outlined text-orange-600">shield_with_house</span>
+                    Protección Civil Els Ports
+                  </h3>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">
+                    Información oficial 112 Comunitat Valenciana
+                  </p>
+                </div>
+                <button
+                  onClick={fetchCivilProtectionStatus}
+                  disabled={civilProtectionLoading}
+                  className="px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-orange-50 text-orange-700 border border-orange-100 hover:bg-orange-100 transition-all"
+                >
+                  {civilProtectionLoading ? 'Cargando...' : 'Actualizar'}
+                </button>
+              </div>
+
+              <div className="p-4 space-y-4">
+                {civilProtectionError && (
+                  <div className="rounded-2xl border border-red-100 bg-red-50 p-3 text-[10px] font-bold text-red-700">
+                    {civilProtectionError}
+                  </div>
+                )}
+
+                {civilProtectionUpdate && (
+                  <>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h4 className="text-sm font-black text-gray-900">{civilProtectionUpdate.title}</h4>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                          Actualizado: {civilProtectionUpdate.updatedAt}
+                        </p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getLevelClasses(civilProtectionUpdate.level)}`}>
+                        {civilProtectionUpdate.level}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                      {civilProtectionUpdate.summary}
+                    </p>
+
+                    <img
+                      src="https://www.112cv.gva.es/WebPublica-MapasOnLineV2/send/getMapaGeoserver?mapa=preemergencias"
+                      alt="Mapa oficial de preemergencias 112 Comunitat Valenciana"
+                      className="w-full rounded-2xl border border-gray-200"
+                    />
+
+                    <div className="grid grid-cols-1 gap-2">
+                      <a
+                        href={civilProtectionUpdate.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-forcall-50 text-forcall-700 border border-forcall-100 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-forcall-100 transition-all"
+                      >
+                        <span className="material-symbols-outlined text-sm">open_in_new</span>
+                        Fuente oficial
+                      </a>
+                      <a
+                        href={civilProtectionUpdate.mapUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-orange-50 text-orange-700 border border-orange-100 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all"
+                      >
+                        <span className="material-symbols-outlined text-sm">map</span>
+                        Abrir mapa 112CV
+                      </a>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* DIRECTORIO DE URGENCIAS */}
