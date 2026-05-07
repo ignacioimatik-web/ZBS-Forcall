@@ -23,7 +23,14 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
 
   const doctors = ["Dra. Elena Benages", "Dra. Delia Mestre", "Dr. Fernando Sierra", "Dr. Jorge Ramón", "Dr. Frank Castillo", "Dr. Ilie Popov", "Dr. Martínez"];
   const nurses = ["Xelo Carbó", "Rosa", "Maite", "Enf. Sara", "Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
-  const currentPersonnel = activeSub === 'Enfermería' ? nurses : activeSub === 'Medicina' ? doctors : [...doctors, ...nurses];
+  const currentPersonnel =
+    activeSub === 'Enfermería'
+      ? nurses
+      : activeSub === 'Medicina'
+        ? doctors
+        : activeSub === 'Refuerzo'
+          ? doctors
+          : [...doctors, ...nurses];
   const isGuardiaCategory = activeSub === 'Medicina' || activeSub === 'Enfermería';
   const canManageActiveCategory = isGuardiaCategory ? canManageGuardiaCategory(props.user, activeSub) : false;
 
