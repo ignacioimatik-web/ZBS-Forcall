@@ -10,12 +10,15 @@ export interface LocalUser {
 
 export const USERS: LocalUser[] = [
   // Medicina
-  { id: 'elena', name: 'Elena Benages', role: 'Médico', category: 'Medicina', pin: '1019' },
-  { id: 'fernando', name: 'Fernando Sierra', role: 'Médico', category: 'Medicina', pin: '2222' },
-  { id: 'frank', name: 'Frank Castillo', role: 'Médico', category: 'Medicina', pin: '1111' },
+  { id: 'elena', name: 'Elena Benages', role: 'Médico', category: 'Medicina', pin: '663880' },
+  { id: 'fernando', name: 'Fernando Sierra', role: 'Médico', category: 'Medicina', pin: '111111' },
+  { id: 'frank', name: 'Frank Castillo', role: 'Médico', category: 'Medicina', pin: '222222' },
+  { id: 'jorge', name: 'Jorge', role: 'Médico', category: 'Medicina', pin: '333333' },
+  { id: 'ilie', name: 'Ilie Popov', role: 'Médico', category: 'Medicina', pin: '555555' },
   // Enfermería
-  { id: 'chelo', name: 'Xelo Carbó', role: 'Enfermera', category: 'Enfermería', pin: '0000' },
-  { id: 'rosa', name: 'Rosa Carbó', role: 'Enfermera', category: 'Enfermería', pin: '3333' },
+  { id: 'chelo', name: 'Xelo Carbó', role: 'Enfermera', category: 'Enfermería', pin: '666666' },
+  { id: 'rosa', name: 'Rosa Carbó', role: 'Enfermera', category: 'Enfermería', pin: '777777' },
+  { id: 'delia', name: 'Delia', role: 'Enfermera', category: 'Enfermería', pin: '444444' },
   // Administrativos
   { id: 'joan', name: 'Joan', role: 'Administrador', category: 'Administrativos', pin: '5555' },
 ];
