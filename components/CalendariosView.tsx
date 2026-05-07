@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { Meeting, User, Guardia, Libranza, Dobla, ManualHoliday, AuditLog } from '../types';
 import { exportCalendarToPDF } from '../lib/pdfExport';
+import { canManageGuardiaCategory } from '../lib/guardiaPermissions';
 
 interface CalendariosViewProps {
   meetings: Meeting[]; guardias: Guardia[]; libranzas: Libranza[]; doblas: Dobla[]; manualHolidays: ManualHoliday[];
@@ -9,6 +10,7 @@ interface CalendariosViewProps {
   onAddLibranza: (libranza: Libranza) => void; onDeleteLibranza: (id: string) => void;
   onAddDobla: (dobla: Dobla) => void; onDeleteDobla: (id: string) => void;
   onAddMeeting: (meeting: Meeting) => void;
+  onSwapGuardias: (event1: Guardia & { _kind?: string }, event2: Guardia & { _kind?: string }) => Promise<boolean>;
   user: User | null;
 }
 
@@ -19,10 +21,11 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [swapMode, setSwapMode] = useState(false);
 
-  const isCoordinator = props.user?.role === 'Coordinador';
   const doctors = ["Dra. Elena Benages", "Dra. Delia Mestre", "Dr. Fernando Sierra", "Dr. Jorge Ramón", "Dr. Frank Castillo", "Dr. Ilie Popov", "Dr. Martínez"];
   const nurses = ["Xelo Carbó", "Rosa", "Maite", "Enf. Sara", "Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
   const currentPersonnel = activeSub === 'Enfermería' ? nurses : activeSub === 'Medicina' ? doctors : [...doctors, ...nurses];
+  const isGuardiaCategory = activeSub === 'Medicina' || activeSub === 'Enfermería';
+  const canManageActiveCategory = isGuardiaCategory ? canManageGuardiaCategory(props.user, activeSub) : false;
 
   useEffect(() => {
     const initLog: AuditLog = { 
@@ -41,11 +44,11 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   };
 
   const handleSaveBulk = () => {
-    if (!bulkPersonnel || bulkDates.length === 0) return;
+    if (!bulkPersonnel || bulkDates.length === 0 || !canManageActiveCategory) return;
     const isNurse = nurses.includes(bulkPersonnel);
     const personnelType = isNurse ? 'Enfermería' : 'Médica';
     bulkDates.forEach(date => {
-      const common = { id: Math.random().toString(36).substr(2, 9), date, personnelName: bulkPersonnel, isChange: !isCoordinator, modifiedBy: null, modifiedAt: new Date() };
+      const common = { id: Math.random().toString(36).substr(2, 9), date, personnelName: bulkPersonnel, isChange: false, modifiedBy: props.user?.name || null, modifiedAt: new Date() };
       if (activeSub === 'Medicina') props.onAddGuardia({ ...common, type: 'Médica' } as any);
       else if (activeSub === 'Enfermería') props.onAddGuardia({ ...common, type: 'Enfermería' } as any);
       else if (activeSub === 'Libranzas') props.onAddLibranza({ ...common, id: 'lib-' + common.id, type: personnelType } as any);
@@ -55,31 +58,12 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     setBulkDates([]); setBulkPersonnel(null);
   };
 
-  const handleSwapEvents = (ev1: any, ev2: any) => {
+  const handleSwapEvents = async (ev1: any, ev2: any) => {
     const p1 = ev1.personnelName;
     const p2 = ev2.personnelName;
-    
-    // Borrar eventos originales usando _kind
-    if (ev1._kind === 'libranza') props.onDeleteLibranza(ev1.id);
-    else if (ev1._kind === 'dobla') props.onDeleteDobla(ev1.id);
-    else if (ev1._kind === 'guardia') props.onDeleteGuardia(ev1.id);
-    
-    if (ev2._kind === 'libranza') props.onDeleteLibranza(ev2.id);
-    else if (ev2._kind === 'dobla') props.onDeleteDobla(ev2.id);
-    else if (ev2._kind === 'guardia') props.onDeleteGuardia(ev2.id);
-    
-    // Crear nuevos eventos SIN id (dejar que Supabase genere UUID)
-    const { id: _id1, _kind: _k1, ...ev1Rest } = ev1;
-    const { id: _id2, _kind: _k2, ...ev2Rest } = ev2;
-    
-    const newEv1 = { ...ev1Rest, personnelName: p2, isChange: !isCoordinator, modifiedBy: props.user?.name || null, modifiedAt: new Date() };
-    const newEv2 = { ...ev2Rest, personnelName: p1, isChange: !isCoordinator, modifiedBy: props.user?.name || null, modifiedAt: new Date() };
-    
-    // Agregar según _kind original
-    if (ev1._kind === 'libranza') { props.onAddLibranza(newEv1); props.onAddLibranza(newEv2); }
-    else if (ev1._kind === 'dobla') { props.onAddDobla(newEv1); props.onAddDobla(newEv2); }
-    else if (ev1._kind === 'guardia') { props.onAddGuardia(newEv1); props.onAddGuardia(newEv2); }
-    
+    const swapped = await props.onSwapGuardias(ev1, ev2);
+    if (!swapped) return;
+
     const newLog: AuditLog = { 
       id: Date.now().toString(), 
       type: 'PERMUTA', 
@@ -168,13 +152,18 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             </h4>
             <select 
               value={bulkPersonnel || ''} 
-              disabled={swapMode} 
+              disabled={swapMode || !canManageActiveCategory} 
               onChange={(e) => { setBulkPersonnel(e.target.value); setBulkDates([]); }} 
               className="w-full px-6 py-5 bg-gray-50 border border-gray-100 rounded-[1.5rem] font-black text-xs uppercase focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-100"
             >
               <option value="">-- SELECCIONAR PROFESIONAL --</option>
               {currentPersonnel.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
+            {!canManageActiveCategory && isGuardiaCategory && (
+              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
+                Solo la coordinación de la categoría puede añadir o quitar guardias. El resto del equipo solo puede hacer permutas.
+              </div>
+            )}
             {bulkPersonnel && (
               <div className="space-y-4 animate-slide-in-up">
                 <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
