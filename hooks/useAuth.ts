@@ -69,20 +69,19 @@ export function useAuth(): UseAuthResult {
         if (sessionError) throw sessionError;
 
         if (session?.user) {
-          console.log('Sesión encontrada, obteniendo perfil...');
+          console.log('Sesión inicial encontrada, obteniendo perfil...');
           const appUser = await fetchProfile(session.user.id, session.user.email || '');
-          if (isMounted) {
+          if (isMounted && appUser) {
             setUser(appUser);
-            if (!appUser) console.warn('No se pudo obtener el perfil para el usuario autenticado');
           }
         } else {
-          console.log('No hay sesión activa');
+          console.log('No hay sesión inicial activa');
         }
       } catch (err) {
         console.error('Error durante initAuth:', err);
       } finally {
         if (isMounted) {
-          console.log('Finalizada carga de autenticación');
+          console.log('Finalizada carga inicial de autenticación');
           setIsLoading(false);
         }
       }
@@ -92,13 +91,12 @@ export function useAuth(): UseAuthResult {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Cambio de estado Auth:', event);
-      if (event === 'SIGNED_IN' && session?.user) {
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && session?.user) {
+        // Si ya tenemos el usuario y el ID es el mismo, no hace falta re-obtener (opcional)
         const appUser = await fetchProfile(session.user.id, session.user.email || '');
         if (isMounted) setUser(appUser);
       } else if (event === 'SIGNED_OUT') {
         if (isMounted) setUser(null);
-      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        // Opcional: refrescar perfil si es necesario
       }
     });
 

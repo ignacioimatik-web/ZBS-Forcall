@@ -178,7 +178,7 @@ const App: React.FC = () => {
   }
 
   if (!user) {
-    return <LoginScreen onLoginSuccess={() => window.location.reload()} />;
+    return <LoginScreen onLoginSuccess={() => {}} />;
   }
 
   return (
