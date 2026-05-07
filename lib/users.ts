@@ -3,6 +3,7 @@ import type { UserRole } from '../types';
 export interface LocalUser {
   id: string;
   name: string;
+  email: string;
   role: UserRole;
   category: 'Medicina' | 'Enfermería' | 'Administrativos';
   pin: string;
@@ -10,17 +11,17 @@ export interface LocalUser {
 
 export const USERS: LocalUser[] = [
   // Medicina
-  { id: 'elena', name: 'Elena Benages', role: 'Médico', category: 'Medicina', pin: '663880' },
-  { id: 'fernando', name: 'Fernando Sierra', role: 'Médico', category: 'Medicina', pin: '111111' },
-  { id: 'frank', name: 'Frank Castillo', role: 'Médico', category: 'Medicina', pin: '222222' },
-  { id: 'jorge', name: 'Jorge', role: 'Médico', category: 'Medicina', pin: '333333' },
-  { id: 'ilie', name: 'Ilie Popov', role: 'Médico', category: 'Medicina', pin: '555555' },
+  { id: 'elena', name: 'Elena Benages', email: 'elena@zbsforcall.es', role: 'Médico', category: 'Medicina', pin: '663880' },
+  { id: 'fernando', name: 'Fernando Sierra', email: 'fernando@zbsforcall.es', role: 'Médico', category: 'Medicina', pin: '111111' },
+  { id: 'frank', name: 'Frank Castillo', email: 'frank@zbsforcall.es', role: 'Médico', category: 'Medicina', pin: '222222' },
+  { id: 'jorge', name: 'Jorge', email: 'jorge@zbsforcall.es', role: 'Médico', category: 'Medicina', pin: '333333' },
+  { id: 'ilie', name: 'Ilie Popov', email: 'ilie@zbsforcall.es', role: 'Médico', category: 'Medicina', pin: '555555' },
   // Enfermería
-  { id: 'chelo', name: 'Xelo Carbó', role: 'Enfermera', category: 'Enfermería', pin: '666666' },
-  { id: 'rosa', name: 'Rosa Carbó', role: 'Enfermera', category: 'Enfermería', pin: '777777' },
-  { id: 'delia', name: 'Delia', role: 'Enfermera', category: 'Enfermería', pin: '444444' },
+  { id: 'chelo', name: 'Xelo Carbó', email: 'chelo@zbsforcall.es', role: 'Enfermera', category: 'Enfermería', pin: '666666' },
+  { id: 'rosa', name: 'Rosa Carbó', email: 'rosa@zbsforcall.es', role: 'Enfermera', category: 'Enfermería', pin: '777777' },
+  { id: 'delia', name: 'Delia', email: 'delia@zbsforcall.es', role: 'Enfermera', category: 'Enfermería', pin: '444444' },
   // Administrativos
-  { id: 'joan', name: 'Joan', role: 'Administrador', category: 'Administrativos', pin: '5555' },
+  { id: 'joan', name: 'Joan', email: 'joan@zbsforcall.es', role: 'Administrador', category: 'Administrativos', pin: '888888' },
 ];
 
 export const CATEGORIES: Array<{ id: string; label: string; icon: string }> = [
