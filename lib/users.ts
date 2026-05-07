@@ -15,7 +15,7 @@ export const USERS: LocalUser[] = [
   { id: 'frank', name: 'Frank Castillo', role: 'Médico', category: 'Medicina', pin: '1111' },
   // Enfermería
   { id: 'chelo', name: 'Xelo Carbó', role: 'Enfermera', category: 'Enfermería', pin: '0000' },
-  { id: 'rosa', name: 'Rosa', role: 'Enfermera', category: 'Enfermería', pin: '3333' },
+  { id: 'rosa', name: 'Rosa Carbó', role: 'Enfermera', category: 'Enfermería', pin: '3333' },
   // Administrativos
   { id: 'joan', name: 'Joan', role: 'Administrador', category: 'Administrativos', pin: '5555' },
 ];
