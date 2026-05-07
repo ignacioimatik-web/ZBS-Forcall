@@ -138,7 +138,6 @@ export function useAuth(): UseAuthResult {
 
       if (signInError) {
         // 2. Si falla por credenciales inválidas, comprobar si el usuario debe ser auto-registrado
-        // Esto permite que el primer login "cree" la cuenta en Supabase si el PIN coincide con lib/users.ts
         if (signInError.message === 'Invalid login credentials') {
           const localUser = USERS.find(u => u.email === email);
           
@@ -158,6 +157,18 @@ export function useAuth(): UseAuthResult {
             if (signUpError) {
               setError(signUpError.message);
               return { success: false, error: signUpError.message };
+            }
+
+            // 3. Tras signUp exitoso, hacer login inmediato para obtener sesión
+            console.log('Registro OK, iniciando sesión automáticamente...');
+            const { error: secondSignInError } = await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+
+            if (secondSignInError) {
+              setError(secondSignInError.message);
+              return { success: false, error: secondSignInError.message };
             }
 
             return { success: true, message: 'Cuenta creada e iniciada sesión' };
