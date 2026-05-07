@@ -22,7 +22,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const [swapMode, setSwapMode] = useState(false);
 
   const doctors = ["Dra. Elena Benages", "Dra. Delia Mestre", "Dr. Fernando Sierra", "Dr. Jorge Ramón", "Dr. Frank Castillo", "Dr. Ilie Popov", "Dr. Martínez"];
-  const nurses = ["Xelo García", "Rosa Carbó", "Maite", "Enf. Sara", "Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
+  const nurses = ["Xelo García", "Yolanda Lainez", "Maite Beltrán", "Yolanda García", "Rosa Carbó"];
   const planningPersonnel =
     canManagePlanningType(props.user, 'Médica') ? doctors :
     canManagePlanningType(props.user, 'Enfermería') ? nurses :
