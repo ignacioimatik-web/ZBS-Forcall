@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { User, UserRole } from '../types';
+import type { User } from '../types';
 import { appRoleToUserRole } from '../types';
 
 const STORAGE_KEY = 'zbs_forcall_user';
@@ -10,7 +10,7 @@ interface UseAuthResult {
   isLoading: boolean;
   error: string | null;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 }
 
 export function useAuth(): UseAuthResult {
@@ -20,29 +20,41 @@ export function useAuth(): UseAuthResult {
 
   // Restaurar sesión desde Supabase al cargar
   useEffect(() => {
-    const restoreSession = async () => {
+    let isMounted = true;
+    let timeoutId: any = null;
+
+    const initAuth = async () => {
+      // Timeout de seguridad: 5s para no quedarse pillado
+      timeoutId = setTimeout(() => {
+        if (isMounted && isLoading) {
+          setIsLoading(false);
+        }
+      }, 5000);
+
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          if (isMounted) setIsLoading(false);
+          return;
+        }
+
         if (session?.user) {
           await loadUserProfile(session.user.id);
-        } else {
-          // Fallback: intentar cargar desde localStorage (modo legacy)
-          const stored = localStorage.getItem(STORAGE_KEY);
-          if (stored) {
-            const parsed: User = JSON.parse(stored);
-            setUser(parsed);
-          }
         }
       } catch (err) {
-        console.error('Error restoring session:', err);
+        console.error('Error in initAuth:', err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          if (timeoutId) clearTimeout(timeoutId);
+        }
       }
     };
 
-    restoreSession();
+    initAuth();
 
-    // Escuchar cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         loadUserProfile(session.user.id);
@@ -52,7 +64,11 @@ export function useAuth(): UseAuthResult {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadUserProfile = async (userId: string) => {
@@ -117,10 +133,14 @@ export function useAuth(): UseAuthResult {
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem(STORAGE_KEY);
-    setUser(null);
-    setError(null);
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem(STORAGE_KEY);
+      setUser(null);
+      setError(null);
+    } catch (err) {
+      console.error('Error signing out:', err);
+    }
   }, []);
 
   return { user, isLoading, error, signIn, signOut };
