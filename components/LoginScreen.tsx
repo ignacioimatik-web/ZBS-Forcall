@@ -33,7 +33,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   };
 
   const handlePinDigit = (digit: string) => {
-    if (pin.length < 4) {
+    if (pin.length < 6) {
       setPin(prev => prev + digit);
     }
   };
@@ -43,7 +43,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   };
 
   const handlePinSubmit = async () => {
-    if (pin.length !== 4) return; // Forzar 4 dígitos
+    if (pin.length !== 6) return; // Forzar 6 dígitos
     setError(null);
     setIsLoading(true);
     try {
@@ -222,7 +222,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <div>
               {/* PIN display */}
               <div className="flex justify-center gap-3 mb-6">
-                {[0, 1, 2, 3].map((i) => (
+                {[0, 1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
                     className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all ${
@@ -244,7 +244,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                   <button
                     key={d}
                     onClick={() => handlePinDigit(d)}
-                    disabled={pin.length === 4}
+                    disabled={pin.length === 6}
                     className="h-14 rounded-xl bg-gray-50 border border-gray-200 text-xl font-bold text-gray-800 hover:bg-forcall-50 hover:border-forcall-300 active:scale-95 transition-all disabled:opacity-40"
                   >
                     {d}
@@ -253,7 +253,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 <div /> {/* empty cell */}
                 <button
                   onClick={() => handlePinDigit('0')}
-                  disabled={pin.length === 4}
+                  disabled={pin.length === 6}
                   className="h-14 rounded-xl bg-gray-50 border border-gray-200 text-xl font-bold text-gray-800 hover:bg-forcall-50 hover:border-forcall-300 active:scale-95 transition-all disabled:opacity-40"
                 >
                   0
@@ -276,9 +276,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               {/* Submit */}
               <button
                 onClick={handlePinSubmit}
-                disabled={pin.length !== 4 || isLoading}
+                disabled={pin.length !== 6 || isLoading}
                 className={`w-full py-3.5 rounded-xl font-bold text-white transition-all shadow-md ${
-                  pin.length === 4 && !isLoading
+                  pin.length === 6 && !isLoading
                     ? 'bg-forcall-600 hover:bg-forcall-700 hover:shadow-lg'
                     : 'bg-gray-300 cursor-not-allowed'
                 }`}
