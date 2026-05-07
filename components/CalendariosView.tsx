@@ -24,9 +24,13 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const doctors = ["Elena Benages", "Delia Mestre", "Fran Castillo", "Fernando Sierra", "Jorge Ramón", "Ilie Popov", "Externo/a"];
   const nurses = ["Xelo García", "Yolanda Lainez", "Maite Beltrán", "Yolanda García", "Rosa Carbó", "Externo/a"];
   const planningPersonnel =
-    canManagePlanningType(props.user, 'Médica') ? doctors :
-    canManagePlanningType(props.user, 'Enfermería') ? nurses :
-    [];
+    canManagePlanningType(props.user, 'Médica') && canManagePlanningType(props.user, 'Enfermería')
+      ? [...doctors, ...nurses]
+      : canManagePlanningType(props.user, 'Médica')
+        ? doctors
+        : canManagePlanningType(props.user, 'Enfermería')
+          ? nurses
+          : [];
   const currentPersonnel =
     activeSub === 'Enfermería'
       ? nurses
