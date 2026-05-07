@@ -21,11 +21,11 @@ export function isMedicineCoordinator(user: User | null) {
 }
 
 export function isNursingCoordinator(user: User | null) {
-  return matchesAny(user, ['chelo', 'xelo', 'xelo carbo', 'xelo carbó']);
+  return matchesAny(user, ['xelo', 'xelo garcia', 'xelo garcía']);
 }
 
 export function isNursingPlanner(user: User | null) {
-  return matchesAny(user, ['chelo', 'xelo', 'xelo carbo', 'xelo carbó']);
+  return matchesAny(user, ['xelo', 'xelo garcia', 'xelo garcía']);
 }
 
 export function canManageGuardiaCategory(user: User | null, category: GuardiaCategory) {
@@ -46,11 +46,11 @@ export function canManagePlanningType(user: User | null, type: Guardia['type']) 
 export function getGuardiaPermissionMessage(type: Guardia['type']) {
   return type === 'Médica'
     ? 'Solo Elena Benages puede añadir o quitar guardias de Medicina.'
-    : 'Solo Xelo Carbó puede añadir o quitar guardias de Enfermería.';
+    : 'Solo Xelo García puede añadir o quitar guardias de Enfermería.';
 }
 
 export function getPlanningPermissionMessage(type: Guardia['type']) {
   return type === 'Médica'
     ? 'Solo Elena Benages puede gestionar libranzas y refuerzo de Medicina.'
-    : 'Solo Xelo Carbó puede gestionar libranzas y refuerzo de Enfermería.';
+    : 'Solo Xelo García puede gestionar libranzas y refuerzo de Enfermería.';
 }
