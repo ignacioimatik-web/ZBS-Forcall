@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { Meeting, User, Guardia, Libranza, Dobla, ManualHoliday, AuditLog } from '../types';
-import { exportCalendarToPDF } from '../lib/pdfExport';
+import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
+import { NotificationToast } from './NotificationToast';
 import { canManageGuardiaCategory, canManagePlanningType } from '../lib/guardiaPermissions';
 
 interface CalendariosViewProps {
@@ -106,11 +107,48 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     });
   };
 
-  const handleDownloadActiveCalendar = () => {
-    exportCalendarToPDF({
-      elementId: 'view-calendar',
-      filename: `Calendario_${activeSub}_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`
-    });
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
+
+  const handleDownloadActiveCalendar = async () => {
+    setIsDownloading(true);
+    const entries: PDFCalendarData['entries'] = [];
+    const month = currentMonth.getMonth();
+    const year = currentMonth.getFullYear();
+    if (activeSub === 'Medicina') {
+      guardias.filter(g => g.type === 'Médica').forEach(g => {
+        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type });
+      });
+    } else if (activeSub === 'Enfermería') {
+      guardias.filter(g => g.type === 'Enfermería').forEach(g => {
+        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type });
+      });
+    } else if (activeSub === 'Libranzas') {
+      libranzas.forEach(l => {
+        entries.push({ date: l.date, personnel: [l.personnelName], type: l.type });
+      });
+    } else if (activeSub === 'Refuerzo') {
+      doblas.forEach(d => {
+        entries.push({ date: d.date, personnel: [d.personnelName], type: d.type });
+      });
+    }
+    const data: PDFCalendarData = {
+      title: `Calendario ${activeSub} Forcall`,
+      subtitle: `${new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
+      month,
+      year,
+      entries,
+    };
+    const filename = `Calendario_${activeSub}_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
+    try {
+      downloadCalendarPDF(data, filename);
+      setDownloadMsg('PDF descargado correctamente');
+    } catch (e) {
+      console.error(e);
+      setDownloadMsg('Error al generar PDF');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const subNav = [
