@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -6,67 +5,191 @@ declare var html2pdf: any;
 
 export const TranscriptionTool: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [transcription, setTranscription] = useState('');
-  const [summary, setSummary] = useState('');
+  const [interimText, setInterimText] = useState('');
   const [recordingTime, setRecordingTime] = useState(0);
-  const [audioURL, setAudioURL] = useState<string | null>(null);
-  
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [summary, setSummary] = useState('');
+
+  const recognitionRef = useRef<any>(null);
   const timerRef = useRef<number | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
-  useEffect(() => { return () => { if (timerRef.current) window.clearInterval(timerRef.current); }; }, []);
+  useEffect(() => {
+    return () => { stopAll(); };
+  }, []);
 
-  const startRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorderRef.current = mediaRecorder; chunksRef.current = [];
-    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-    mediaRecorder.onstop = async () => {
-      const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-      setAudioURL(URL.createObjectURL(blob));
-      handleTranscription(blob);
-    };
-    mediaRecorder.start(); setIsRecording(true); setRecordingTime(0);
-    timerRef.current = window.setInterval(() => setRecordingTime(p => p + 1), 1000);
+  const stopAll = () => {
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    try { recognitionRef.current?.stop(); } catch {}
+    recognitionRef.current = null;
+    try { mediaRecorderRef.current?.stop(); } catch {}
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
   };
 
-  const handleTranscription = async (blob: Blob) => {
-    setIsTranscribing(true);
+  const startRecording = async () => {
+    setErrorMessage(null);
+    setInterimText('');
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setErrorMessage('Tu navegador no soporta dictado por voz. Usa Chrome, Edge o Safari.');
+      return;
+    }
+
+    // Solicitamos permiso de micrófono por MediaRecorder como respaldo, pero no bloqueamos
+    // el dictado si no está disponible (por ejemplo, sin micrófono físico en el equipo).
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        const base64 = (reader.result as string).split(',')[1];
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const res = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: [{ parts: [{ inlineData: { mimeType: "audio/webm", data: base64 } }, { text: "Transcribe el audio clínico a texto estructurado en español." }] }]
-        });
-        setTranscription(res.text || '');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      let mediaRecorder: MediaRecorder | null = null;
+      try {
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        chunksRef.current = [];
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+        mediaRecorder.onstop = () => {
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach((t) => t.stop());
+            streamRef.current = null;
+          }
+        };
+        mediaRecorder?.start();
+      } catch {
+        // MediaRecorder no es crítico
+      }
+    } catch {
+      // Si getUserMedia falla seguimos solo con SpeechRecognition
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'es-ES';
+
+      recognition.onresult = (event: any) => {
+        let interim = '';
+        let final = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript: string = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            final += transcript + ' ';
+          } else {
+            interim += transcript;
+          }
+        }
+        if (final) {
+          setTranscription((prev) => prev + final);
+        }
+        setInterimText(interim);
       };
-    } finally { setIsTranscribing(false); }
+
+      recognition.onerror = (event: any) => {
+        if (event.error === 'not-allowed') {
+          setErrorMessage('Permiso de micrófono denegado. Permíte el acceso en la configuración del navegador.');
+        } else if (event.error === 'no-speech') {
+          setErrorMessage('No se detectó voz. Acércate al micrófono y habla claramente.');
+        } else if (event.error === 'audio-capture') {
+          setErrorMessage('No se encontró micrófono. Conecta uno e inténtalo de nuevo.');
+        } else if (event.error === 'network') {
+          setErrorMessage('Error de red en el servicio de dictado. Revisa tu conexión a internet.');
+        } else {
+          setErrorMessage(`Error de dictado: ${event.error}`);
+        }
+        setIsRecording(false);
+        if (timerRef.current) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        try { mediaRecorderRef.current?.stop(); } catch {}
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+        setInterimText('');
+        if (timerRef.current) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        try { mediaRecorderRef.current?.stop(); } catch {}
+      };
+
+      recognition.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      timerRef.current = window.setInterval(() => setRecordingTime((p) => p + 1), 1000);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage('No se pudo iniciar la grabación. Asegurate de tener un micrófono disponible.');
+    }
+  };
+
+  const stopRecording = () => {
+    try { recognitionRef.current?.stop(); } catch {}
+    try { mediaRecorderRef.current?.stop(); } catch {}
   };
 
   const handleSummarize = async () => {
     if (!transcription || isSummarizing) return;
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === 'undefined') {
+      setErrorMessage('Falta la clave de API de Gemini (GEMINI_API_KEY). No se puede generar el resumen.');
+      return;
+    }
     setIsSummarizing(true);
+    setErrorMessage(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const res = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Genera un resumen clínico ejecutivo estructurado (puntos clave, diagnóstico diferencial, plan actuación) de esta transcripción: "${transcription}"`
+        model: 'gemini-2.0-flash-exp',
+        contents: `Genera un resumen clínico ejecutivo estructurado (puntos clave, diagnóstico diferencial, plan actuación) de esta transcripción: "${transcription}"`,
       });
       setSummary(res.text || '');
-    } catch (e) { console.error(e); } finally { setIsSummarizing(false); }
+    } catch (e) {
+      console.error(e);
+      setErrorMessage('Error al generar el resumen IA. Inténtalo de nuevo.');
+    } finally {
+      setIsSummarizing(false);
+    }
   };
 
   const savePDF = (id: string, name: string) => {
     const element = document.getElementById(id);
     if (!element) return;
-    html2pdf().set({ margin: 10, filename: `${name}.pdf`, html2canvas: { scale: 2 }, jsPDF: { orientation: 'portrait' } }).from(element).save();
+
+    const clone = element.cloneNode(true) as HTMLElement;
+    const textareas = clone.querySelectorAll('textarea');
+    textareas.forEach((ta) => {
+      const div = document.createElement('div');
+      div.style.whiteSpace = 'pre-wrap';
+      div.style.fontFamily = 'Inter, sans-serif';
+      div.style.fontSize = '14px';
+      div.style.lineHeight = '1.6';
+      div.style.color = '#1f2937';
+      div.textContent = (ta as HTMLTextAreaElement).value;
+      ta.parentNode?.replaceChild(div, ta);
+    });
+
+    const opt = {
+      margin: 10,
+      filename: `${name}.pdf`,
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait' as const },
+    };
+
+    html2pdf().set(opt).from(clone).save();
   };
 
   const sendEmail = (txt: string) => {
@@ -75,16 +198,35 @@ export const TranscriptionTool: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-300 text-red-800 rounded-2xl p-4 text-sm font-semibold flex items-center gap-2 animate-slide-in-up">
+          <span className="material-symbols-outlined">error</span>
+          <span className="flex-1">{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="text-red-800 hover:text-red-900">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      )}
+
       <div className="bg-emerald-800 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 no-print">
         <div>
-          <h2 className="text-2xl font-black flex items-center gap-2"><span className="material-symbols-outlined text-3xl">mic</span> Dictado Inteligente</h2>
-          <p className="text-xs opacity-70 font-bold uppercase tracking-widest mt-1">IA Generativa ZBS Forcall</p>
+          <h2 className="text-2xl font-black flex items-center gap-2">
+            <span className="material-symbols-outlined text-3xl">mic</span> Dictado Inteligente
+          </h2>
+          <p className="text-xs opacity-70 font-bold uppercase tracking-widest mt-1">Transcripción por voz en tiempo real</p>
         </div>
         <div className="flex flex-col items-center">
-          <button onClick={isRecording ? () => mediaRecorderRef.current?.stop() : startRecording} className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-white text-emerald-800 hover:scale-110'}`}>
+          <button
+            onClick={isRecording ? stopRecording : startRecording}
+            className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all ${
+              isRecording ? 'bg-red-500 animate-pulse' : 'bg-white text-emerald-800 hover:scale-110'
+            }`}
+          >
             <span className="material-symbols-outlined text-3xl">{isRecording ? 'stop' : 'mic'}</span>
           </button>
-          <span className="text-xs font-mono mt-2 font-black">{Math.floor(recordingTime/60)}:{(recordingTime%60).toString().padStart(2,'0')}</span>
+          <span className="text-xs font-mono mt-2 font-black">
+            {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+          </span>
         </div>
       </div>
 
@@ -94,13 +236,32 @@ export const TranscriptionTool: React.FC = () => {
           <div className="p-4 bg-gray-50 border-b flex justify-between items-center no-print">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Transcripción Original</span>
             <div className="flex gap-2">
-              {transcription && <button onClick={handleSummarize} className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase flex items-center gap-1 active:scale-95"><span className="material-symbols-outlined text-sm">auto_awesome</span> RESUMIR IA</button>}
-              <button onClick={() => savePDF('trans-area', 'transcripcion')} className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-black uppercase">GUARDAR PDF</button>
+              {transcription && (
+                <button
+                  onClick={handleSummarize}
+                  className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase flex items-center gap-1 active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-sm">auto_awesome</span> RESUMIR IA
+                </button>
+              )}
+              <button
+                onClick={() => savePDF('trans-area', 'transcripcion')}
+                className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-black uppercase"
+              >
+                GUARDAR PDF
+              </button>
             </div>
           </div>
           <div id="trans-area" className="p-6 flex-1 overflow-y-auto">
-            {isTranscribing ? <div className="h-full flex flex-col items-center justify-center text-gray-300 gap-2"><span className="material-symbols-outlined animate-spin text-4xl">sync</span><p className="text-[10px] font-black uppercase">IA Procesando audio...</p></div> : 
-             <textarea value={transcription} onChange={(e) => setTranscription(e.target.value)} className="w-full h-full resize-none border-none focus:ring-0 text-sm font-medium leading-relaxed text-gray-800" placeholder="El texto aparecerá aquí..." />}
+            <textarea
+              value={transcription + interimText}
+              onChange={(e) => {
+                setTranscription(e.target.value);
+                setInterimText('');
+              }}
+              className="w-full h-full resize-none border-none focus:ring-0 text-sm font-medium leading-relaxed text-gray-800"
+              placeholder="Pulsa el micrófono y empieza a hablar..."
+            />
           </div>
         </div>
 
@@ -108,16 +269,39 @@ export const TranscriptionTool: React.FC = () => {
         {(summary || isSummarizing) && (
           <div className="bg-indigo-50/30 rounded-3xl shadow-lg border border-indigo-100 flex flex-col animate-slide-in-up">
             <div className="p-4 bg-indigo-100/30 border-b border-indigo-100 flex justify-between items-center no-print">
-              <span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">Resumen Ejecutivo Estructurado (IA)</span>
+              <span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">
+                Resumen Ejecutivo Estructurado (IA)
+              </span>
               <div className="flex gap-2">
-                <button onClick={() => navigator.clipboard.writeText(summary)} className="p-2 bg-white text-indigo-600 rounded-lg border border-indigo-100"><span className="material-symbols-outlined text-sm">content_copy</span></button>
-                <button onClick={() => sendEmail(summary)} className="p-2 bg-white text-indigo-600 rounded-lg border border-indigo-100"><span className="material-symbols-outlined text-sm">mail</span></button>
-                <button onClick={() => savePDF('sum-area', 'resumen_clínico')} className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase shadow-md">PDF RESUMEN</button>
+                <button
+                  onClick={() => navigator.clipboard.writeText(summary)}
+                  className="p-2 bg-white text-indigo-600 rounded-lg border border-indigo-100"
+                >
+                  <span className="material-symbols-outlined text-sm">content_copy</span>
+                </button>
+                <button
+                  onClick={() => sendEmail(summary)}
+                  className="p-2 bg-white text-indigo-600 rounded-lg border border-indigo-100"
+                >
+                  <span className="material-symbols-outlined text-sm">mail</span>
+                </button>
+                <button
+                  onClick={() => savePDF('sum-area', 'resumen_clínico')}
+                  className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase shadow-md"
+                >
+                  PDF RESUMEN
+                </button>
               </div>
             </div>
             <div id="sum-area" className="p-6">
-               {isSummarizing ? <div className="flex flex-col items-center py-12 text-indigo-400 gap-2"><span className="material-symbols-outlined animate-bounce text-4xl">psychology</span><p className="text-[10px] font-black uppercase tracking-widest">IA Analizando transcripción...</p></div> : 
-                <div className="prose prose-sm font-medium text-gray-800 whitespace-pre-wrap">{summary}</div>}
+              {isSummarizing ? (
+                <div className="flex flex-col items-center py-12 text-indigo-400 gap-2">
+                  <span className="material-symbols-outlined animate-bounce text-4xl">psychology</span>
+                  <p className="text-[10px] font-black uppercase tracking-widest">IA Analizando transcripción...</p>
+                </div>
+              ) : (
+                <div className="prose prose-sm font-medium text-gray-800 whitespace-pre-wrap">{summary}</div>
+              )}
             </div>
           </div>
         )}

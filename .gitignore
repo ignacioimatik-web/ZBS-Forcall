@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env
+.env*.local
+
+# Test screenshots and temp files
+*.png
+screenshot-*
+test-*.cjs
+prueba-*.png
