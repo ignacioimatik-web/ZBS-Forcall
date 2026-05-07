@@ -22,7 +22,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const [swapMode, setSwapMode] = useState(false);
 
   const doctors = ["Dra. Elena Benages", "Dra. Delia Mestre", "Dr. Fernando Sierra", "Dr. Jorge Ramón", "Dr. Frank Castillo", "Dr. Ilie Popov", "Dr. Martínez"];
-  const nurses = ["Xelo Carbó", "Rosa Carbó", "Maite", "Enf. Sara", "Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
+  const nurses = ["Xelo García", "Rosa Carbó", "Maite", "Enf. Sara", "Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
   const planningPersonnel =
     canManagePlanningType(props.user, 'Médica') ? doctors :
     canManagePlanningType(props.user, 'Enfermería') ? nurses :
@@ -184,7 +184,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             )}
             {!canManageActiveCategory && isPlanningCategory && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Xelo Carbó puede gestionar Enfermería.
+                En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Xelo García puede gestionar Enfermería.
               </div>
             )}
             {bulkPersonnel && (
