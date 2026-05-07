@@ -157,8 +157,8 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     };
     if (activeCategory === 'Medicina') onAddGuardia({ ...common, type: 'Médica' } as any);
     else if (activeCategory === 'Enfermería') onAddGuardia({ ...common, type: 'Enfermería' } as any);
-    else if (activeCategory === 'Libranzas') onAddLibranza({ ...common, id: 'lib-' + common.id } as any);
-    else if (activeCategory === 'Refuerzo') onAddDobla({ ...common, id: 'dob-' + common.id } as any);
+    else if (activeCategory === 'Libranzas') onAddLibranza({ ...common, id: 'lib-' + common.id, type: planningType } as any);
+    else if (activeCategory === 'Refuerzo') onAddDobla({ ...common, id: 'dob-' + common.id, type: planningType } as any);
     setIsModalOpen(false);
   };
 
