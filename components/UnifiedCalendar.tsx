@@ -45,10 +45,13 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [firstSwapTarget, setFirstSwapTarget] = useState<any | null>(null);
 
   const isGuardiaCategory = activeCategory === 'Medicina' || activeCategory === 'Enfermería';
-  const planningType = availablePersonnel.some((person) => person.includes('Dra.') || person.includes('Dr.')) ? 'Médica' : 'Enfermería';
+  const isPlanningCategory = activeCategory === 'Libranzas' || activeCategory === 'Refuerzo';
+  const planningType = activeCategory === 'Libranzas' || activeCategory === 'Refuerzo'
+    ? (availablePersonnel.some((person) => person.includes('Elena') || person.includes('Delia') || person.includes('Fran') || person.includes('Fernando') || person.includes('Jorge') || person.includes('Ilie')) ? 'Médica' : 'Enfermería')
+    : 'Médica';
   const canManageActiveCategory = !isReadOnly && isGuardiaCategory
     ? canManageGuardiaCategory(currentUser, activeCategory)
-    : !isReadOnly && (activeCategory === 'Libranzas' || activeCategory === 'Refuerzo')
+    : !isReadOnly && isPlanningCategory
       ? canManagePlanningType(currentUser, planningType)
       : false;
   const canSwapInActiveCategory = !isReadOnly && isGuardiaCategory && !!currentUser;
