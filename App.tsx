@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { UnifiedCalendar } from './components/UnifiedCalendar';
@@ -16,8 +16,31 @@ import { useDoblas } from './hooks/useDoblas';
 import { useMeetings } from './hooks/useMeetings';
 import { canManageGuardiaType, getGuardiaPermissionMessage } from './lib/guardiaPermissions';
 
+const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
+  const [dots, setDots] = useState('.');
+  useEffect(() => {
+    const interval = setInterval(() => setDots(prev => prev.length >= 3 ? '.' : prev + '.'), 500);
+    const timeout = setTimeout(() => {
+      console.warn('AppLoader timeout: forcing login screen');
+      onTimeout();
+    }, 5000);
+    return () => { clearInterval(interval); clearTimeout(timeout); };
+  }, [onTimeout]);
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-forcall-600"></div>
+        <p className="mt-4 text-gray-600">Cargando{dots}</p>
+        <p className="mt-2 text-xs text-gray-400">Si tarda más de 5s, se mostrará el login</p>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
+  const [forceShowLogin, setForceShowLogin] = useState(false);
   const { guardias, addGuardia, updateGuardia, deleteGuardia, isLoading: guardiasLoading } = useGuardias();
   const { libranzas, addLibranza, updateLibranza, deleteLibranza, isLoading: libranzasLoading } = useLibranzas();
   const { doblas, addDobla, updateDobla, deleteDobla, isLoading: doblasLoading } = useDoblas();
@@ -166,19 +189,14 @@ const App: React.FC = () => {
     }
   };
 
-  if (authLoading) {
+  if (authLoading && !forceShowLogin) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-forcall-600"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
-        </div>
-      </div>
+      <AppLoader onTimeout={() => setForceShowLogin(true)} />
     );
   }
 
-  if (!user) {
-    return <LoginScreen onLoginSuccess={() => {}} />;
+  if (!user || forceShowLogin) {
+    return <LoginScreen onLoginSuccess={() => setForceShowLogin(false)} />;
   }
 
   return (
