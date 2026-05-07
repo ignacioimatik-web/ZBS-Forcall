@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Meeting, MeetingType, Guardia, User, Libranza, Dobla } from '../types';
 import { getHolidayName } from '../utils';
-import { canManageGuardiaCategory, canManageGuardiaType } from '../lib/guardiaPermissions';
+import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType } from '../lib/guardiaPermissions';
 
 declare var html2pdf: any;
 
@@ -45,9 +45,12 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [firstSwapTarget, setFirstSwapTarget] = useState<any | null>(null);
 
   const isGuardiaCategory = activeCategory === 'Medicina' || activeCategory === 'Enfermería';
+  const planningType = availablePersonnel.some((person) => person.includes('Dra.') || person.includes('Dr.')) ? 'Médica' : 'Enfermería';
   const canManageActiveCategory = !isReadOnly && isGuardiaCategory
     ? canManageGuardiaCategory(currentUser, activeCategory)
-    : false;
+    : !isReadOnly && (activeCategory === 'Libranzas' || activeCategory === 'Refuerzo')
+      ? canManagePlanningType(currentUser, planningType)
+      : false;
   const canSwapInActiveCategory = !isReadOnly && isGuardiaCategory && !!currentUser;
 
   const daysInMonth = useMemo(() => {
@@ -225,7 +228,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                 {events.map((ev: any, idx) => (
                   <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-4 py-3 md:px-3 md:py-2 rounded-2xl text-[14px] md:text-[11px] font-black border leading-tight transition-all relative flex items-center justify-between shadow-sm ${getEventStyle(ev)} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
                     <span className="whitespace-normal break-words pr-2">{ev.personnelName || ev.title}</span>
-                    {canManageGuardiaType(currentUser, ev.type) && !bulkMode && !swapMode && (
+                    {((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type))) && !bulkMode && !swapMode && (
                       <button onClick={(e) => { 
                         e.stopPropagation(); 
                         if (ev._kind === 'libranza') onDeleteLibranza(ev.id); 

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { Meeting, User, Guardia, Libranza, Dobla, ManualHoliday, AuditLog } from '../types';
 import { exportCalendarToPDF } from '../lib/pdfExport';
-import { canManageGuardiaCategory } from '../lib/guardiaPermissions';
+import { canManageGuardiaCategory, canManagePlanningType } from '../lib/guardiaPermissions';
 
 interface CalendariosViewProps {
   meetings: Meeting[]; guardias: Guardia[]; libranzas: Libranza[]; doblas: Dobla[]; manualHolidays: ManualHoliday[];
@@ -22,17 +22,28 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const [swapMode, setSwapMode] = useState(false);
 
   const doctors = ["Dra. Elena Benages", "Dra. Delia Mestre", "Dr. Fernando Sierra", "Dr. Jorge Ramón", "Dr. Frank Castillo", "Dr. Ilie Popov", "Dr. Martínez"];
-  const nurses = ["Xelo Carbó", "Rosa", "Maite", "Enf. Sara", "Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
+  const nurses = ["Xelo Carbó", "Rosa Carbó", "Maite", "Enf. Sara", "Enf. María Pilar", "Enf. Jose Vicente", "Enf. Silvia Mir", "Enf. Carlos Giner"];
+  const planningPersonnel =
+    canManagePlanningType(props.user, 'Médica') ? doctors :
+    canManagePlanningType(props.user, 'Enfermería') ? nurses :
+    [];
   const currentPersonnel =
     activeSub === 'Enfermería'
       ? nurses
       : activeSub === 'Medicina'
         ? doctors
         : activeSub === 'Refuerzo'
-          ? doctors
-          : [...doctors, ...nurses];
+          ? planningPersonnel
+          : activeSub === 'Libranzas'
+            ? planningPersonnel
+            : [...doctors, ...nurses];
   const isGuardiaCategory = activeSub === 'Medicina' || activeSub === 'Enfermería';
-  const canManageActiveCategory = isGuardiaCategory ? canManageGuardiaCategory(props.user, activeSub) : false;
+  const isPlanningCategory = activeSub === 'Libranzas' || activeSub === 'Refuerzo';
+  const canManageActiveCategory = isGuardiaCategory
+    ? canManageGuardiaCategory(props.user, activeSub)
+    : isPlanningCategory
+      ? planningPersonnel.length > 0
+      : false;
 
   useEffect(() => {
     const initLog: AuditLog = { 
@@ -169,6 +180,11 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             {!canManageActiveCategory && isGuardiaCategory && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
                 Solo la coordinación de la categoría puede añadir o quitar guardias. El resto del equipo solo puede hacer permutas.
+              </div>
+            )}
+            {!canManageActiveCategory && isPlanningCategory && (
+              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
+                En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Rosa Carbó puede gestionar Enfermería.
               </div>
             )}
             {bulkPersonnel && (
