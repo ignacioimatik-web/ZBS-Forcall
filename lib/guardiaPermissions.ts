@@ -25,7 +25,7 @@ export function isNursingCoordinator(user: User | null) {
 }
 
 export function isNursingPlanner(user: User | null) {
-  return matchesAny(user, ['rosa', 'rosa carbo', 'rosa carbó']);
+  return matchesAny(user, ['chelo', 'xelo', 'xelo carbo', 'xelo carbó']);
 }
 
 export function canManageGuardiaCategory(user: User | null, category: GuardiaCategory) {
@@ -52,5 +52,5 @@ export function getGuardiaPermissionMessage(type: Guardia['type']) {
 export function getPlanningPermissionMessage(type: Guardia['type']) {
   return type === 'Médica'
     ? 'Solo Elena Benages puede gestionar libranzas y refuerzo de Medicina.'
-    : 'Solo Rosa Carbó puede gestionar libranzas y refuerzo de Enfermería.';
+    : 'Solo Xelo Carbó puede gestionar libranzas y refuerzo de Enfermería.';
 }

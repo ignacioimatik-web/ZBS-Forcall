@@ -184,7 +184,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             )}
             {!canManageActiveCategory && isPlanningCategory && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Rosa Carbó puede gestionar Enfermería.
+                En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Xelo Carbó puede gestionar Enfermería.
               </div>
             )}
             {bulkPersonnel && (
