@@ -19,65 +19,91 @@ export function useAuth(): UseAuthResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProfile = useCallback(async (userId: string, email: string) => {
-    try {
-      const { data, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+  const fetchProfile = useCallback(async (userId: string, email: string, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        console.log(`Intentando obtener perfil para ${userId} (intento ${i + 1})...`);
+        const { data, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
 
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        return null;
+        if (!profileError && data) {
+          const profile = data as Profile;
+          return {
+            id: profile.id,
+            name: profile.full_name,
+            email: profile.email,
+            phone: profile.phone || undefined,
+            role: appRoleToUserRole(profile.role),
+            is2FAEnabled: false,
+          };
+        }
+
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is 'no rows'
+          console.error('Error al obtener perfil:', profileError);
+        } else {
+          console.warn('Perfil no encontrado aún, reintentando...');
+        }
+      } catch (err) {
+        console.error('Error inesperado al obtener perfil:', err);
       }
-
-      const profile = data as Profile;
-      const appUser: User = {
-        id: profile.id,
-        name: profile.full_name,
-        email: profile.email,
-        phone: profile.phone || undefined,
-        role: appRoleToUserRole(profile.role),
-        is2FAEnabled: false, // MFA se gestiona en Supabase si es necesario
-      };
       
-      return appUser;
-    } catch (err) {
-      console.error('Unexpected error fetching profile:', err);
-      return null;
+      // Esperar un poco antes de reintentar (aumentar con cada intento)
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+      }
     }
+    return null;
   }, []);
 
   useEffect(() => {
-    // 1. Verificar sesión inicial
+    let isMounted = true;
+
     const initAuth = async () => {
+      console.log('Iniciando verificación de autenticación...');
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
+
         if (session?.user) {
+          console.log('Sesión encontrada, obteniendo perfil...');
           const appUser = await fetchProfile(session.user.id, session.user.email || '');
-          setUser(appUser);
+          if (isMounted) {
+            setUser(appUser);
+            if (!appUser) console.warn('No se pudo obtener el perfil para el usuario autenticado');
+          }
+        } else {
+          console.log('No hay sesión activa');
         }
       } catch (err) {
-        console.error('Error initializing auth:', err);
+        console.error('Error durante initAuth:', err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          console.log('Finalizada carga de autenticación');
+          setIsLoading(false);
+        }
       }
     };
 
     initAuth();
 
-    // 2. Escuchar cambios en la autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Cambio de estado Auth:', event);
       if (event === 'SIGNED_IN' && session?.user) {
         const appUser = await fetchProfile(session.user.id, session.user.email || '');
-        setUser(appUser);
+        if (isMounted) setUser(appUser);
       } else if (event === 'SIGNED_OUT') {
-        setUser(null);
+        if (isMounted) setUser(null);
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        // Opcional: refrescar perfil si es necesario
       }
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
