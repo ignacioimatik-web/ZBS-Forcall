@@ -191,3 +191,4 @@ Para dudas o issues, contacta con el equipo de desarrollo o abre un issue en el 
 ## Licencia
 
 Este proyecto es de uso interno para la **Zona Básica de Salud de Forcall**. Todos los derechos reservados.
+// Force redeploy Thu May  7 21:25:14 CEST 2026
