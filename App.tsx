@@ -1,5 +1,3 @@
-// Simplified App component without forceShowLogin and timeout handling
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
@@ -41,7 +39,8 @@ const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
 
 const App: React.FC = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
-  const [showLogin, setShowLogin] = useState(false);
+  const [forceShowLogin, setForceShowLogin] = useState(false);
+
   const { guardias, addGuardia, updateGuardia, deleteGuardia, isLoading: guardiasLoading } = useGuardias();
   const { libranzas, addLibranza, updateLibranza, deleteLibranza, isLoading: libranzasLoading } = useLibranzas();
   const { doblas, addDobla, updateDobla, deleteDobla, isLoading: doblasLoading } = useDoblas();
@@ -189,30 +188,30 @@ const App: React.FC = () => {
     }
   };
 
-// Show loader while authentication is initializing
-if (authLoading) {
-  return <AppLoader onTimeout={() => {/* no action needed */}} />;
-}
+  // Show loading spinner while auth initializes
+  if (authLoading && !forceShowLogin) {
+    return <AppLoader onTimeout={() => setForceShowLogin(true)} />;
+  }
 
-// If no user is authenticated, show the login screen
-if (!user) {
-  return <LoginScreen onLoginSuccess={() => {/* no additional state to reset */}} />;
-}
+  // Show login screen if not authenticated
+  if (!user || forceShowLogin) {
+    return <LoginScreen onLoginSuccess={() => setForceShowLogin(false)} />;
+  }
 
-return (
-  <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in">
-    <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} />
-    {isDataLoading && (
-      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">
-        <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
-      </div>
-    )}
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {renderContent()}
-    </main>
-    {notification && <NotificationToast message={notification} onClose={() => setNotification(null)} />}
-  </div>
-);
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in">
+      <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} />
+      {isDataLoading && (
+        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">
+          <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
+        </div>
+      )}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {renderContent()}
+      </main>
+      {notification && <NotificationToast message={notification} onClose={() => setNotification(null)} />}
+    </div>
+  );
 };
 
 export default App;
