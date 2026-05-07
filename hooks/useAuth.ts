@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { User } from '../types';
-import { appRoleToUserRole } from '../types';
+import type { User, Profile } from '../types';
+import { appRoleToUserRole, userRoleToAppRole } from '../types';
+import { USERS } from '../lib/users';
 
 const STORAGE_KEY = 'zbs_forcall_user';
 
@@ -18,15 +19,54 @@ export function useAuth(): UseAuthResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Restaurar sesión desde Supabase al cargar
+  const fetchProfile = useCallback(async (userId: string, email: string, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        console.log(`Intentando obtener perfil para ${userId} (intento ${i + 1})...`);
+        const { data, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (!profileError && data) {
+          const profile = data as Profile;
+          return {
+            id: profile.id,
+            name: profile.full_name,
+            email: profile.email,
+            phone: profile.phone || undefined,
+            role: appRoleToUserRole(profile.role),
+            is2FAEnabled: false,
+          };
+        }
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Error al obtener perfil:', profileError);
+        } else {
+          console.warn('Perfil no encontrado aún, reintentando...');
+        }
+      } catch (err) {
+        console.error('Error inesperado al obtener perfil:', err);
+      }
+      
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+      }
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     let timeoutId: any = null;
 
     const initAuth = async () => {
-      // Timeout de seguridad: 5s para no quedarse pillado
+      console.log('--- Auth Init Started ---');
+      
       timeoutId = setTimeout(() => {
         if (isMounted && isLoading) {
+          console.warn('Auth init timeout reached, forcing loading state to false');
           setIsLoading(false);
         }
       }, 5000);
@@ -36,17 +76,24 @@ export function useAuth(): UseAuthResult {
         
         if (sessionError) {
           console.error('Session error:', sessionError);
-          if (isMounted) setIsLoading(false);
+          setIsLoading(false);
           return;
         }
 
         if (session?.user) {
-          await loadUserProfile(session.user.id);
+          console.log('Session found for user:', session.user.id);
+          const appUser = await fetchProfile(session.user.id, session.user.email || '');
+          if (isMounted) {
+            setUser(appUser);
+          }
+        } else {
+          console.log('No active session found');
         }
       } catch (err) {
-        console.error('Error in initAuth:', err);
+        console.error('Critical error in initAuth:', err);
       } finally {
         if (isMounted) {
+          console.log('Auth Init Finished');
           setIsLoading(false);
           if (timeoutId) clearTimeout(timeoutId);
         }
@@ -55,12 +102,19 @@ export function useAuth(): UseAuthResult {
 
     initAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        loadUserProfile(session.user.id);
-      } else {
-        setUser(null);
-        localStorage.removeItem(STORAGE_KEY);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth State Change Event:', event);
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && session?.user) {
+        const appUser = await fetchProfile(session.user.id, session.user.email || '');
+        if (isMounted) {
+          setUser(appUser);
+          setIsLoading(false);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        if (isMounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
       }
     });
 
@@ -69,64 +123,63 @@ export function useAuth(): UseAuthResult {
       if (timeoutId) clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchProfile]);
 
-  const loadUserProfile = async (userId: string) => {
-    try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (profileError || !profile) {
-        console.error('Error loading profile:', profileError);
-        setUser(null);
-        return;
-      }
-
-      const appUser: User = {
-        id: profile.id,
-        name: profile.full_name,
-        email: profile.email,
-        role: appRoleToUserRole(profile.role),
-        is2FAEnabled: false,
-      };
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appUser));
-      setUser(appUser);
-    } catch (err) {
-      console.error('Error loading user profile:', err);
-      setUser(null);
-    }
-  };
+  const transformPin = (pin: string) => `pin${pin}#`;
 
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
+    const supabasePassword = transformPin(password);
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password: supabasePassword,
       });
 
-      if (authError) {
-        const msg = authError.message === 'Invalid login credentials'
-          ? 'Email o contraseña incorrectos.'
-          : authError.message;
-        setError(msg);
-        return { success: false, error: msg };
+      if (signInError) {
+        if (signInError.message === 'Invalid login credentials') {
+          const localUser = USERS.find(u => u.email === email);
+          
+          if (localUser && localUser.pin === password) {
+            console.log('Auto-registrando usuario en Supabase...');
+            const { error: signUpError } = await supabase.auth.signUp({
+              email,
+              password: supabasePassword,
+              options: {
+                data: {
+                  full_name: localUser.name,
+                  role: userRoleToAppRole(localUser.role, localUser.category === 'Enfermería')
+                }
+              }
+            });
+
+            if (signUpError) {
+              setError(signUpError.message);
+              return { success: false, error: signUpError.message };
+            }
+
+            console.log('Registro OK, iniciando sesión automáticamente...');
+            const { error: secondSignInError } = await supabase.auth.signInWithPassword({
+              email,
+              password: supabasePassword,
+            });
+
+            if (secondSignInError) {
+              setError(secondSignInError.message);
+              return { success: false, error: secondSignInError.message };
+            }
+
+            return { success: true, message: 'Cuenta creada e iniciada sesión' };
+          }
+        }
+
+        setError(signInError.message);
+        return { success: false, error: signInError.message };
       }
 
-      if (data.user) {
-        await loadUserProfile(data.user.id);
-        return { success: true };
-      }
-
-      const msg = 'No se pudo iniciar sesión.';
-      setError(msg);
-      return { success: false, error: msg };
+      return { success: true };
     } catch (err: any) {
-      const msg = err?.message || 'Error al iniciar sesión.';
+      const msg = err.message || 'Error al iniciar sesión';
       setError(msg);
       return { success: false, error: msg };
     }
@@ -135,7 +188,6 @@ export function useAuth(): UseAuthResult {
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
-      localStorage.removeItem(STORAGE_KEY);
       setUser(null);
       setError(null);
     } catch (err) {

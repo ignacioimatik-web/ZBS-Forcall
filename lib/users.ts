@@ -3,6 +3,7 @@ import type { UserRole } from '../types';
 export interface LocalUser {
   id: string;
   name: string;
+  email: string;
   role: UserRole;
   category: 'Medicina' | 'Enfermería' | 'Administrativos';
   pin: string;
@@ -10,11 +11,11 @@ export interface LocalUser {
 
 export const USERS: LocalUser[] = [
   // Enfermería
-  { id: 'xelo', name: 'Xelo García', role: 'Coordinador', category: 'Enfermería', pin: '666666' },
-  { id: 'yolanda_lainez', name: 'Yolanda Lainez', role: 'Enfermera', category: 'Enfermería', pin: '111111' },
-  { id: 'maite', name: 'Maite Beltrán', role: 'Enfermera', category: 'Enfermería', pin: '222222' },
-  { id: 'yolanda_garcia', name: 'Yolanda García', role: 'Enfermera', category: 'Enfermería', pin: '333333' },
-  { id: 'rosa', name: 'Rosa Carbó', role: 'Enfermera', category: 'Enfermería', pin: '444444' },
+  { id: 'xelo', name: 'Xelo García', email: 'xelo.zbsforcall@gmail.com', role: 'Coordinador', category: 'Enfermería', pin: '666666' },
+  { id: 'yolanda_lainez', name: 'Yolanda Lainez', email: 'yolanda_lainez.zbsforcall@gmail.com', role: 'Enfermera', category: 'Enfermería', pin: '111111' },
+  { id: 'maite', name: 'Maite Beltrán', email: 'maite.zbsforcall@gmail.com', role: 'Enfermera', category: 'Enfermería', pin: '222222' },
+  { id: 'yolanda_garcia', name: 'Yolanda García', email: 'yolanda_garcia.zbsforcall@gmail.com', role: 'Enfermera', category: 'Enfermería', pin: '333333' },
+  { id: 'rosa', name: 'Rosa Carbó', email: 'rosa.zbsforcall@gmail.com', role: 'Enfermera', category: 'Enfermería', pin: '444444' },
 ];
 
 export const CATEGORIES: Array<{ id: string; label: string; icon: string }> = [
