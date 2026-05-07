@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Profile } from '../types';
-import { appRoleToUserRole } from '../types';
+import { appRoleToUserRole, userRoleToAppRole } from '../types';
+import { USERS } from '../lib/users';
 
 const STORAGE_KEY = 'zbs_forcall_user';
 
@@ -84,12 +85,40 @@ export function useAuth(): UseAuthResult {
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // 1. Intentar inicio de sesión normal
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (signInError) {
+        // 2. Si falla por credenciales inválidas, comprobar si el usuario debe ser auto-registrado
+        // Esto permite que el primer login "cree" la cuenta en Supabase si el PIN coincide con lib/users.ts
+        if (signInError.message === 'Invalid login credentials') {
+          const localUser = USERS.find(u => u.email === email);
+          
+          if (localUser && localUser.pin === password) {
+            console.log('Auto-registrando usuario en Supabase...');
+            const { error: signUpError } = await supabase.auth.signUp({
+              email,
+              password,
+              options: {
+                data: {
+                  full_name: localUser.name,
+                  role: userRoleToAppRole(localUser.role, localUser.category === 'Enfermería')
+                }
+              }
+            });
+
+            if (signUpError) {
+              setError(signUpError.message);
+              return { success: false, error: signUpError.message };
+            }
+
+            return { success: true, message: 'Cuenta creada e iniciada sesión' };
+          }
+        }
+
         setError(signInError.message);
         return { success: false, error: signInError.message };
       }
