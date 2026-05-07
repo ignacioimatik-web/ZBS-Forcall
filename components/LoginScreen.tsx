@@ -225,7 +225,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 {[0, 1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
-                    className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all ${
+                    className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center transition-all ${
                       i < pin.length
                         ? 'border-forcall-500 bg-forcall-50'
                         : 'border-gray-200 bg-gray-50'

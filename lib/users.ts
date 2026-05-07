@@ -3,31 +3,22 @@ import type { UserRole } from '../types';
 export interface LocalUser {
   id: string;
   name: string;
-  email: string;
   role: UserRole;
   category: 'Medicina' | 'Enfermería' | 'Administrativos';
   pin: string;
 }
 
 export const USERS: LocalUser[] = [
-  // Medicina
-  { id: 'elena', name: 'Elena Benages', email: 'elena.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '663880' },
-  { id: 'fernando', name: 'Fernando Sierra', email: 'fernando.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '111111' },
-  { id: 'frank', name: 'Frank Castillo', email: 'frank.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '222222' },
-  { id: 'jorge', name: 'Jorge', email: 'jorge.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '333333' },
-  { id: 'ilie', name: 'Ilie Popov', email: 'ilie.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '555555' },
   // Enfermería
-  { id: 'chelo', name: 'Xelo Carbó', email: 'chelo.zbsforcall@gmail.com', role: 'Enfermera', category: 'Enfermería', pin: '666666' },
-  { id: 'rosa', name: 'Rosa Carbó', email: 'rosa.zbsforcall@gmail.com', role: 'Enfermera', category: 'Enfermería', pin: '777777' },
-  { id: 'delia', name: 'Delia', email: 'delia.zbsforcall@gmail.com', role: 'Enfermera', category: 'Enfermería', pin: '444444' },
-  // Administrativos
-  { id: 'joan', name: 'Joan', email: 'joan.zbsforcall@gmail.com', role: 'Administrador', category: 'Administrativos', pin: '000000' },
+  { id: 'xelo', name: 'Xelo García', role: 'Coordinador', category: 'Enfermería', pin: '666666' },
+  { id: 'yolanda_lainez', name: 'Yolanda Lainez', role: 'Enfermera', category: 'Enfermería', pin: '111111' },
+  { id: 'maite', name: 'Maite Beltrán', role: 'Enfermera', category: 'Enfermería', pin: '222222' },
+  { id: 'yolanda_garcia', name: 'Yolanda García', role: 'Enfermera', category: 'Enfermería', pin: '333333' },
+  { id: 'rosa', name: 'Rosa Carbó', role: 'Enfermera', category: 'Enfermería', pin: '444444' },
 ];
 
 export const CATEGORIES: Array<{ id: string; label: string; icon: string }> = [
-  { id: 'Medicina', label: 'Medicina', icon: 'stethoscope' },
   { id: 'Enfermería', label: 'Enfermería', icon: 'medical_services' },
-  { id: 'Administrativos', label: 'Administrativos', icon: 'admin_panel_settings' },
 ];
 
 export function getUsersByCategory(category: string): LocalUser[] {
