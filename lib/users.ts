@@ -10,11 +10,11 @@ export interface LocalUser {
 
 export const USERS: LocalUser[] = [
   // Medicina
-  { id: 'elena', name: 'Elena', role: 'Médico', category: 'Medicina', pin: '1019' },
+  { id: 'elena', name: 'Elena Benages', role: 'Médico', category: 'Medicina', pin: '1019' },
   { id: 'fernando', name: 'Fernando', role: 'Médico', category: 'Medicina', pin: '1111' },
   { id: 'frank', name: 'Frank', role: 'Médico', category: 'Medicina', pin: '2222' },
   // Enfermería
-  { id: 'chelo', name: 'Chelo', role: 'Enfermera', category: 'Enfermería', pin: '0000' },
+  { id: 'chelo', name: 'Xelo Carbó', role: 'Enfermera', category: 'Enfermería', pin: '0000' },
   // Administrativos (vacío por ahora)
 ];
 

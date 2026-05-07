@@ -14,6 +14,7 @@ import { useGuardias } from './hooks/useGuardias';
 import { useLibranzas } from './hooks/useLibranzas';
 import { useDoblas } from './hooks/useDoblas';
 import { useMeetings } from './hooks/useMeetings';
+import { canManageGuardiaType, getGuardiaPermissionMessage } from './lib/guardiaPermissions';
 
 const App: React.FC = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
@@ -44,13 +45,62 @@ const App: React.FC = () => {
   }, [meetings, addMeeting, updateMeeting]);
 
   const handleUpsertGuardia = useCallback(async (guardia: any) => {
+    if (!canManageGuardiaType(user, guardia.type)) {
+      setNotification(getGuardiaPermissionMessage(guardia.type));
+      return false;
+    }
     const existing = guardias.find(g => g.id === guardia.id);
     if (existing) {
       await updateGuardia(guardia);
     } else {
       await addGuardia(guardia);
     }
-  }, [guardias, addGuardia, updateGuardia]);
+    return true;
+  }, [user, guardias, addGuardia, updateGuardia]);
+
+  const handleDeleteGuardia = useCallback(async (id: string) => {
+    const existing = guardias.find(g => g.id === id);
+    if (!existing) return false;
+    if (!canManageGuardiaType(user, existing.type)) {
+      setNotification(getGuardiaPermissionMessage(existing.type));
+      return false;
+    }
+    await deleteGuardia(id);
+    return true;
+  }, [user, guardias, deleteGuardia]);
+
+  const handleSwapGuardias = useCallback(async (event1: any, event2: any) => {
+    if (!user) {
+      setNotification('Debes iniciar sesión para hacer una permuta.');
+      return false;
+    }
+    if (event1?._kind !== 'guardia' || event2?._kind !== 'guardia') {
+      setNotification('Solo se permiten permutas de guardias.');
+      return false;
+    }
+
+    const { id: id1, _kind: _kind1, ...event1Rest } = event1;
+    const { id: id2, _kind: _kind2, ...event2Rest } = event2;
+
+    await deleteGuardia(id1);
+    await deleteGuardia(id2);
+    await addGuardia({
+      ...event1Rest,
+      personnelName: event2.personnelName,
+      isChange: true,
+      modifiedBy: user.name || null,
+      modifiedAt: new Date(),
+    });
+    await addGuardia({
+      ...event2Rest,
+      personnelName: event1.personnelName,
+      isChange: true,
+      modifiedBy: user.name || null,
+      modifiedAt: new Date(),
+    });
+
+    return true;
+  }, [user, addGuardia, deleteGuardia]);
 
   const handleUpsertLibranza = useCallback(async (libranza: any) => {
     const existing = libranzas.find(l => l.id === libranza.id);
@@ -80,7 +130,7 @@ const App: React.FC = () => {
           doblas={doblas}
           onNavigate={setActiveTab} 
           onAddGuardia={handleUpsertGuardia}
-          onDeleteGuardia={deleteGuardia}
+          onDeleteGuardia={handleDeleteGuardia}
           onAddMeeting={handleUpsertSession}
           onAddLibranza={handleUpsertLibranza}
           onAddDobla={handleUpsertDobla}
@@ -97,12 +147,13 @@ const App: React.FC = () => {
             doblas={doblas}
             manualHolidays={manualHolidays}
             onAddGuardia={handleUpsertGuardia}
-            onDeleteGuardia={deleteGuardia}
+            onDeleteGuardia={handleDeleteGuardia}
             onAddLibranza={handleUpsertLibranza}
             onDeleteLibranza={deleteLibranza}
             onAddDobla={handleUpsertDobla}
             onDeleteDobla={deleteDobla}
             onAddMeeting={handleUpsertSession}
+            onSwapGuardias={handleSwapGuardias}
             user={user}
           />
         );
