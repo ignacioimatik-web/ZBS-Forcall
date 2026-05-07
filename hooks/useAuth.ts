@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { User } from '../types';
-import { validateUser } from '../lib/users';
+import { supabase } from '../lib/supabase';
+import type { User, Profile } from '../types';
+import { appRoleToUserRole } from '../types';
 
 const STORAGE_KEY = 'zbs_forcall_user';
 
@@ -8,8 +9,8 @@ interface UseAuthResult {
   user: User | null;
   isLoading: boolean;
   error: string | null;
-  signIn: (userId: string, pin: string) => Promise<{ success: boolean; error?: string }>;
-  signOut: () => void;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signOut: () => Promise<void>;
 }
 
 export function useAuth(): UseAuthResult {
@@ -17,45 +18,98 @@ export function useAuth(): UseAuthResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Restaurar sesión desde localStorage
-  useEffect(() => {
+  const fetchProfile = useCallback(async (userId: string, email: string) => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed: User = JSON.parse(stored);
-        setUser(parsed);
+      const { data, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return null;
       }
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-    } finally {
-      setIsLoading(false);
+
+      const profile = data as Profile;
+      const appUser: User = {
+        id: profile.id,
+        name: profile.full_name,
+        email: profile.email,
+        phone: profile.phone || undefined,
+        role: appRoleToUserRole(profile.role),
+        is2FAEnabled: false, // MFA se gestiona en Supabase si es necesario
+      };
+      
+      return appUser;
+    } catch (err) {
+      console.error('Unexpected error fetching profile:', err);
+      return null;
     }
   }, []);
 
-  const signIn = useCallback(async (userId: string, pin: string) => {
+  useEffect(() => {
+    // 1. Verificar sesión inicial
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const appUser = await fetchProfile(session.user.id, session.user.email || '');
+          setUser(appUser);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
+
+    // 2. Escuchar cambios en la autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const appUser = await fetchProfile(session.user.id, session.user.email || '');
+        setUser(appUser);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
+
+  const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
-    const localUser = validateUser(userId, pin);
-    if (!localUser) {
-      const msg = 'PIN incorrecto. Inténtalo de nuevo.';
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        setError(signInError.message);
+        return { success: false, error: signInError.message };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      const msg = err.message || 'Error al iniciar sesión';
       setError(msg);
       return { success: false, error: msg };
     }
-    const appUser: User = {
-      id: localUser.id,
-      name: localUser.name,
-      email: '',
-      role: localUser.role,
-      is2FAEnabled: false,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appUser));
-    setUser(appUser);
-    return { success: true };
   }, []);
 
-  const signOut = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setUser(null);
-    setError(null);
+  const signOut = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setError(null);
+    } catch (err) {
+      console.error('Error signing out:', err);
+    }
   }, []);
 
   return { user, isLoading, error, signIn, signOut };

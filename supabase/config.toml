@@ -1,0 +1,20 @@
+# Supabase configuration
+project_id = "tkkwwovobzaemlywrajc"
+
+[api]
+port = 54321
+external_url = "http://localhost:54321"
+
+[db]
+port = 54322
+shadow_port = 54320
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/**"]
+
+[storage]
+enabled = true
+
+[functions]
+# No functions configured

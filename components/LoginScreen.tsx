@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { CATEGORIES, getUsersByCategory } from '../lib/users';
+import { CATEGORIES, getUsersByCategory, USERS } from '../lib/users';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -33,7 +33,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   };
 
   const handlePinDigit = (digit: string) => {
-    if (pin.length < 4) {
+    if (pin.length < 6) {
       setPin(prev => prev + digit);
     }
   };
@@ -43,11 +43,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   };
 
   const handlePinSubmit = async () => {
-    if (pin.length !== 4) return;
+    if (pin.length !== 6) return; // Forzar 6 dígitos
     setError(null);
     setIsLoading(true);
     try {
-      const result = await signIn(selectedUserId, pin);
+      const selectedUser = USERS.find(u => u.id === selectedUserId);
+      if (!selectedUser) {
+        setError('Usuario no encontrado');
+        return;
+      }
+
+      const result = await signIn(selectedUser.email, pin);
       if (result.success) {
         onLoginSuccess();
       } else {
@@ -215,11 +221,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           {step === 'pin' && (
             <div>
               {/* PIN display */}
-              <div className="flex justify-center gap-3 mb-6">
-                {[0, 1, 2, 3].map((i) => (
+              <div className="flex justify-center gap-2 mb-6">
+                {[0, 1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
-                    className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all ${
+                    className={`w-10 h-12 rounded-xl border-2 flex items-center justify-center transition-all ${
                       i < pin.length
                         ? 'border-forcall-500 bg-forcall-50'
                         : 'border-gray-200 bg-gray-50'
