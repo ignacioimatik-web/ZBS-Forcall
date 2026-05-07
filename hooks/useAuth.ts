@@ -60,29 +60,44 @@ export function useAuth(): UseAuthResult {
 
   useEffect(() => {
     let isMounted = true;
+    let timeoutId: any = null;
 
     const initAuth = async () => {
-      console.log('Iniciando verificación de autenticación...');
+      console.log('--- Auth Init Started ---');
+      
+      // Seguridad: timeout de 5s para no quedarse pillado en carga
+      timeoutId = setTimeout(() => {
+        if (isMounted && isLoading) {
+          console.warn('Auth init timeout reached, forcing loading state to false');
+          setIsLoading(false);
+        }
+      }, 5000);
+
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setIsLoading(false);
+          return;
+        }
 
         if (session?.user) {
-          console.log('Sesión inicial encontrada, obteniendo perfil...');
+          console.log('Session found for user:', session.user.id);
           const appUser = await fetchProfile(session.user.id, session.user.email || '');
-          if (isMounted && appUser) {
+          if (isMounted) {
             setUser(appUser);
           }
         } else {
-          console.log('No hay sesión inicial activa');
+          console.log('No active session found');
         }
       } catch (err) {
-        console.error('Error durante initAuth:', err);
+        console.error('Critical error in initAuth:', err);
       } finally {
         if (isMounted) {
-          console.log('Finalizada carga inicial de autenticación');
+          console.log('Auth Init Finished');
           setIsLoading(false);
+          if (timeoutId) clearTimeout(timeoutId);
         }
       }
     };
@@ -90,18 +105,24 @@ export function useAuth(): UseAuthResult {
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Cambio de estado Auth:', event);
+      console.log('Auth State Change Event:', event);
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && session?.user) {
-        // Si ya tenemos el usuario y el ID es el mismo, no hace falta re-obtener (opcional)
         const appUser = await fetchProfile(session.user.id, session.user.email || '');
-        if (isMounted) setUser(appUser);
+        if (isMounted) {
+          setUser(appUser);
+          setIsLoading(false); // Asegurar que quitamos carga tras login
+        }
       } else if (event === 'SIGNED_OUT') {
-        if (isMounted) setUser(null);
+        if (isMounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
       }
     });
 
     return () => {
       isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
