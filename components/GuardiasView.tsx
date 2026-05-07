@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { Guardia, User } from '../types';
+import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
+import { NotificationToast } from './NotificationToast';
 import { getHolidayName } from '../utils';
 
 interface GuardiasViewProps {
@@ -17,6 +19,8 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('Todas');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     doctorName: '',
@@ -63,6 +67,38 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
     setSelectedDay(date);
     setFormData({ doctorName: '', nurseName: '' });
     setIsModalOpen(true);
+  };
+
+  const handleDownloadGuardiasPDF = async () => {
+    setIsDownloading(true);
+    const entries: PDFCalendarData['entries'] = [];
+    const month = currentMonth.getMonth();
+    const year = currentMonth.getFullYear();
+    guardias
+      .filter(
+        g =>
+          g.date.getMonth() === month && g.date.getFullYear() === year
+      )
+      .forEach(g => {
+        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type });
+      });
+    const data: PDFCalendarData = {
+      title: 'Calendario Guardias Forcall',
+      subtitle: `${new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
+      month,
+      year,
+      entries,
+    };
+    const filename = `Calendario_Guardias_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
+    try {
+      downloadCalendarPDF(data, filename);
+      setDownloadMsg('PDF descargado correctamente');
+    } catch (e) {
+      console.error(e);
+      setDownloadMsg('Error al generar PDF');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -304,5 +340,16 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         </div>
       )}
     </div>
+      {isDownloading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
+          <div className="flex flex-col items-center gap-4 bg-white p-6 rounded-2xl shadow-xl">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <span className="font-black text-gray-800">Generando PDF…</span>
+          </div>
+        </div>
+      )}
+      {downloadMsg && (
+        <NotificationToast message={downloadMsg} onClose={() => setDownloadMsg(null)} />
+      )}
   );
 };

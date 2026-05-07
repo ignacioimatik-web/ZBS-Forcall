@@ -2,7 +2,7 @@
 import React from 'react';
 import { Meeting, User, Guardia, Libranza, Dobla } from '../types';
 import { UnifiedCalendar } from './UnifiedCalendar';
-import { exportCalendarToPDF } from '../lib/pdfExport';
+import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 
 interface DashboardProps {
   meetings: Meeting[];
@@ -42,11 +42,50 @@ export const Dashboard: React.FC<DashboardProps> = ({
     { label: 'Ref', count: doblas.length, icon: 'dynamic_feed', color: 'text-orange-500' }
   ];
 
-  const handleDownloadDashboard = () => {
-    exportCalendarToPDF({
-      elementId: 'dashboard-calendar',
-      filename: `Calendario_General_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`
+  const handleDownloadActiveCalendar = () => {
+    // Build entries for all categories
+    const entries = [] as PDFCalendarData['entries'];
+    // Guardias
+    guardias.forEach(g => {
+      entries.push({
+        date: g.date,
+        personnel: [g.personnelName],
+        type: g.type
+      });
     });
+    // Libranzas
+    libranzas.forEach(l => {
+      entries.push({
+        date: l.date,
+        personnel: [l.personnelName],
+        type: l.type
+      });
+    });
+    // Doblas
+    doblas.forEach(d => {
+      entries.push({
+        date: d.date,
+        personnel: [d.personnelName],
+        type: d.type
+      });
+    });
+    // Meetings
+    meetings.forEach(m => {
+      entries.push({
+        date: m.date,
+        personnel: [m.title],
+        type: m.type
+      });
+    });
+    const data: PDFCalendarData = {
+      title: 'Calendario General Forcall',
+      subtitle: `${new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
+      month: new Date().getMonth(),
+      year: new Date().getFullYear(),
+      entries,
+    };
+    const filename = `Calendario_General_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
+    downloadCalendarPDF(data, filename);
   };
 
   const getGreeting = () => {
