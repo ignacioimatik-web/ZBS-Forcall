@@ -1,3 +1,4 @@
+// Simplified App component without forceShowLogin and timeout handling
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
@@ -19,7 +20,7 @@ import { canManageGuardiaType, getGuardiaPermissionMessage } from './lib/guardia
 const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
   const [dots, setDots] = useState('.');
   useEffect(() => {
-    const interval = setInterval(() => setDots(prev => prev.length >= 3 ? '.' : prev + '.'), 500);
+    const interval = setInterval(() => setDots(prev => (prev.length >= 3 ? '.' : prev + '.')), 500);
     const timeout = setTimeout(() => {
       console.warn('AppLoader timeout: forcing login screen');
       onTimeout();
@@ -40,12 +41,12 @@ const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
 
 const App: React.FC = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
-  const [forceShowLogin, setForceShowLogin] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const { guardias, addGuardia, updateGuardia, deleteGuardia, isLoading: guardiasLoading } = useGuardias();
   const { libranzas, addLibranza, updateLibranza, deleteLibranza, isLoading: libranzasLoading } = useLibranzas();
   const { doblas, addDobla, updateDobla, deleteDobla, isLoading: doblasLoading } = useDoblas();
   const { meetings, addMeeting, updateMeeting, deleteMeeting, isLoading: meetingsLoading } = useMeetings();
-  
+
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
@@ -101,10 +102,8 @@ const App: React.FC = () => {
       setNotification('Solo se permiten permutas de guardias.');
       return false;
     }
-
     const { id: id1, _kind: _kind1, ...event1Rest } = event1;
     const { id: id2, _kind: _kind2, ...event2Rest } = event2;
-
     await deleteGuardia(id1);
     await deleteGuardia(id2);
     await addGuardia({
@@ -121,7 +120,6 @@ const App: React.FC = () => {
       modifiedBy: user.name || null,
       modifiedAt: new Date(),
     });
-
     return true;
   }, [user, addGuardia, deleteGuardia]);
 
@@ -146,24 +144,26 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard':
-        return <Dashboard 
-          meetings={meetings} 
-          guardias={guardias} 
-          libranzas={libranzas}
-          doblas={doblas}
-          onNavigate={setActiveTab} 
-          onAddGuardia={handleUpsertGuardia}
-          onDeleteGuardia={handleDeleteGuardia}
-          onAddMeeting={handleUpsertSession}
-          onAddLibranza={handleUpsertLibranza}
-          onAddDobla={handleUpsertDobla}
-          onDeleteLibranza={deleteLibranza}
-          onDeleteDobla={deleteDobla}
-          user={user} 
-        />;
+        return (
+          <Dashboard
+            meetings={meetings}
+            guardias={guardias}
+            libranzas={libranzas}
+            doblas={doblas}
+            onNavigate={setActiveTab}
+            onAddGuardia={handleUpsertGuardia}
+            onDeleteGuardia={handleDeleteGuardia}
+            onAddMeeting={handleUpsertSession}
+            onAddLibranza={handleUpsertLibranza}
+            onAddDobla={handleUpsertDobla}
+            onDeleteLibranza={deleteLibranza}
+            onDeleteDobla={deleteDobla}
+            user={user}
+          />
+        );
       case 'Guardias':
         return (
-          <CalendariosView 
+          <CalendariosView
             meetings={meetings}
             guardias={guardias}
             libranzas={libranzas}
@@ -189,30 +189,30 @@ const App: React.FC = () => {
     }
   };
 
-  if (authLoading && !forceShowLogin) {
-    return (
-      <AppLoader onTimeout={() => setForceShowLogin(true)} />
-    );
-  }
+// Show loader while authentication is initializing
+if (authLoading) {
+  return <AppLoader onTimeout={() => {/* no action needed */}} />;
+}
 
-  if (!user || forceShowLogin) {
-    return <LoginScreen onLoginSuccess={() => setForceShowLogin(false)} />;
-  }
+// If no user is authenticated, show the login screen
+if (!user) {
+  return <LoginScreen onLoginSuccess={() => {/* no additional state to reset */}} />;
+}
 
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in">
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} />
-      {isDataLoading && (
-        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">
-          <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
-        </div>
-      )}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {renderContent()}
-      </main>
-      {notification && <NotificationToast message={notification} onClose={() => setNotification(null)} />}
-    </div>
-  );
+return (
+  <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in">
+    <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} />
+    {isDataLoading && (
+      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">
+        <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
+      </div>
+    )}
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {renderContent()}
+    </main>
+    {notification && <NotificationToast message={notification} onClose={() => setNotification(null)} />}
+  </div>
+);
 };
 
 export default App;
