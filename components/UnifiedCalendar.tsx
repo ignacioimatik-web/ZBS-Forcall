@@ -36,7 +36,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   onAddGuardia, onDeleteGuardia, onAddLibranza, onDeleteLibranza, onAddDobla, onDeleteDobla,
   onSwapEvents, currentUser, activeCategory = 'Todo',
   availablePersonnel = [], bulkMode = false, selectedBulkDates = [], onToggleBulkDate,
-  swapMode = false, onCancelSwap, hideHeader = false, id = "calendar-container"
+  swapMode = false, onCancelSwap, hideHeader = false, id = "calendar-container", isReadOnly = false
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
