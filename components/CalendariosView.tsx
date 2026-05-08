@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { Meeting, User, Guardia, Libranza, Dobla, ManualHoliday, AuditLog } from '../types';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
+import { generateICS, downloadICS } from '../lib/calendarExport';
 import { NotificationToast } from './NotificationToast';
 import { canManageGuardiaCategory, canManagePlanningType } from '../lib/guardiaPermissions';
 import { useAuditLogs } from '../hooks/useAuditLogs';
@@ -105,6 +106,36 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     };
     addLog(newLog);
     setSwapMode(false);
+  };
+
+  const handleDownloadUserCalendar = () => {
+    if (!props.user) return;
+    const userName = props.user.name;
+    const events = [
+      ...props.guardias
+        .filter(g => g.personnelName === userName)
+        .map(g => ({
+          summary: `${g.type}: ${g.personnelName}`,
+          start: g.date,
+          description: `Guardia en ZBS Forcall`
+        })),
+      ...props.libranzas
+        .filter(l => l.personnelName === userName)
+        .map(l => ({
+          summary: `Libranza ${l.type}: ${l.personnelName}`,
+          start: l.date,
+          description: `Libranza en ZBS Forcall`
+        })),
+      ...props.doblas
+        .filter(d => d.personnelName === userName)
+        .map(d => ({
+          summary: `Dobla ${d.type}: ${d.personnelName}`,
+          start: d.date,
+          description: `Refuerzo en ZBS Forcall`
+        })),
+    ];
+    const icsContent = generateICS(events);
+    downloadICS(icsContent, `mis-guardias-${userName}.ics`);
   };
 
   const handleDownloadRegistry = () => {
@@ -249,12 +280,23 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                   <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">{activeSub} - {currentMonth.toLocaleDateString('es-ES', { month: 'long' })}</span>
                </div>
             </button>
-          </div>
-          
-          <button 
-            onClick={() => { setSwapMode(!swapMode); setBulkPersonnel(null); }} 
-            className={`w-full p-6 rounded-[2.5rem] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-4 border-2 ${swapMode ? 'bg-indigo-700 text-white border-indigo-900 ring-4 ring-indigo-500/20 animate-pulse' : 'bg-white text-indigo-700 border-indigo-50 hover:border-indigo-200 shadow-indigo-100/20 shadow-lg'}`}
-          >
+           </div>
+           
+           <button 
+             onClick={handleDownloadUserCalendar} 
+             className="w-full p-5 rounded-[2rem] bg-emerald-50 text-emerald-700 border-2 border-emerald-100 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-3 group hover:bg-emerald-100 hover:border-emerald-200"
+           >
+              <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">calendar_today</span>
+              <div className="text-left">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">Exportar mi calendario</span>
+                <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">Archivo .ics para tu móvil</span>
+              </div>
+           </button>
+
+           <button 
+             onClick={() => { setSwapMode(!swapMode); setBulkPersonnel(null); }} 
+             className={`w-full p-6 rounded-[2.5rem] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-4 border-2 ${swapMode ? 'bg-indigo-700 text-white border-indigo-900 ring-4 ring-indigo-500/20 animate-pulse' : 'bg-white text-indigo-700 border-indigo-50 hover:border-indigo-200 shadow-indigo-100/20 shadow-lg'}`}
+           >
              <span className="material-symbols-outlined text-3xl">{swapMode ? 'sync_alt' : 'swap_calls'}</span>
              <div className="text-left">
                <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">{swapMode ? 'PERMUTA ACTIVA' : 'PEDIR PERMUTA'}</span>
