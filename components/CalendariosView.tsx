@@ -282,16 +282,23 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             </button>
            </div>
            
-           <button 
-             onClick={handleDownloadUserCalendar} 
-             className="w-full p-5 rounded-[2rem] bg-emerald-50 text-emerald-700 border-2 border-emerald-100 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-3 group hover:bg-emerald-100 hover:border-emerald-200"
-           >
-              <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">calendar_today</span>
-              <div className="text-left">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">Exportar mi calendario</span>
-                <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">Archivo .ics para tu móvil</span>
-              </div>
-           </button>
+           {/* BOTÓN PERSONALIZADO - SOLO MIS GUARDIAS */}
+           <div className="bg-emerald-50/50 rounded-[2rem] p-4 border-2 border-emerald-100">
+             <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+               <span className="material-symbols-outlined text-[14px]">person</span>
+               Solo mis guardias
+             </p>
+             <button 
+               onClick={handleDownloadUserCalendar} 
+               className="w-full p-5 rounded-[1.5rem] bg-emerald-600 text-white shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3 group hover:bg-emerald-700"
+             >
+                <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">calendar_today</span>
+                <div className="text-left">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">Descargar Mi Calendario</span>
+                  <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">Formato .ics (Apple/Google)</span>
+                </div>
+             </button>
+           </div>
 
            <button 
              onClick={() => { setSwapMode(!swapMode); setBulkPersonnel(null); }} 
