@@ -44,6 +44,7 @@ export interface User {
   role: UserRole;
   avatarUrl?: string;
   is2FAEnabled: boolean;
+  staffGroup?: 'medico' | 'enfermeria' | null;
 }
 
 // Nuevos tipos Supabase

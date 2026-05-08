@@ -30,12 +30,15 @@ export function useAuth(): UseAuthResult {
 
         if (!profileError && data) {
           const profile = data as Profile;
+          // Si hay perfil en Supabase, usarlo; si full_name es null, usar fallback local
+          const localUser = USERS.find(u => u.email === email);
           return {
             id: profile.id,
-            name: profile.full_name,
+            name: profile.full_name || localUser?.name || email,
             email: profile.email,
-            phone: profile.phone || undefined,
+            phone: profile.phone || localUser?.phone || undefined,
             role: appRoleToUserRole(profile.role),
+            staffGroup: profile.staff_group || (localUser?.category === 'Enfermería' ? 'enfermeria' : localUser?.category === 'Medicina' ? 'medico' : null),
             is2FAEnabled: false,
           };
         }
@@ -60,6 +63,7 @@ export function useAuth(): UseAuthResult {
         email: localUser.email,
         phone: localUser.phone || undefined,
         role: localUser.role,
+        staffGroup: localUser.category === 'Enfermería' ? 'enfermeria' : localUser.category === 'Medicina' ? 'medico' : null,
         is2FAEnabled: false,
       };
     }
