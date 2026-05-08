@@ -41,7 +41,12 @@ export function useAuditLogs(): UseAuditLogsResult {
             timestamp: isNaN(timestamp.getTime()) ? new Date() : timestamp,
             description: row.description || '',
             category: row.category || row.entity_type || '',
-            details: payload.details || (payload.from ? {
+            details: payload.details ? {
+              from: payload.details.from,
+              to: payload.details.to,
+              date1: payload.details.date1 ? new Date(payload.details.date1) : new Date(),
+              date2: payload.details.date2 ? new Date(payload.details.date2) : new Date(),
+            } : (payload.from ? {
               from: payload.from,
               to: payload.to,
               date1: payload.date1 ? new Date(payload.date1) : new Date(),
