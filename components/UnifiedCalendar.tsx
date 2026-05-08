@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { Meeting, MeetingType, Guardia, User, Libranza, Dobla } from '../types';
 import { getHolidayName } from '../utils';
 import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType } from '../lib/guardiaPermissions';
+import { ConfirmationModal } from './ConfirmationModal';
 
 declare var html2pdf: any;
 
@@ -51,6 +52,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [personnelName, setPersonnelName] = useState('');
   const [firstSwapTarget, setFirstSwapTarget] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 
   const isGuardiaCategory = activeCategory === 'Medicina' || activeCategory === 'Enfermería';
   const isPlanningCategory = activeCategory === 'Libranzas' || activeCategory === 'Refuerzo';
@@ -130,8 +132,9 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   };
 
   const handleEntryClick = (e: React.MouseEvent, ev: any) => {
+    e.stopPropagation();
+    if (bulkMode) return;
     if (swapMode && canSwapInActiveCategory && onSwapEvents) {
-      e.stopPropagation();
       if (!firstSwapTarget) {
         setFirstSwapTarget(ev);
       } else {
@@ -140,6 +143,12 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
           setFirstSwapTarget(null);
         }
       }
+      return;
+    }
+    const canDelete = (ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) ||
+      ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type));
+    if (canDelete) {
+      setDeleteTarget(ev);
     }
   };
 
@@ -236,21 +245,14 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                 {isFestivo && <span className="hidden md:block w-3 h-3 bg-red-500 rounded-full shadow-sm animate-pulse" title={holiday}></span>}
               </div>
               <div className="flex-1 space-y-2 md:space-y-1.5 overflow-hidden">
-                {events.map((ev: any, idx) => (
-                  <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-4 py-3 md:px-3 md:py-2 rounded-2xl text-[14px] md:text-[11px] font-black border leading-tight transition-all relative flex items-center justify-between shadow-sm ${getEventStyle(ev)} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
-                    <span className="whitespace-normal break-words pr-2">{ev.personnelName || ev.title}</span>
-                    {((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type))) && !bulkMode && !swapMode && (
-                      <button onClick={(e) => { 
-                        e.stopPropagation(); 
-                        if (ev._kind === 'libranza') onDeleteLibranza(ev.id); 
-                        else if (ev._kind === 'dobla') onDeleteDobla(ev.id); 
-                        else if (ev._kind === 'guardia') onDeleteGuardia(ev.id);
-                      }} className="md:opacity-0 group-hover:opacity-100 text-inherit hover:text-red-600 transition-opacity shrink-0 p-1">
-                        <span className="material-symbols-outlined text-[18px]">close</span>
-                      </button>
-                    )}
+                {events.map((ev: any, idx) => {
+                  const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
+                  return (
+                  <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-4 py-3 md:px-3 md:py-2 rounded-2xl text-[14px] md:text-[11px] font-black border leading-tight transition-all relative flex items-center justify-between shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
+                    <span className="whitespace-normal break-words flex-1">{ev.personnelName || ev.title}</span>
                   </div>
-                ))}
+                  );
+                })}
                 {events.length === 0 && canManageActiveCategory && !swapMode && (
                   <div className="hidden md:flex flex-1 items-center justify-center text-gray-100 italic text-[10px] font-bold uppercase tracking-[0.2em]">Libre</div>
                 )}
@@ -284,6 +286,20 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
           </div>
         </div>
       )}
+      <ConfirmationModal
+        isOpen={!!deleteTarget}
+        title="Quitar del calendario"
+        message={deleteTarget ? `¿Quitar a ${deleteTarget.personnelName || deleteTarget.title} del día ${new Date(deleteTarget.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}?` : ''}
+        confirmLabel="Quitar"
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          if (deleteTarget._kind === 'libranza') onDeleteLibranza(deleteTarget.id);
+          else if (deleteTarget._kind === 'dobla') onDeleteDobla(deleteTarget.id);
+          else if (deleteTarget._kind === 'guardia') onDeleteGuardia(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };
