@@ -80,7 +80,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     const isNurse = nurses.includes(bulkPersonnel);
     const personnelType = isNurse ? 'Enfermería' : 'Médica';
     bulkDates.forEach(date => {
-      const common = { id: Math.random().toString(36).substr(2, 9), date, personnelName: bulkPersonnel, isChange: false, modifiedBy: props.user?.name || null, modifiedAt: new Date() };
+      const common = { id: Math.random().toString(36).substr(2, 9), date, personnelName: bulkPersonnel, isChange: false, modifiedBy: props.user?.id || null, modifiedAt: new Date() };
       if (activeSub === 'Medicina') props.onAddGuardia({ ...common, type: 'Médica' } as any);
       else if (activeSub === 'Enfermería') props.onAddGuardia({ ...common, type: 'Enfermería' } as any);
       else if (activeSub === 'Libranzas') props.onAddLibranza({ ...common, id: 'lib-' + common.id, type: personnelType } as any);

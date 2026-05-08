@@ -169,7 +169,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
       date: selectedDate,
       personnelName,
       isChange: false,
-      modifiedBy: currentUser?.name,
+       modifiedBy: currentUser?.id,
       modifiedAt: new Date()
     };
     if (activeCategory === 'Medicina') onAddGuardia({ ...common, type: 'Médica' } as any);
