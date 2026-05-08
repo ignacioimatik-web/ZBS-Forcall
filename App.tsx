@@ -13,6 +13,7 @@ import { useGuardias } from './hooks/useGuardias';
 import { useLibranzas } from './hooks/useLibranzas';
 import { useDoblas } from './hooks/useDoblas';
 import { useMeetings } from './hooks/useMeetings';
+import { useReminders } from './hooks/useReminders';
 import { canManageGuardiaType, getGuardiaPermissionMessage } from './lib/guardiaPermissions';
 
 const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
@@ -54,6 +55,9 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
+
+  // Inicializar recordatorios (notificaciones programadas)
+  useReminders();
 
   const isDataLoading = guardiasLoading || libranzasLoading || doblasLoading || meetingsLoading;
 
