@@ -91,20 +91,14 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     setBulkDates([]); setBulkPersonnel(null);
   };
 
-  const handleSwapEvents = async (ev1: any, ev2: any) => {
+    const handleSwapEvents = async (ev1: any, ev2: any) => {
     const p1 = ev1.personnelName;
     const p2 = ev2.personnelName;
     const swapped = await props.onSwapGuardias(ev1, ev2);
     if (!swapped) return;
 
-    const newLog = { 
-      type: 'PERMUTA' as const, 
-      user: props.user?.name || 'Usuario', 
-      description: `Intercambio confirmado entre ${p1} y ${p2}.`, 
-      category: activeSub, 
-      details: { from: p1, to: p2, date1: ev1.date, date2: ev2.date } 
-    };
-    addLog(newLog);
+    // El trigger de BD (audit_logs) ya registra el cambio como 'CAMBIO'.
+    // Solo limpiamos el estado local.
     setSwapMode(false);
   };
 
