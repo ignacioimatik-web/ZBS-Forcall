@@ -2,6 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Guardia } from '../types';
 
+// Normalizar tipo entre frontend (Médica/Enfermería) y BD (medica/enfermeria)
+function normalizeType(type: string): 'Médica' | 'Enfermería' {
+  const lower = type.toLowerCase();
+  if (lower === 'medica' || lower === 'médica') return 'Médica';
+  if (lower === 'enfermeria' || lower === 'enfermería') return 'Enfermería';
+  return type as 'Médica' | 'Enfermería';
+}
+
 interface UseGuardiasResult {
   guardias: Guardia[];
   isLoading: boolean;
@@ -31,17 +39,17 @@ export function useGuardias(): UseGuardiasResult {
         return;
       }
 
-      // Convertir fechas de string a Date
-      const mapped: Guardia[] = (data || []).map(row => ({
-        id: row.id,
-        date: new Date(row.date),
-        time: undefined, // TODO: extraer de date si se almacena en timestamptz
-        type: row.type as 'Médica' | 'Enfermería',
-        personnelName: row.personnel_name,
-        isChange: row.is_change,
-        modifiedBy: row.modified_by || undefined,
-        modifiedAt: row.modified_at ? new Date(row.modified_at) : undefined
-      }));
+       // Convertir fechas de string a Date y normalizar tipos
+       const mapped: Guardia[] = (data || []).map(row => ({
+         id: row.id,
+         date: new Date(row.date),
+         time: undefined, // TODO: extraer de date si se almacena en timestamptz
+         type: (row.type === 'medica' ? 'Médica' : 'Enfermería') as 'Médica' | 'Enfermería',
+         personnelName: row.personnel_name,
+         isChange: row.is_change,
+         modifiedBy: row.modified_by || undefined,
+         modifiedAt: row.modified_at ? new Date(row.modified_at) : undefined
+       }));
 
       setGuardias(mapped);
       setError(null);
@@ -81,7 +89,7 @@ export function useGuardias(): UseGuardiasResult {
       const newGuardia: Guardia = {
         id: data.id,
         date: new Date(data.date),
-        type: data.type as 'Médica' | 'Enfermería',
+        type: normalizeType(data.type),
         personnelName: data.personnel_name,
         isChange: data.is_change,
         modifiedBy: data.modified_by || undefined,
