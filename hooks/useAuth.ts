@@ -54,6 +54,21 @@ export function useAuth(): UseAuthResult {
         await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
       }
     }
+    
+    // Si el perfil no se encuentra, crear uno fallback basado en datos locales
+    console.warn('Perfil no encontrado en BD, usando datos locales como fallback...');
+    const localUser = USERS.find(u => u.email === email);
+    if (localUser) {
+      return {
+        id: userId,
+        name: localUser.name,
+        email: localUser.email,
+        phone: localUser.phone || undefined,
+        role: localUser.role,
+        is2FAEnabled: false,
+      };
+    }
+    
     return null;
   }, []);
 

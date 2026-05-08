@@ -44,6 +44,7 @@ const App: React.FC = () => {
   
   const { user, isLoading: authLoading, signOut } = useAuth();
   const [forceShowLogin, setForceShowLogin] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
 
   const { guardias, addGuardia, updateGuardia, deleteGuardia, isLoading: guardiasLoading } = useGuardias();
   const { libranzas, addLibranza, updateLibranza, deleteLibranza, isLoading: libranzasLoading } = useLibranzas();
@@ -192,14 +193,17 @@ const App: React.FC = () => {
     }
   };
 
-  // Show loading spinner while auth initializes
-  if (authLoading && !forceShowLogin) {
+  // Show loading spinner while auth initializes (only on first load)
+  if (authLoading && !forceShowLogin && !loginAttempted) {
     return <AppLoader onTimeout={() => setForceShowLogin(true)} />;
   }
 
   // Show login screen if not authenticated
   if (!user || forceShowLogin) {
-    return <LoginScreen onLoginSuccess={() => setForceShowLogin(false)} />;
+    return <LoginScreen onLoginSuccess={() => {
+      setLoginAttempted(true);
+      setForceShowLogin(false);
+    }} />;
   }
 
   return (
