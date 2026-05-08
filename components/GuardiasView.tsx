@@ -340,16 +340,5 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         </div>
       )}
     </div>
-      {isDownloading && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
-          <div className="flex flex-col items-center gap-4 bg-white p-6 rounded-2xl shadow-xl">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            <span className="font-black text-gray-800">Generando PDF…</span>
-          </div>
-        </div>
-      )}
-      {downloadMsg && (
-        <NotificationToast message={downloadMsg} onClose={() => setDownloadMsg(null)} />
-      )}
   );
 };
