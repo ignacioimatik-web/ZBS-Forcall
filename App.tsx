@@ -56,8 +56,8 @@ const App: React.FC = () => {
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
 
-  // Inicializar recordatorios (notificaciones programadas)
-  useReminders();
+  // Inicializar recordatorios (notificaciones programadas) para el usuario actual
+  useReminders(user?.name);
 
   const isDataLoading = guardiasLoading || libranzasLoading || doblasLoading || meetingsLoading;
 
