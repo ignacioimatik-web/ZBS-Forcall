@@ -419,7 +419,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                   </tr>
                   );
                 }))
-              ) : (
+              : (
                 <tr><td colSpan={5} className="px-6 py-12 text-center opacity-30 text-[10px] font-black uppercase tracking-widest">Sin registros</td></tr>
               )}
             </tbody>
