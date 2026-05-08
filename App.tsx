@@ -111,23 +111,25 @@ const App: React.FC = () => {
       return false;
     }
     // Intercambiar personnelName mediante actualización en sitio
+    // Crear objetos LIMPIOS y EXPLÍCITOS para evitar mezclar tipos
     const guard1Update = {
-      ...event1,
+      id: event1.id,
+      date: event1.date,
+      type: event1.type, // Mantener tipo original (Médica/Enfermería)
       personnelName: event2.personnelName,
       isChange: true,
       modifiedBy: user.id || null,
       modifiedAt: new Date(),
     };
     const guard2Update = {
-      ...event2,
+      id: event2.id,
+      date: event2.date,
+      type: event2.type, // Mantener tipo original (Médica/Enfermería)
       personnelName: event1.personnelName,
       isChange: true,
       modifiedBy: user.id || null,
       modifiedAt: new Date(),
     };
-    // Eliminar propiedades extra que no son de Guardia
-    const { _kind: _k1, ...pureGuard1 } = guard1Update;
-    const { _kind: _k2, ...pureGuard2 } = guard2Update;
     const success1 = await updateGuardia(pureGuard1);
     const success2 = await updateGuardia(pureGuard2);
     
