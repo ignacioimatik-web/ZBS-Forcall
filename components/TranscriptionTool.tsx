@@ -1,16 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI } from "@google/genai";
 
 declare var html2pdf: any;
 
 export const TranscriptionTool: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [isSummarizing, setIsSummarizing] = useState(false);
   const [transcription, setTranscription] = useState('');
   const [interimText, setInterimText] = useState('');
   const [recordingTime, setRecordingTime] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [summary, setSummary] = useState('');
 
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<number | null>(null);
@@ -141,30 +138,6 @@ export const TranscriptionTool: React.FC = () => {
     try { mediaRecorderRef.current?.stop(); } catch {}
   };
 
-  const handleSummarize = async () => {
-    if (!transcription || isSummarizing) return;
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === 'undefined') {
-      setErrorMessage('Falta la clave de API de Gemini (GEMINI_API_KEY). No se puede generar el resumen.');
-      return;
-    }
-    setIsSummarizing(true);
-    setErrorMessage(null);
-    try {
-      const ai = new GoogleGenAI({ apiKey });
-      const res = await ai.models.generateContent({
-        model: 'gemini-2.0-flash-exp',
-        contents: `Genera un resumen clínico ejecutivo estructurado (puntos clave, diagnóstico diferencial, plan actuación) de esta transcripción: "${transcription}"`,
-      });
-      setSummary(res.text || '');
-    } catch (e) {
-      console.error(e);
-      setErrorMessage('Error al generar el resumen IA. Inténtalo de nuevo.');
-    } finally {
-      setIsSummarizing(false);
-    }
-  };
-
   const savePDF = (id: string, name: string) => {
     const element = document.getElementById(id);
     if (!element) return;
@@ -235,22 +208,12 @@ export const TranscriptionTool: React.FC = () => {
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
           <div className="p-4 bg-gray-50 border-b flex justify-between items-center no-print">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Transcripción Original</span>
-            <div className="flex gap-2">
-              {transcription && (
-                <button
-                  onClick={handleSummarize}
-                  className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase flex items-center gap-1 active:scale-95"
-                >
-                  <span className="material-symbols-outlined text-sm">auto_awesome</span> RESUMIR IA
-                </button>
-              )}
-              <button
-                onClick={() => savePDF('trans-area', 'transcripcion')}
-                className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-black uppercase"
-              >
-                GUARDAR PDF
-              </button>
-            </div>
+            <button
+              onClick={() => savePDF('trans-area', 'transcripcion')}
+              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-black uppercase"
+            >
+              GUARDAR PDF
+            </button>
           </div>
           <div id="trans-area" className="p-6 flex-1 overflow-y-auto">
             <textarea
@@ -264,47 +227,6 @@ export const TranscriptionTool: React.FC = () => {
             />
           </div>
         </div>
-
-        {/* Resumen IA */}
-        {(summary || isSummarizing) && (
-          <div className="bg-indigo-50/30 rounded-3xl shadow-lg border border-indigo-100 flex flex-col animate-slide-in-up">
-            <div className="p-4 bg-indigo-100/30 border-b border-indigo-100 flex justify-between items-center no-print">
-              <span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">
-                Resumen Ejecutivo Estructurado (IA)
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => navigator.clipboard.writeText(summary)}
-                  className="p-2 bg-white text-indigo-600 rounded-lg border border-indigo-100"
-                >
-                  <span className="material-symbols-outlined text-sm">content_copy</span>
-                </button>
-                <button
-                  onClick={() => sendEmail(summary)}
-                  className="p-2 bg-white text-indigo-600 rounded-lg border border-indigo-100"
-                >
-                  <span className="material-symbols-outlined text-sm">mail</span>
-                </button>
-                <button
-                  onClick={() => savePDF('sum-area', 'resumen_clínico')}
-                  className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase shadow-md"
-                >
-                  PDF RESUMEN
-                </button>
-              </div>
-            </div>
-            <div id="sum-area" className="p-6">
-              {isSummarizing ? (
-                <div className="flex flex-col items-center py-12 text-indigo-400 gap-2">
-                  <span className="material-symbols-outlined animate-bounce text-4xl">psychology</span>
-                  <p className="text-[10px] font-black uppercase tracking-widest">IA Analizando transcripción...</p>
-                </div>
-              ) : (
-                <div className="prose prose-sm font-medium text-gray-800 whitespace-pre-wrap">{summary}</div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
