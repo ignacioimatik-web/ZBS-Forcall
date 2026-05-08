@@ -141,6 +141,9 @@ export function useAuth(): UseAuthResult {
     setError(null);
     const supabasePassword = transformPin(password);
     try {
+      // Cerrar sesión existente antes de intentar login (evita conflictos entre pestañas)
+      await supabase.auth.signOut();
+      
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: supabasePassword,
