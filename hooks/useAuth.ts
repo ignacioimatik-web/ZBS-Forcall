@@ -221,5 +221,36 @@ export function useAuth(): UseAuthResult {
     }
   }, []);
 
+  // Temporizador de inactividad (1 hora = 3600000 ms)
+  useEffect(() => {
+    if (!user) return;
+
+    const INACTIVITY_TIMEOUT = 3600000; // 1 hora
+    let inactivityTimer: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        console.log('Sesión cerrada por inactividad (1 hora)');
+        signOut();
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    events.forEach(event => {
+      document.addEventListener(event, resetTimer);
+    });
+
+    resetTimer();
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      events.forEach(event => {
+        document.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [user, signOut]);
+
   return { user, isLoading, error, signIn, signOut };
 }
