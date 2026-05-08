@@ -1,10 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
-
-interface GroundingSource {
-  title?: string;
-  uri?: string;
-}
 
 interface PhoneCategory {
   title: string;
@@ -88,14 +82,9 @@ const fallbackCivilProtection: CivilProtectionUpdate = {
 };
 
 export const AlertasView: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<string>('');
-  const [sources, setSources] = useState<GroundingSource[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [civilProtectionLoading, setCivilProtectionLoading] = useState(false);
   const [civilProtectionError, setCivilProtectionError] = useState<string | null>(null);
   const [civilProtectionUpdate, setCivilProtectionUpdate] = useState<CivilProtectionUpdate | null>(null);
-  const [isSourcesOpen, setIsSourcesOpen] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   const [weatherLoading, setWeatherLoading] = useState(true);
@@ -164,34 +153,9 @@ export const AlertasView: React.FC = () => {
       setNotificationPermission(Notification.permission);
     }
     const timer = setTimeout(() => setWeatherLoading(false), 500);
-    fetchAlerts();
     fetchCivilProtectionStatus();
     return () => clearTimeout(timer);
   }, []);
-
-  const fetchAlerts = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash-exp",
-        contents: "Resumen de alertas sanitarias, vialidad (Puertos Querol y Torremiró) y avisos 112 en la comarca de Els Ports (Castellón) para hoy.",
-        config: { tools: [{ googleSearch: {} }] },
-      });
-
-      setData(response.text || "No hay alertas críticas reportadas.");
-      const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-      const extractedSources = chunks
-        .filter((c: any) => c.web)
-        .map((c: any) => ({ title: c.web.title, uri: c.web.uri }));
-      setSources(Array.from(new Map(extractedSources.map((item: any) => [item.uri, item])).values()));
-    } catch {
-      setError("Error al sincronizar alertas.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchCivilProtectionStatus = async () => {
     setCivilProtectionLoading(true);
@@ -253,10 +217,6 @@ export const AlertasView: React.FC = () => {
           <p className="opacity-90 mt-2 text-sm font-medium">Diseño apaisado con visión rápida de Protección Civil, avisos y directorio operativo.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={fetchAlerts} disabled={loading} className="bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2 rounded-2xl text-xs font-black transition-all border border-white/20 flex items-center gap-2">
-            <span className={`material-symbols-outlined text-lg ${loading ? 'animate-spin' : ''}`}>refresh</span>
-            ALERTAS IA
-          </button>
           <button onClick={fetchCivilProtectionStatus} disabled={civilProtectionLoading} className="bg-white text-red-700 hover:bg-red-50 px-4 py-2 rounded-2xl text-xs font-black transition-all border border-white/30 flex items-center gap-2">
             <span className={`material-symbols-outlined text-lg ${civilProtectionLoading ? 'animate-spin' : ''}`}>refresh</span>
             PROTECCIÓN CIVIL
@@ -375,27 +335,6 @@ export const AlertasView: React.FC = () => {
               )}
             </div>
           </div>
-
-          <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Despacho de situación</p>
-              <h3 className="text-lg font-black text-gray-900 mt-1">Resumen asistencial y operativo</h3>
-            </div>
-            <div className="p-6">
-              {loading ? (
-                <div className="flex flex-col items-center text-center py-10">
-                  <div className="w-12 h-12 border-4 border-forcall-100 border-t-red-600 rounded-full animate-spin mb-4"></div>
-                  <h3 className="text-gray-800 font-bold">Consultando fuentes oficiales...</h3>
-                </div>
-              ) : (
-                <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed font-medium columns-1 xl:columns-2">
-                  {data.split('\n').filter(Boolean).map((line, index) => (
-                    <p key={index} className="mb-3 break-inside-avoid">{line}</p>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </section>
 
         <aside className="2xl:col-span-4 space-y-6">
@@ -449,22 +388,6 @@ export const AlertasView: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
-            <button onClick={() => setIsSourcesOpen(!isSourcesOpen)} className="w-full p-4 flex justify-between items-center">
-              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Fuentes ({sources.length})</span>
-              <span className={`material-symbols-outlined transition-transform ${isSourcesOpen ? 'rotate-180' : ''}`}>expand_more</span>
-            </button>
-            {isSourcesOpen && (
-              <div className="px-4 pb-4 space-y-2 animate-slide-in-up">
-                {sources.map((s, i) => (
-                  <a key={i} href={s.uri} target="_blank" rel="noreferrer" className="block p-3 bg-white border border-gray-100 rounded-2xl text-[10px] font-bold text-forcall-700 truncate hover:bg-forcall-50">
-                    {s.title}
-                  </a>
-                ))}
-              </div>
-            )}
           </div>
         </aside>
       </div>
