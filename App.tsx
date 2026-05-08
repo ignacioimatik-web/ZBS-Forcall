@@ -130,6 +130,9 @@ const App: React.FC = () => {
     const { _kind: _k2, ...pureGuard2 } = guard2Update;
     const success1 = await updateGuardia(pureGuard1);
     const success2 = await updateGuardia(pureGuard2);
+    
+    // El trigger de BD (audit_logs) ya registra el cambio como 'CAMBIO'.
+    // Recargar logs manualmente para que se vea pronto.
     if (success1 && success2) {
       return true;
     } else {
