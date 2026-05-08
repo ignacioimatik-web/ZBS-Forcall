@@ -164,19 +164,19 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     const year = currentMonth.getFullYear();
     if (activeSub === 'Medicina') {
       guardias.filter(g => g.type === 'Médica').forEach(g => {
-        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type });
+        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: 'M' });
       });
     } else if (activeSub === 'Enfermería') {
       guardias.filter(g => g.type === 'Enfermería').forEach(g => {
-        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type });
+        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: 'E' });
       });
     } else if (activeSub === 'Libranzas') {
       libranzas.forEach(l => {
-        entries.push({ date: l.date, personnel: [l.personnelName], type: l.type });
+        entries.push({ date: l.date, personnel: [l.personnelName], type: l.type, kind: 'L' });
       });
     } else if (activeSub === 'Refuerzo') {
       doblas.forEach(d => {
-        entries.push({ date: d.date, personnel: [d.personnelName], type: d.type });
+        entries.push({ date: d.date, personnel: [d.personnelName], type: d.type, kind: 'R' });
       });
     }
     const data: PDFCalendarData = {

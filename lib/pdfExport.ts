@@ -10,6 +10,7 @@ export interface PDFCalendarData {
     date: Date;
     personnel: string[];
     type?: string;
+    kind?: string;
   }>;
 }
 
@@ -117,10 +118,27 @@ export function generateCalendarPDF(data: PDFCalendarData): jsPDF {
               }
               return;
             }
+            const kindMap: Record<string, { label: string; color: number[] }> = {
+              M: { label: 'M', color: [37, 99, 235] },
+              E: { label: 'E', color: [220, 38, 38] },
+              L: { label: 'L', color: [22, 163, 74] },
+              R: { label: 'R', color: [234, 88, 12] },
+              MT: { label: 'MT', color: [14, 165, 233] },
+            };
+            const info = kindMap[entry.kind || ''];
             const names = entry.personnel.join(', ');
-            const truncated = names.length > 14 ? names.substring(0, 13) + '…' : names;
-            doc.setTextColor(dark[0], dark[1], dark[2]);
-            doc.text(truncated, x + 1.5, textY);
+            const truncated = names.length > 12 ? names.substring(0, 11) + '…' : names;
+            if (info) {
+              doc.setTextColor(info.color[0], info.color[1], info.color[2]);
+              doc.setFont('helvetica', 'bold');
+              doc.text(info.label, x + 1.5, textY);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(dark[0], dark[1], dark[2]);
+              doc.text(truncated, x + 4.5, textY);
+            } else {
+              doc.setTextColor(dark[0], dark[1], dark[2]);
+              doc.text(truncated, x + 1.5, textY);
+            }
             textY += 2.8;
           });
         }
