@@ -30,22 +30,28 @@ export function useAuditLogs(): UseAuditLogsResult {
         return;
       }
 
-      const mapped: AuditLog[] = (data || []).map(row => {
-        const payload = row.payload || {};
-        return {
-          id: row.id,
-          type: mapActionToType(row.action),
-          user: row.actor_name || 'Sistema',
-          timestamp: new Date(row.created_at),
-          description: row.description || '',
-          category: row.category || row.entity_type || '',
-          details: payload.details || (payload.from ? {
-            from: payload.from,
-            to: payload.to,
-            date1: payload.date1 ? new Date(payload.date1) : new Date(),
-            date2: payload.date2 ? new Date(payload.date2) : new Date(),
-          } : undefined)
-        };
+      const mapped: AuditLog[] = (data || []).flatMap(row => {
+        try {
+          const payload = row.payload || {};
+          const timestamp = new Date(row.created_at);
+          return {
+            id: row.id,
+            type: mapActionToType(row.action),
+            user: row.actor_name || 'Sistema',
+            timestamp: isNaN(timestamp.getTime()) ? new Date() : timestamp,
+            description: row.description || '',
+            category: row.category || row.entity_type || '',
+            details: payload.details || (payload.from ? {
+              from: payload.from,
+              to: payload.to,
+              date1: payload.date1 ? new Date(payload.date1) : new Date(),
+              date2: payload.date2 ? new Date(payload.date2) : new Date(),
+            } : undefined)
+          };
+        } catch (mapErr) {
+          console.error('Error mapeando fila de audit_logs:', mapErr, row);
+          return [];
+        }
       });
 
       setLogs(mapped);
