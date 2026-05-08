@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { UnifiedCalendar } from './components/UnifiedCalendar';
@@ -246,6 +247,7 @@ const App: React.FC = () => {
         {renderContent()}
       </main>
       {notification && <NotificationToast message={notification} onClose={() => setNotification(null)} />}
+      <Analytics />
     </div>
   );
 };
