@@ -75,6 +75,7 @@ export function useAuditLogs(): UseAuditLogsResult {
         .insert({
           actor_name: log.user,
           action: mapTypeToAction(log.type),
+          entity_type: 'permuta',
           description: log.description,
           category: log.category,
           payload,
