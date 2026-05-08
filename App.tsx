@@ -106,26 +106,33 @@ const App: React.FC = () => {
       setNotification('Solo se permiten permutas de guardias.');
       return false;
     }
-    const { id: id1, _kind: _kind1, ...event1Rest } = event1;
-    const { id: id2, _kind: _kind2, ...event2Rest } = event2;
-    await deleteGuardia(id1);
-    await deleteGuardia(id2);
-    await addGuardia({
-      ...event1Rest,
+    // Intercambiar personnelName mediante actualización en sitio
+    const guard1Update = {
+      ...event1,
       personnelName: event2.personnelName,
       isChange: true,
       modifiedBy: user.name || null,
       modifiedAt: new Date(),
-    });
-    await addGuardia({
-      ...event2Rest,
+    };
+    const guard2Update = {
+      ...event2,
       personnelName: event1.personnelName,
       isChange: true,
       modifiedBy: user.name || null,
       modifiedAt: new Date(),
-    });
-    return true;
-  }, [user, addGuardia, deleteGuardia]);
+    };
+    // Eliminar propiedades extra que no son de Guardia
+    const { _kind: _k1, ...pureGuard1 } = guard1Update;
+    const { _kind: _k2, ...pureGuard2 } = guard2Update;
+    const success1 = await updateGuardia(pureGuard1);
+    const success2 = await updateGuardia(pureGuard2);
+    if (success1 && success2) {
+      return true;
+    } else {
+      setNotification('Error al realizar la permuta. Inténtalo de nuevo.');
+      return false;
+    }
+  }, [user, updateGuardia]);
 
   const handleUpsertLibranza = useCallback(async (libranza: any) => {
     const existing = libranzas.find(l => l.id === libranza.id);
