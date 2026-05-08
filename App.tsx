@@ -111,14 +111,14 @@ const App: React.FC = () => {
       ...event1,
       personnelName: event2.personnelName,
       isChange: true,
-      modifiedBy: user.name || null,
+      modifiedBy: user.id || null,
       modifiedAt: new Date(),
     };
     const guard2Update = {
       ...event2,
       personnelName: event1.personnelName,
       isChange: true,
-      modifiedBy: user.name || null,
+      modifiedBy: user.id || null,
       modifiedAt: new Date(),
     };
     // Eliminar propiedades extra que no son de Guardia
