@@ -34,7 +34,7 @@ export function useLibranzas(): UseLibranzasResult {
       const mapped: Libranza[] = (data || []).map(row => ({
         id: row.id,
         date: new Date(row.date),
-        type: row.type as 'Médica' | 'Enfermería',
+        type: row.type as 'medica' | 'enfermeria',
         personnelName: row.personnel_name,
         isChange: row.is_change,
         modifiedBy: row.modified_by || undefined,
@@ -77,7 +77,7 @@ export function useLibranzas(): UseLibranzasResult {
       const newLibranza: Libranza = {
         id: data.id,
         date: new Date(data.date),
-        type: data.type as 'Médica' | 'Enfermería',
+        type: data.type as 'medica' | 'enfermeria',
         personnelName: data.personnel_name,
         isChange: data.is_change,
         modifiedBy: data.modified_by || undefined,

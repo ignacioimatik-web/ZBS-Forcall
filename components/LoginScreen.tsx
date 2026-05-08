@@ -80,12 +80,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
   const categoryColors: Record<string, string> = {
     Medicina: 'bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-800',
-    Enfermería: 'bg-green-50 border-green-200 hover:bg-green-100 text-green-800',
+    enfermeria: 'bg-green-50 border-green-200 hover:bg-green-100 text-green-800',
     Administrativos: 'bg-amber-50 border-amber-200 hover:bg-amber-100 text-amber-800',
   };
   const categoryIconColors: Record<string, string> = {
     Medicina: 'text-blue-500',
-    Enfermería: 'text-green-500',
+    enfermeria: 'text-green-500',
     Administrativos: 'text-amber-500',
   };
 

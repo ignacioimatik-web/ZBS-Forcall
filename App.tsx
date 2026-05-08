@@ -115,7 +115,7 @@ const App: React.FC = () => {
     const guard1Update = {
       id: event1.id,
       date: event1.date,
-      type: event1.type, // Mantener tipo original (Médica/Enfermería)
+      type: event1.type, // Mantener tipo original (medica/enfermeria)
       personnelName: event2.personnelName,
       isChange: true,
       modifiedBy: user.id || null,
@@ -124,7 +124,7 @@ const App: React.FC = () => {
     const guard2Update = {
       id: event2.id,
       date: event2.date,
-      type: event2.type, // Mantener tipo original (Médica/Enfermería)
+      type: event2.type, // Mantener tipo original (medica/enfermeria)
       personnelName: event1.personnelName,
       isChange: true,
       modifiedBy: user.id || null,

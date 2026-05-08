@@ -63,7 +63,7 @@ export interface Database {
           date: string;
           personnel_user_id: string | null;
           personnel_name: string;
-          type: 'Médica' | 'Enfermería';
+          type: 'medica' | 'enfermeria';
           is_change: boolean;
           modified_by: string | null;
           modified_at: string | null;
@@ -75,7 +75,7 @@ export interface Database {
           date: string;
           personnel_user_id?: string | null;
           personnel_name: string;
-          type: 'Médica' | 'Enfermería';
+          type: 'medica' | 'enfermeria';
           is_change?: boolean;
           modified_by?: string | null;
           modified_at?: string | null;
@@ -87,7 +87,7 @@ export interface Database {
           date?: string;
           personnel_user_id?: string | null;
           personnel_name?: string;
-          type?: 'Médica' | 'Enfermería';
+          type?: 'medica' | 'enfermeria';
           is_change?: boolean;
           modified_by?: string | null;
           modified_at?: string | null;
@@ -100,7 +100,7 @@ export interface Database {
           date: string;
           personnel_user_id: string | null;
           personnel_name: string;
-          type: 'Médica' | 'Enfermería';
+          type: 'medica' | 'enfermeria';
           is_change: boolean;
           modified_by: string | null;
           modified_at: string | null;
@@ -112,7 +112,7 @@ export interface Database {
           date: string;
           personnel_user_id?: string | null;
           personnel_name: string;
-          type: 'Médica' | 'Enfermería';
+          type: 'medica' | 'enfermeria';
           is_change?: boolean;
           modified_by?: string | null;
           modified_at?: string | null;
@@ -124,7 +124,7 @@ export interface Database {
           date?: string;
           personnel_user_id?: string | null;
           personnel_name?: string;
-          type?: 'Médica' | 'Enfermería';
+          type?: 'medica' | 'enfermeria';
           is_change?: boolean;
           modified_by?: string | null;
           modified_at?: string | null;
@@ -137,7 +137,7 @@ export interface Database {
           date: string;
           personnel_user_id: string | null;
           personnel_name: string;
-          type: 'Médica' | 'Enfermería';
+          type: 'medica' | 'enfermeria';
           is_change: boolean;
           modified_by: string | null;
           modified_at: string | null;
@@ -149,7 +149,7 @@ export interface Database {
           date: string;
           personnel_user_id?: string | null;
           personnel_name: string;
-          type: 'Médica' | 'Enfermería';
+          type: 'medica' | 'enfermeria';
           is_change?: boolean;
           modified_by?: string | null;
           modified_at?: string | null;
@@ -161,7 +161,7 @@ export interface Database {
           date?: string;
           personnel_user_id?: string | null;
           personnel_name?: string;
-          type?: 'Médica' | 'Enfermería';
+          type?: 'medica' | 'enfermeria';
           is_change?: boolean;
           modified_by?: string | null;
           modified_at?: string | null;

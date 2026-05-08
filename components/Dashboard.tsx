@@ -35,9 +35,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onAddMeeting,
   user 
 }) => {
-  const stats = [
-    { label: 'Med', count: guardias.filter(g => g.type === 'Médica').length, icon: 'stethoscope', color: 'text-blue-500' },
-    { label: 'Enf', count: guardias.filter(g => g.type === 'Enfermería').length, icon: 'vaccines', color: 'text-red-500' },
+    const stats = [
+    { label: 'Med', count: guardias.filter(g => g.type === 'medica').length, icon: 'stethoscope', color: 'text-blue-500' },
+    { label: 'Enf', count: guardias.filter(g => g.type === 'enfermeria').length, icon: 'vaccines', color: 'text-red-500' },
     { label: 'Lib', count: libranzas.length, icon: 'beach_access', color: 'text-green-500' },
     { label: 'Ref', count: doblas.length, icon: 'dynamic_feed', color: 'text-orange-500' }
   ];
@@ -51,7 +51,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         date: g.date,
         personnel: [g.personnelName],
         type: g.type,
-        kind: g.type === 'Médica' ? 'M' : 'E'
+        kind: g.type === 'medica' ? 'M' : 'E'
       });
     });
     // Libranzas
@@ -102,7 +102,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     if (femaleNames.some(fn => name.includes(fn))) return `Bienvenida, ${name}`;
     const maleNames = ['Fernando', 'Jorge', 'Frank', 'Ilie', 'Joan', 'Vicente', 'Carlos'];
     if (maleNames.some(mn => name.includes(mn))) return `Bienvenido, ${name}`;
-    if (role === 'Enfermera') return `Bienvenida, ${name}`;
+    if (role === 'enfermera') return `Bienvenida, ${name}`;
     if (role === 'Administrador') return `Bienvenido, ${name}`;
     return `Hola, ${name}`;
   };

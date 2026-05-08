@@ -21,7 +21,7 @@ interface CalendariosViewProps {
 
 export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const { guardias, libranzas, doblas, meetings } = props;
-  const [activeSub, setActiveSub] = useState<'Medicina' | 'Enfermería' | 'Libranzas' | 'Refuerzo'>('Medicina');
+  const [activeSub, setActiveSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo'>('Medicina');
   const [bulkPersonnel, setBulkPersonnel] = useState<string | null>(null);
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
   const { logs: auditLogs, addLog } = useAuditLogs();
@@ -37,15 +37,15 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const doctors = ["Elena Benages", "Delia Mestre", "Frank Castillo", "Fernando Sierra", "Jorge Ramón", "Ilie Popov", "Externo/a"];
   const nurses = ["Xelo García", "Yolanda Lainez", "Maite Beltrán", "Yolanda García", "Rosa Carbó", "Externo/a"];
   const planningPersonnel =
-    canManagePlanningType(props.user, 'Médica') && canManagePlanningType(props.user, 'Enfermería')
+    canManagePlanningType(props.user, 'medica') && canManagePlanningType(props.user, 'enfermeria')
       ? [...doctors, ...nurses]
-      : canManagePlanningType(props.user, 'Médica')
+      : canManagePlanningType(props.user, 'medica')
         ? doctors
-        : canManagePlanningType(props.user, 'Enfermería')
+        : canManagePlanningType(props.user, 'enfermeria')
           ? nurses
           : [];
   const currentPersonnel =
-    activeSub === 'Enfermería'
+    activeSub === 'enfermeria'
       ? nurses
       : activeSub === 'Medicina'
         ? doctors
@@ -54,7 +54,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           : activeSub === 'Libranzas'
             ? planningPersonnel
             : [...doctors, ...nurses];
-  const isGuardiaCategory = activeSub === 'Medicina' || activeSub === 'Enfermería';
+  const isGuardiaCategory = activeSub === 'Medicina' || activeSub === 'enfermeria';
   const isPlanningCategory = activeSub === 'Libranzas' || activeSub === 'Refuerzo';
   const canManageActiveCategory = isGuardiaCategory
     ? canManageGuardiaCategory(props.user, activeSub)
@@ -79,11 +79,11 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const handleSaveBulk = () => {
     if (!bulkPersonnel || bulkDates.length === 0 || !canManageActiveCategory) return;
     const isNurse = nurses.includes(bulkPersonnel);
-    const personnelType = isNurse ? 'Enfermería' : 'Médica';
+    const personnelType = isNurse ? 'enfermeria' : 'medica';
     bulkDates.forEach(date => {
       const common = { id: Math.random().toString(36).substr(2, 9), date, personnelName: bulkPersonnel, isChange: false, modifiedBy: props.user?.id || null, modifiedAt: new Date() };
-      if (activeSub === 'Medicina') props.onAddGuardia({ ...common, type: 'Médica' } as any);
-      else if (activeSub === 'Enfermería') props.onAddGuardia({ ...common, type: 'Enfermería' } as any);
+      if (activeSub === 'Medicina') props.onAddGuardia({ ...common, type: 'medica' } as any);
+      else if (activeSub === 'enfermeria') props.onAddGuardia({ ...common, type: 'enfermeria' } as any);
       else if (activeSub === 'Libranzas') props.onAddLibranza({ ...common, id: 'lib-' + common.id, type: personnelType } as any);
       else if (activeSub === 'Refuerzo') props.onAddDobla({ ...common, id: 'dob-' + common.id, type: personnelType } as any);
     });
@@ -192,11 +192,11 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     const month = currentMonth.getMonth();
     const year = currentMonth.getFullYear();
     if (activeSub === 'Medicina') {
-      guardias.filter(g => g.type === 'Médica').forEach(g => {
+      guardias.filter(g => g.type === 'medica').forEach(g => {
         entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: 'M' });
       });
-    } else if (activeSub === 'Enfermería') {
-      guardias.filter(g => g.type === 'Enfermería').forEach(g => {
+    } else if (activeSub === 'enfermeria') {
+      guardias.filter(g => g.type === 'enfermeria').forEach(g => {
         entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: 'E' });
       });
     } else if (activeSub === 'Libranzas') {
@@ -229,7 +229,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
 
   const subNav = [
     { id: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20' },
-    { id: 'Enfermería', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20' },
+    { id: 'enfermeria', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20' },
     { id: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20' },
     { id: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20' }
   ];
@@ -333,7 +333,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             )}
             {!canManageActiveCategory && isPlanningCategory && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Xelo García puede gestionar Enfermería.
+                En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Xelo García puede gestionar enfermeria.
               </div>
             )}
             {bulkPersonnel && (
@@ -397,7 +397,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                 permutaHistory.map(log => (
                   <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-5"><div className="flex flex-col"><span className="text-sm font-black text-gray-800">{log.timestamp.toLocaleDateString('es-ES')}</span></div></td>
-                    <td className="px-6 py-5"><span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${log.category === 'Medicina' ? 'bg-blue-50 text-blue-700 border-blue-100' : log.category === 'Enfermería' ? 'bg-red-50 text-red-700 border-red-100' : log.category === 'Libranzas' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>{log.category}</span></td>
+                    <td className="px-6 py-5"><span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${log.category === 'Medicina' ? 'bg-blue-50 text-blue-700 border-blue-100' : log.category === 'enfermeria' ? 'bg-red-50 text-red-700 border-red-100' : log.category === 'Libranzas' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>{log.category}</span></td>
                     <td className="px-6 py-5"><div className="flex items-center gap-3"><span className="text-sm font-black text-indigo-700">{log.details?.from}</span><span className="material-symbols-outlined text-gray-300 text-sm">sync_alt</span><span className="text-sm font-black text-indigo-700">{log.details?.to}</span></div></td>
                     <td className="px-6 py-5"><div className="flex gap-2"><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">Día {log.details?.date1.getDate()}</span><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">Día {log.details?.date2.getDate()}</span></div></td>
                     <td className="px-6 py-5 text-right"><span className="text-xs font-black text-gray-600 uppercase tracking-tighter">{log.user}</span></td>

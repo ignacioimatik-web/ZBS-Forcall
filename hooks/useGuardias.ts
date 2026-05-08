@@ -13,11 +13,11 @@ function toFrontendType(dbType: string): 'medica' | 'enfermeria' {
   return 'medica'; // Por defecto medica
 }
 
-// Convertir a formato BD (SIEMPRE Médica/Enfermería con tildes)
+// Convertir a formato BD (SIEMPRE medica/enfermeria con tildes)
 function toDBType(frontendType: string): string {
   const lowered = frontendType.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  if (lowered === 'medica') return 'Médica';
-  if (lowered === 'enfermeria') return 'Enfermería';
+  if (lowered === 'medica') return 'medica';
+  if (lowered === 'enfermeria') return 'enfermeria';
   return frontendType; // Asumimos que ya tiene el formato correcto
 }
 
@@ -50,7 +50,7 @@ export function useGuardias(): UseGuardiasResult {
         return;
       }
 
-      // Convertir fechas y normalizar tipos a formato frontend (Médica/Enfermería)
+      // Convertir fechas y normalizar tipos a formato frontend (medica/enfermeria)
       const mapped: Guardia[] = (data || []).map(row => ({
         id: row.id,
         date: new Date(row.date),
@@ -195,10 +195,10 @@ export function useGuardias(): UseGuardiasResult {
   };
 }
 
-function fromDBType(type: string): 'Médica' | 'Enfermería' {
-  if (type === 'medica') return 'Médica';
-  if (type === 'enfermeria') return 'Enfermería';
-  return type as 'Médica' | 'Enfermería'; // Ya tiene el formato correcto
+function fromDBType(type: string): 'medica' | 'enfermeria' {
+  if (type === 'medica') return 'medica';
+  if (type === 'enfermeria') return 'enfermeria';
+  return type as 'medica' | 'enfermeria'; // Ya tiene el formato correcto
 }
 
 interface UseGuardiasResult {
@@ -230,14 +230,14 @@ export function useGuardias(): UseGuardiasResult {
         return;
       }
 
-      // Convertir fechas de string a Date y normalizar tipos a formato frontend (Médica/Enfermería)
+      // Convertir fechas de string a Date y normalizar tipos a formato frontend (medica/enfermeria)
         const mapped: Guardia[] = (data || []).map(row => {
-          // Normalizar: BD puede tener medica/enfermeria o Médica/Enfermería
+          // Normalizar: BD puede tener medica/enfermeria o medica/enfermeria
           const rowType = (row.type as string).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          let frontendType: 'Médica' | 'Enfermería';
-          if (rowType === 'medica') frontendType = 'Médica';
-          else if (rowType === 'enfermeria') frontendType = 'Enfermería';
-          else frontendType = row.type as 'Médica' | 'Enfermería'; // Ya tiene formato correcto
+          let frontendType: 'medica' | 'enfermeria';
+          if (rowType === 'medica') frontendType = 'medica';
+          else if (rowType === 'enfermeria') frontendType = 'enfermeria';
+          else frontendType = row.type as 'medica' | 'enfermeria'; // Ya tiene formato correcto
           
           return {
             id: row.id,

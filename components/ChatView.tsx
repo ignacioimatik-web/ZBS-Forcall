@@ -14,7 +14,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser, messages, onSen
   const channels = [
     { id: 'general', name: 'Equipo General', icon: 'groups', color: 'bg-blue-100 text-blue-700' },
     { id: 'medicina', name: 'Facultativos', icon: 'stethoscope', color: 'bg-green-100 text-green-700' },
-    { id: 'enfermeria', name: 'Enfermería', icon: 'vaccines', color: 'bg-pink-100 text-pink-700' },
+    { id: 'enfermeria', name: 'enfermeria', icon: 'vaccines', color: 'bg-pink-100 text-pink-700' },
     { id: 'sesiones', name: 'Sesiones Clínicas', icon: 'school', color: 'bg-earth-200 text-earth-800' },
   ];
 
