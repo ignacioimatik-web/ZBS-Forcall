@@ -13,7 +13,7 @@ export const USERS: LocalUser[] = [
   // Medicina
   { id: 'elena', name: 'Elena Benages', email: 'elena.zbsforcall@gmail.com', role: 'Coordinador', category: 'Medicina', pin: '663880' },
   { id: 'delia', name: 'Delia Mestre', email: 'delia.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '777777' },
-  { id: 'fran', name: 'Fran Castillo', email: 'fran.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '888888' },
+  { id: 'fran', name: 'Frank Castillo', email: 'fran.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '888888' },
   { id: 'fernando', name: 'Fernando Sierra', email: 'fernando.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '147852' },
   { id: 'jorge', name: 'Jorge Ramón', email: 'jorge.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '258963' },
   { id: 'ilie', name: 'Ilie Popov', email: 'ilie.zbsforcall@gmail.com', role: 'Médico', category: 'Medicina', pin: '258525' },
