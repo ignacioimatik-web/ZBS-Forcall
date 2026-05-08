@@ -3,10 +3,16 @@ import { supabase } from '../lib/supabase';
 import type { Guardia } from '../types';
 
 // Normalizar tipo entre frontend (Médica/Enfermería) y BD (medica/enfermeria)
-function normalizeType(type: string): 'Médica' | 'Enfermería' {
-  const lower = type.toLowerCase();
-  if (lower === 'medica' || lower === 'médica') return 'Médica';
-  if (lower === 'enfermeria' || lower === 'enfermería') return 'Enfermería';
+function toDBType(type: string): string {
+  const lower = type.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (lower === 'medica') return 'medica';
+  if (lower === 'enfermeria') return 'enfermeria';
+  return type;
+}
+
+function fromDBType(type: string): 'Médica' | 'Enfermería' {
+  if (type === 'medica') return 'Médica';
+  if (type === 'enfermeria') return 'Enfermería';
   return type as 'Médica' | 'Enfermería';
 }
 
@@ -40,16 +46,16 @@ export function useGuardias(): UseGuardiasResult {
       }
 
        // Convertir fechas de string a Date y normalizar tipos
-       const mapped: Guardia[] = (data || []).map(row => ({
-         id: row.id,
-         date: new Date(row.date),
-         time: undefined, // TODO: extraer de date si se almacena en timestamptz
-         type: (row.type === 'medica' ? 'Médica' : 'Enfermería') as 'Médica' | 'Enfermería',
-         personnelName: row.personnel_name,
-         isChange: row.is_change,
-         modifiedBy: row.modified_by || undefined,
-         modifiedAt: row.modified_at ? new Date(row.modified_at) : undefined
-       }));
+        const mapped: Guardia[] = (data || []).map(row => ({
+          id: row.id,
+          date: new Date(row.date),
+          time: undefined, // TODO: extraer de date si se almacena en timestamptz
+          type: fromDBType(row.type),
+          personnelName: row.personnel_name,
+          isChange: row.is_change,
+          modifiedBy: row.modified_by || undefined,
+          modifiedAt: row.modified_at ? new Date(row.modified_at) : undefined
+        }));
 
       setGuardias(mapped);
       setError(null);
@@ -67,12 +73,14 @@ export function useGuardias(): UseGuardiasResult {
 
   const addGuardia = useCallback(async (guardia: Omit<Guardia, 'id'>): Promise<Guardia | null> => {
     try {
+      // Conservar el tipo exacto: medica/enfermeria para BD
+      const dbType = toDBType(guardia.type);
       const { data, error: insertError } = await supabase
         .from('guardias')
         .insert({
           date: `${guardia.date.getFullYear()}-${String(guardia.date.getMonth() + 1).padStart(2, '0')}-${String(guardia.date.getDate()).padStart(2, '0')}`,
           personnel_name: guardia.personnelName,
-          type: guardia.type,
+          type: dbType,
           is_change: guardia.isChange || false,
           modified_by: guardia.modifiedBy || null,
           modified_at: guardia.modifiedAt?.toISOString() || null
@@ -89,7 +97,7 @@ export function useGuardias(): UseGuardiasResult {
       const newGuardia: Guardia = {
         id: data.id,
         date: new Date(data.date),
-        type: normalizeType(data.type),
+        type: fromDBType(data.type),
         personnelName: data.personnel_name,
         isChange: data.is_change,
         modifiedBy: data.modified_by || undefined,
@@ -107,12 +115,26 @@ export function useGuardias(): UseGuardiasResult {
 
   const updateGuardia = useCallback(async (guardia: Guardia): Promise<boolean> => {
     try {
+      // Leer el tipo actual de la BD para NO cambiarlo (evitar mezclar médicos/enfermería)
+      const { data: currentData, error: readError } = await supabase
+        .from('guardias')
+        .select('type')
+        .eq('id', guardia.id)
+        .single();
+
+      if (readError) {
+        console.error('Error reading guardia type:', readError);
+        setError(readError.message);
+        return false;
+      }
+
+      const dbType = currentData?.type || toDBType(guardia.type);
       const { error: updateError } = await supabase
         .from('guardias')
         .update({
           date: `${guardia.date.getFullYear()}-${String(guardia.date.getMonth() + 1).padStart(2, '0')}-${String(guardia.date.getDate()).padStart(2, '0')}`,
           personnel_name: guardia.personnelName,
-          type: guardia.type,
+          type: dbType,
           is_change: guardia.isChange || false,
           modified_by: guardia.modifiedBy || null,
           modified_at: guardia.modifiedAt?.toISOString() || null
