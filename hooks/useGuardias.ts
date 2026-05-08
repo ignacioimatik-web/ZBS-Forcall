@@ -2,18 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Guardia } from '../types';
 
-// Normalizar tipo entre frontend (Médica/Enfermería) y BD (medica/enfermeria)
-function toDBType(type: string): string {
-  const lower = type.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  if (lower === 'medica') return 'medica';
-  if (lower === 'enfermeria') return 'enfermeria';
-  return type;
-}
+// Sin funciones de conversión. Usar SIEMPRE Médica/Enfermería (con tildes) según CHECK constraint
+// La base de datos espera exactamente 'Médica' o 'Enfermería'
 
 function fromDBType(type: string): 'Médica' | 'Enfermería' {
   if (type === 'medica') return 'Médica';
   if (type === 'enfermeria') return 'Enfermería';
-  return type as 'Médica' | 'Enfermería';
+  return type as 'Médica' | 'Enfermería'; // Ya tiene el formato correcto
 }
 
 interface UseGuardiasResult {
@@ -45,17 +40,26 @@ export function useGuardias(): UseGuardiasResult {
         return;
       }
 
-       // Convertir fechas de string a Date y normalizar tipos
-        const mapped: Guardia[] = (data || []).map(row => ({
-          id: row.id,
-          date: new Date(row.date),
-          time: undefined, // TODO: extraer de date si se almacena en timestamptz
-          type: fromDBType(row.type),
-          personnelName: row.personnel_name,
-          isChange: row.is_change,
-          modifiedBy: row.modified_by || undefined,
-          modifiedAt: row.modified_at ? new Date(row.modified_at) : undefined
-        }));
+      // Convertir fechas de string a Date y normalizar tipos a formato frontend (Médica/Enfermería)
+        const mapped: Guardia[] = (data || []).map(row => {
+          // Normalizar: BD puede tener medica/enfermeria o Médica/Enfermería
+          const rowType = (row.type as string).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          let frontendType: 'Médica' | 'Enfermería';
+          if (rowType === 'medica') frontendType = 'Médica';
+          else if (rowType === 'enfermeria') frontendType = 'Enfermería';
+          else frontendType = row.type as 'Médica' | 'Enfermería'; // Ya tiene formato correcto
+          
+          return {
+            id: row.id,
+            date: new Date(row.date),
+            time: undefined,
+            type: frontendType,
+            personnelName: row.personnel_name,
+            isChange: row.is_change,
+            modifiedBy: row.modified_by || undefined,
+            modifiedAt: row.modified_at ? new Date(row.modified_at) : undefined
+          };
+        });
 
       setGuardias(mapped);
       setError(null);
