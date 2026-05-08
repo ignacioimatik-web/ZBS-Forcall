@@ -12,7 +12,7 @@ interface GuardiasViewProps {
   currentUser: User | null;
 }
 
-type FilterType = 'Todas' | 'Médica' | 'Enfermería';
+type FilterType = 'Todas' | 'medica' | 'enfermeria';
 
 export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuardia, onDeleteGuardia, currentUser }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -80,7 +80,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
           g.date.getMonth() === month && g.date.getFullYear() === year
       )
       .forEach(g => {
-        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: g.type === 'Médica' ? 'M' : 'E' });
+        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: g.type === 'medica' ? 'M' : 'E' });
       });
     const data: PDFCalendarData = {
       title: 'Calendario Guardias Forcall',
@@ -108,7 +108,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         onAddGuardia({
           id: Date.now().toString(),
           date: selectedDay,
-          type: 'Médica',
+          type: 'medica',
           personnelName: formData.doctorName,
         });
       }
@@ -117,7 +117,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         onAddGuardia({
           id: (Date.now() + 1).toString(), 
           date: selectedDay,
-          type: 'Enfermería',
+          type: 'enfermeria',
           personnelName: formData.nurseName,
         });
       }
@@ -132,7 +132,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
     setCurrentMonth(newDate);
   };
 
-  const filterOptions: FilterType[] = ['Todas', 'Médica', 'Enfermería'];
+  const filterOptions: FilterType[] = ['Todas', 'medica', 'enfermeria'];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -230,7 +230,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                      <div 
                         key={g.id} 
                         className={`text-[11px] font-black py-2 px-3 rounded-lg flex justify-between items-center group/item shadow-sm border ${
-                          g.type === 'Médica' ? 'bg-blue-50 text-blue-900 border-blue-200' : 'bg-red-50 text-red-900 border-red-200'
+                          g.type === 'medica' ? 'bg-blue-50 text-blue-900 border-blue-200' : 'bg-red-50 text-red-900 border-red-200'
                         }`}
                       >
                         <div className="truncate uppercase tracking-tighter">
@@ -264,11 +264,11 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-blue-100 rounded border border-blue-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Guardia Médica</span>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Guardia medica</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-red-100 rounded border border-red-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Guardia Enfermería</span>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Guardia enfermeria</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-orange-100 rounded border border-orange-200"></div>
@@ -295,7 +295,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-blue-700 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">stethoscope</span> Personal Médico
+                  <span className="material-symbols-outlined text-sm">stethoscope</span> Personal Medico
                 </label>
                 <input
                   type="text"
@@ -308,7 +308,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-red-700 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">vaccines</span> Personal Enfermería
+                  <span className="material-symbols-outlined text-sm">vaccines</span> Personal enfermeria
                 </label>
                 <input
                   type="text"

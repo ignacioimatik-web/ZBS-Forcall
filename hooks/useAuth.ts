@@ -38,7 +38,7 @@ export function useAuth(): UseAuthResult {
             email: profile.email,
             phone: profile.phone || localUser?.phone || undefined,
             role: appRoleToUserRole(profile.role),
-            staffGroup: profile.staff_group || (localUser?.category === 'Enfermería' ? 'enfermeria' : localUser?.category === 'Medicina' ? 'medico' : null),
+            staffGroup: profile.staff_group || (localUser?.category === 'enfermeria' ? 'enfermeria' : localUser?.category === 'Medicina' ? 'medico' : null),
             is2FAEnabled: false,
           };
         }
@@ -63,7 +63,7 @@ export function useAuth(): UseAuthResult {
         email: localUser.email,
         phone: localUser.phone || undefined,
         role: localUser.role,
-        staffGroup: localUser.category === 'Enfermería' ? 'enfermeria' : localUser.category === 'Medicina' ? 'medico' : null,
+        staffGroup: localUser.category === 'enfermeria' ? 'enfermeria' : localUser.category === 'Medicina' ? 'medico' : null,
         is2FAEnabled: false,
       };
     }
@@ -165,7 +165,7 @@ export function useAuth(): UseAuthResult {
               options: {
                 data: {
                   full_name: localUser.name,
-                  role: userRoleToAppRole(localUser.role, localUser.category === 'Enfermería')
+                  role: userRoleToAppRole(localUser.role, localUser.category === 'enfermeria')
                 }
               }
             });

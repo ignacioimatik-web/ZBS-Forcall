@@ -1,6 +1,6 @@
 import type { Guardia, User } from '../types';
 
-export type GuardiaCategory = 'Medicina' | 'Enfermería';
+export type GuardiaCategory = 'Medicina' | 'enfermeria';
 
 const normalize = (value?: string | null) =>
   (value || '')
@@ -53,23 +53,23 @@ export function canManageGuardiaCategory(user: User | null, category: GuardiaCat
 }
 
 export function canManageGuardiaType(user: User | null, type: Guardia['type']) {
-  if (type === 'Médica') return isMedicineCoordinator(user);
+  if (type === 'medica') return isMedicineCoordinator(user);
   return isNursingCoordinator(user);
 }
 
 export function canManagePlanningType(user: User | null, type: Guardia['type']) {
-  if (type === 'Médica') return isMedicineCoordinator(user);
+  if (type === 'medica') return isMedicineCoordinator(user);
   return isNursingPlanner(user);
 }
 
 export function getGuardiaPermissionMessage(type: Guardia['type']) {
-  return type === 'Médica'
+  return type === 'medica'
     ? 'Solo Elena Benages puede añadir o quitar guardias de Medicina.'
-    : 'Solo Xelo García puede añadir o quitar guardias de Enfermería.';
+    : 'Solo Xelo García puede añadir o quitar guardias de enfermeria.';
 }
 
 export function getPlanningPermissionMessage(type: Guardia['type']) {
-  return type === 'Médica'
+  return type === 'medica'
     ? 'Solo Elena Benages puede gestionar libranzas y refuerzo de Medicina.'
-    : 'Solo Xelo García puede gestionar libranzas y refuerzo de Enfermería.';
+    : 'Solo Xelo García puede gestionar libranzas y refuerzo de enfermeria.';
 }

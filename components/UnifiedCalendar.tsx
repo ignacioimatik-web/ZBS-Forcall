@@ -21,7 +21,7 @@ interface UnifiedCalendarProps {
   onSwapEvents?: (event1: any, event2: any) => void;
   currentUser: User | null;
   isReadOnly?: boolean;
-  activeCategory?: 'Medicina' | 'Enfermería' | 'Libranzas' | 'Refuerzo' | 'Todo';
+  activeCategory?: 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Todo';
   availablePersonnel?: string[];
   bulkMode?: boolean;
   selectedBulkDates?: Date[];
@@ -54,11 +54,11 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [firstSwapTarget, setFirstSwapTarget] = useState<any | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 
-  const isGuardiaCategory = activeCategory === 'Medicina' || activeCategory === 'Enfermería';
+  const isGuardiaCategory = activeCategory === 'Medicina' || activeCategory === 'enfermeria';
   const isPlanningCategory = activeCategory === 'Libranzas' || activeCategory === 'Refuerzo';
   const planningType = activeCategory === 'Libranzas' || activeCategory === 'Refuerzo'
-    ? (availablePersonnel.some((person) => person.includes('Elena') || person.includes('Delia') || person.includes('Fran') || person.includes('Fernando') || person.includes('Jorge') || person.includes('Ilie')) ? 'Médica' : 'Enfermería')
-    : 'Médica';
+    ? (availablePersonnel.some((person) => person.includes('Elena') || person.includes('Delia') || person.includes('Fran') || person.includes('Fernando') || person.includes('Jorge') || person.includes('Ilie')) ? 'medica' : 'enfermeria')
+    : 'medica';
   const canManageActiveCategory = !isReadOnly && isGuardiaCategory
     ? canManageGuardiaCategory(currentUser, activeCategory)
     : !isReadOnly && isPlanningCategory
@@ -89,9 +89,9 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
         ...meetings.filter(m => m.date.toDateString() === dStr).map(m => ({ ...m, _kind: 'meeting' }))
       ];
     } else if (activeCategory === 'Medicina') {
-      events = guardias.filter(g => g.date.toDateString() === dStr && g.type === 'Médica').map(g => ({ ...g, _kind: 'guardia' }));
-    } else if (activeCategory === 'Enfermería') {
-      events = guardias.filter(g => g.date.toDateString() === dStr && g.type === 'Enfermería').map(g => ({ ...g, _kind: 'guardia' }));
+      events = guardias.filter(g => g.date.toDateString() === dStr && g.type === 'medica').map(g => ({ ...g, _kind: 'guardia' }));
+    } else if (activeCategory === 'enfermeria') {
+      events = guardias.filter(g => g.date.toDateString() === dStr && g.type === 'enfermeria').map(g => ({ ...g, _kind: 'guardia' }));
     } else if (activeCategory === 'Libranzas') {
       events = libranzas.filter(l => l.date.toDateString() === dStr).map(l => ({ ...l, _kind: 'libranza' }));
     } else if (activeCategory === 'Refuerzo') {
@@ -118,11 +118,11 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     }
     
     // Guardias: discriminar por type
-    if (ev.type === 'Médica') {
+    if (ev.type === 'medica') {
       const base = 'bg-blue-100 text-blue-900 border-blue-300';
       return ev.isChange ? `${base} ring-2 ring-orange-400` : base;
     }
-    if (ev.type === 'Enfermería') {
+    if (ev.type === 'enfermeria') {
       const base = 'bg-red-100 text-red-900 border-red-300';
       return ev.isChange ? `${base} ring-2 ring-orange-400` : base;
     }
@@ -172,8 +172,8 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
        modifiedBy: currentUser?.id,
       modifiedAt: new Date()
     };
-    if (activeCategory === 'Medicina') onAddGuardia({ ...common, type: 'Médica' } as any);
-    else if (activeCategory === 'Enfermería') onAddGuardia({ ...common, type: 'Enfermería' } as any);
+    if (activeCategory === 'Medicina') onAddGuardia({ ...common, type: 'medica' } as any);
+    else if (activeCategory === 'enfermeria') onAddGuardia({ ...common, type: 'enfermeria' } as any);
     else if (activeCategory === 'Libranzas') onAddLibranza({ ...common, id: 'lib-' + common.id, type: planningType } as any);
     else if (activeCategory === 'Refuerzo') onAddDobla({ ...common, id: 'dob-' + common.id, type: planningType } as any);
     setIsModalOpen(false);
@@ -250,8 +250,8 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                   const badge: { label: string; style: string } | null =
                     ev._kind === 'libranza' ? { label: 'L', style: 'bg-green-600 text-white' } :
                     ev._kind === 'dobla' ? { label: 'R', style: 'bg-orange-600 text-white' } :
-                    ev._kind === 'guardia' && ev.type === 'Médica' ? { label: 'M', style: 'bg-blue-600 text-white' } :
-                    ev._kind === 'guardia' && ev.type === 'Enfermería' ? { label: 'E', style: 'bg-red-600 text-white' } :
+                    ev._kind === 'guardia' && ev.type === 'medica' ? { label: 'M', style: 'bg-blue-600 text-white' } :
+                    ev._kind === 'guardia' && ev.type === 'enfermeria' ? { label: 'E', style: 'bg-red-600 text-white' } :
                     ev._kind === 'meeting' ? { label: 'MT', style: 'bg-sky-600 text-white' } : null;
                   return (
                   <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-4 py-3 md:px-3 md:py-2 rounded-2xl text-[14px] md:text-[11px] font-black border leading-tight transition-all relative flex items-center gap-1.5 shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
