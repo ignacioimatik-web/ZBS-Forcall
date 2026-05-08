@@ -19,6 +19,17 @@ interface CalendariosViewProps {
   user: User | null;
 }
 
+function safeFormatDate(value: any): string {
+  if (value instanceof Date && !isNaN(value.getTime())) return value.toLocaleDateString('es-ES');
+  if (value != null) { const d = new Date(value); if (!isNaN(d.getTime())) return d.toLocaleDateString('es-ES'); }
+  return '-';
+}
+function safeDayLabel(value: any): string {
+  if (value instanceof Date && !isNaN(value.getTime())) return `Día ${value.getDate()}`;
+  if (value != null) { const d = new Date(value); if (!isNaN(d.getTime())) return `Día ${d.getDate()}`; }
+  return '-';
+}
+
 export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const { guardias, libranzas, doblas, meetings } = props;
   const [activeSub, setActiveSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo'>('Medicina');
@@ -154,7 +165,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     doc.text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, pageW - 10, 13, { align: 'right' });
 
     const rows = permutaHistory.map(log => [
-      log.timestamp.toLocaleDateString('es-ES'),
+      safeFormatDate(log.timestamp),
       log.category,
       log.details?.from || '',
       log.details?.to || '',
@@ -395,9 +406,9 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             <tbody className="divide-y divide-gray-100">
               {permutaHistory.length > 0 ? (
                 permutaHistory.map(log => {
-                  const ts = log.timestamp instanceof Date && !isNaN(log.timestamp.getTime()) ? log.timestamp.toLocaleDateString('es-ES') : '-';
-                  const d1 = log.details?.date1 instanceof Date && !isNaN(log.details.date1.getTime()) ? `Día ${log.details.date1.getDate()}` : '-';
-                  const d2 = log.details?.date2 instanceof Date && !isNaN(log.details.date2.getTime()) ? `Día ${log.details.date2.getDate()}` : '-';
+                  const ts = safeFormatDate(log.timestamp);
+                  const d1 = log.details ? safeDayLabel((log.details as any).date1) : '-';
+                  const d2 = log.details ? safeDayLabel((log.details as any).date2) : '-';
                   return (
                   <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-5"><div className="flex flex-col"><span className="text-sm font-black text-gray-800">{ts}</span></div></td>

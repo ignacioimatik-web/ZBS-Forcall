@@ -73,11 +73,12 @@ export function useAuditLogs(): UseAuditLogsResult {
     try {
       const payload: any = {};
       if (log.details) {
+        const toStr = (d: any) => d instanceof Date ? d.toISOString() : String(d);
         payload.details = {
           from: log.details.from,
           to: log.details.to,
-          date1: log.details.date1.toISOString(),
-          date2: log.details.date2.toISOString(),
+          date1: toStr(log.details.date1),
+          date2: toStr(log.details.date2),
         };
       }
 
