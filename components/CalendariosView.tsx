@@ -4,6 +4,7 @@ import { Meeting, User, Guardia, Libranza, Dobla, ManualHoliday, AuditLog } from
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 import { NotificationToast } from './NotificationToast';
 import { canManageGuardiaCategory, canManagePlanningType } from '../lib/guardiaPermissions';
+import { useAuditLogs } from '../hooks/useAuditLogs';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -22,7 +23,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const [activeSub, setActiveSub] = useState<'Medicina' | 'Enfermería' | 'Libranzas' | 'Refuerzo'>('Medicina');
   const [bulkPersonnel, setBulkPersonnel] = useState<string | null>(null);
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const { logs: auditLogs, addLog } = useAuditLogs();
   const [swapMode, setSwapMode] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -61,16 +62,14 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
       : false;
 
   useEffect(() => {
-    const initLog: AuditLog = { 
-      id: Math.random().toString(), 
-      type: 'VALIDACION', 
+    const initLog = { 
+      type: 'VALIDACION' as const, 
       user: 'Sistema', 
-      timestamp: new Date(), 
       description: `Iniciada sesión de gestión en categoría: ${activeSub}`, 
       category: activeSub 
     };
-    setAuditLogs(prev => [initLog, ...prev.slice(0, 49)]);
-  }, [activeSub]);
+    addLog(initLog);
+  }, [activeSub, addLog]);
 
   const toggleBulkDate = (date: Date) => {
     setBulkDates(prev => prev.find(d => d.toDateString() === date.toDateString()) ? prev.filter(d => d.toDateString() !== date.toDateString()) : [...prev, date]);
@@ -87,7 +86,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
       else if (activeSub === 'Libranzas') props.onAddLibranza({ ...common, id: 'lib-' + common.id, type: personnelType } as any);
       else if (activeSub === 'Refuerzo') props.onAddDobla({ ...common, id: 'dob-' + common.id, type: personnelType } as any);
     });
-    setAuditLogs(prev => [{ id: Date.now().toString(), type: 'CAMBIO', user: props.user?.name || 'Usuario', timestamp: new Date(), description: `Asignación masiva: ${bulkPersonnel} (${bulkDates.length} turnos) en ${activeSub}.`, category: activeSub }, ...prev]);
+    addLog({ type: 'CAMBIO', user: props.user?.name || 'Usuario', description: `Asignación masiva: ${bulkPersonnel} (${bulkDates.length} turnos) en ${activeSub}.`, category: activeSub });
     setBulkDates([]); setBulkPersonnel(null);
   };
 
@@ -97,16 +96,14 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     const swapped = await props.onSwapGuardias(ev1, ev2);
     if (!swapped) return;
 
-    const newLog: AuditLog = { 
-      id: Date.now().toString(), 
-      type: 'PERMUTA', 
+    const newLog = { 
+      type: 'PERMUTA' as const, 
       user: props.user?.name || 'Usuario', 
-      timestamp: new Date(), 
       description: `Intercambio confirmado entre ${p1} y ${p2}.`, 
       category: activeSub, 
       details: { from: p1, to: p2, date1: ev1.date, date2: ev2.date } 
     };
-    setAuditLogs(prev => [newLog, ...prev]);
+    addLog(newLog);
     setSwapMode(false);
   };
 
