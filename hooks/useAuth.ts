@@ -217,10 +217,12 @@ export function useAuth(): UseAuthResult {
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
-      setUser(null);
-      setError(null);
     } catch (err) {
       console.error('Error signing out:', err);
+    } finally {
+      setUser(null);
+      setError(null);
+      setIsLoading(false);
     }
   }, []);
 
