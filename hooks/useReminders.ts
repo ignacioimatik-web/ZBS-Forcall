@@ -94,9 +94,9 @@ export function useReminders(userName?: string): UseRemindersResult {
           });
         };
 
-        scheduleForType(guardias || [], guardias.some((g: any) => g.type === 'medica') ? 'Guardia medica' : 'Guardia enfermeria');
-        scheduleForType(libranzas || [], libranzas.some((l: any) => l.type === 'medica') ? 'Libranza medica' : 'Libranza enfermeria');
-        scheduleForType(doblas || [], doblas.some((d: any) => d.type === 'medica') ? 'Dobla medica' : 'Dobla enfermeria');
+        scheduleForType(guardias || [], (guardias || []).some((g: any) => g.type === 'medica') ? 'Guardia medica' : 'Guardia enfermeria');
+        scheduleForType(libranzas || [], (libranzas || []).some((l: any) => l.type === 'medica') ? 'Libranza medica' : 'Libranza enfermeria');
+        scheduleForType(doblas || [], (doblas || []).some((d: any) => d.type === 'medica') ? 'Dobla medica' : 'Dobla enfermeria');
       } catch (error) {
         console.error('Error loading reminders:', error);
       }

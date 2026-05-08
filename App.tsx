@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { UnifiedCalendar } from './components/UnifiedCalendar';
@@ -47,10 +47,10 @@ const App: React.FC = () => {
   const [forceShowLogin, setForceShowLogin] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
 
-  const { guardias, addGuardia, updateGuardia, deleteGuardia, isLoading: guardiasLoading } = useGuardias();
-  const { libranzas, addLibranza, updateLibranza, deleteLibranza, isLoading: libranzasLoading } = useLibranzas();
-  const { doblas, addDobla, updateDobla, deleteDobla, isLoading: doblasLoading } = useDoblas();
-  const { meetings, addMeeting, updateMeeting, deleteMeeting, isLoading: meetingsLoading } = useMeetings();
+  const { guardias, addGuardia, updateGuardia, deleteGuardia, isLoading: guardiasLoading, refresh: refreshGuardias } = useGuardias();
+  const { libranzas, addLibranza, updateLibranza, deleteLibranza, isLoading: libranzasLoading, refresh: refreshLibranzas } = useLibranzas();
+  const { doblas, addDobla, updateDobla, deleteDobla, isLoading: doblasLoading, refresh: refreshDoblas } = useDoblas();
+  const { meetings, addMeeting, updateMeeting, deleteMeeting, isLoading: meetingsLoading, refresh: refreshMeetings } = useMeetings();
 
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
@@ -58,6 +58,18 @@ const App: React.FC = () => {
 
   // Inicializar recordatorios (notificaciones programadas) para el usuario actual
   useReminders(user?.name);
+
+  // Refrescar datos cuando el usuario inicia sesión (pasa de null a no-null)
+  const prevUserRef = useRef(user);
+  useEffect(() => {
+    if (prevUserRef.current === null && user !== null) {
+      refreshGuardias();
+      refreshLibranzas();
+      refreshDoblas();
+      refreshMeetings();
+    }
+    prevUserRef.current = user;
+  }, [user, refreshGuardias, refreshLibranzas, refreshDoblas, refreshMeetings]);
 
   const isDataLoading = guardiasLoading || libranzasLoading || doblasLoading || meetingsLoading;
 
