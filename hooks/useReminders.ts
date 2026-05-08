@@ -7,7 +7,7 @@ interface UseRemindersResult {
   requestPermission: () => Promise<boolean>;
 }
 
-export function useReminders(): UseRemindersResult {
+export function useReminders(userName?: string): UseRemindersResult {
   const timersRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
@@ -46,30 +46,35 @@ export function useReminders(): UseRemindersResult {
 
   // Cargar guardias y programar recordatorios al iniciar
   useEffect(() => {
+    if (!user Name) return; // No programar si no hay usuario
+    
     const loadAndSchedule = async () => {
       const hasPermission = await requestPermission();
       if (!hasPermission) return;
 
       try {
-        // Cargar guardias de los próximos 7 días
+        // Cargar guardias de los próximos 7 días filtradas por el usuario
         const nextWeek = new Date();
         nextWeek.setDate(nextWeek.getDate() + 7);
         
         const { data: guardias } = await supabase
           .from('guardias')
           .select('*')
+          .eq('personnel_name', user Name)
           .gte('date', new Date().toISOString().split('T')[0])
           .lte('date', nextWeek.toISOString().split('T')[0]);
 
         const { data: libranzas } = await supabase
           .from('libranzas')
           .select('*')
+          .eq('personnel_name', user Name)
           .gte('date', new Date().toISOString().split('T')[0])
           .lte('date', nextWeek.toISOString().split('T')[0]);
 
         const { data: doblas } = await supabase
           .from('doblas')
           .select('*')
+          .eq('personnel_name', user Name)
           .gte('date', new Date().toISOString().split('T')[0])
           .lte('date', nextWeek.toISOString().split('T')[0]);
 
@@ -83,15 +88,15 @@ export function useReminders(): UseRemindersResult {
             
             scheduleReminder(
               `Recordatorio: ${type}`,
-              `${type} de ${item.personnel_name} el ${eventDate.toLocaleDateString('es-ES')}`,
+              `Tu ${type.toLowerCase()} es el ${eventDate.toLocaleDateString('es-ES')}`,
               reminderDate
             );
           });
         };
 
-        scheduleForType(guardias || [], item.type === 'medica' ? 'Guardia Médica' : 'Guardia Enfermería');
-        scheduleForType(libranzas || [], item.type === 'medica' ? 'Libranza Médica' : 'Libranza Enfermería');
-        scheduleForType(doblas || [], item.type === 'medica' ? 'Dobla Médica' : 'Dobla Enfermería');
+        scheduleForType(guardias || [], guardias.some((g: any) => g.type === 'medica') ? 'Guardia Médica' : 'Guardia Enfermería');
+        scheduleForType(libranzas || [], libranzas.some((l: any) => l.type === 'medica') ? 'Libranza Médica' : 'Libranza Enfermería');
+        scheduleForType(doblas || [], doblas.some((d: any) => d.type === 'medica') ? 'Dobla Médica' : 'Dobla Enfermería');
       } catch (error) {
         console.error('Error loading reminders:', error);
       }
