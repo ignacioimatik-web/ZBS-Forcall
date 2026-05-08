@@ -38,6 +38,10 @@ const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
 };
 
 const App: React.FC = () => {
+  // Referenciar LoginScreen explícitamente para evitar tree-shaking
+  const LoginScreenRef = LoginScreen;
+  console.log('LoginScreen loaded:', !!LoginScreenRef);
+  
   const { user, isLoading: authLoading, signOut } = useAuth();
   const [forceShowLogin, setForceShowLogin] = useState(false);
 
