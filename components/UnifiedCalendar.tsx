@@ -247,8 +247,15 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
               <div className="flex-1 space-y-2 md:space-y-1.5 overflow-hidden">
                 {events.map((ev: any, idx) => {
                   const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
+                  const badge: { label: string; style: string } | null =
+                    ev._kind === 'libranza' ? { label: 'L', style: 'bg-green-600 text-white' } :
+                    ev._kind === 'dobla' ? { label: 'R', style: 'bg-orange-600 text-white' } :
+                    ev._kind === 'guardia' && ev.type === 'Médica' ? { label: 'M', style: 'bg-blue-600 text-white' } :
+                    ev._kind === 'guardia' && ev.type === 'Enfermería' ? { label: 'E', style: 'bg-red-600 text-white' } :
+                    ev._kind === 'meeting' ? { label: 'MT', style: 'bg-sky-600 text-white' } : null;
                   return (
-                  <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-4 py-3 md:px-3 md:py-2 rounded-2xl text-[14px] md:text-[11px] font-black border leading-tight transition-all relative flex items-center justify-between shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
+                  <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-4 py-3 md:px-3 md:py-2 rounded-2xl text-[14px] md:text-[11px] font-black border leading-tight transition-all relative flex items-center gap-1.5 shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
+                    {badge && <span className={`text-[9px] md:text-[7px] font-black px-1.5 py-0.5 rounded-md leading-none shrink-0 ${badge.style}`}>{badge.label}</span>}
                     <span className="whitespace-normal break-words flex-1">{ev.personnelName || ev.title}</span>
                   </div>
                   );

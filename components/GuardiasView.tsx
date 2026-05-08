@@ -80,7 +80,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
           g.date.getMonth() === month && g.date.getFullYear() === year
       )
       .forEach(g => {
-        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type });
+        entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: g.type === 'Médica' ? 'M' : 'E' });
       });
     const data: PDFCalendarData = {
       title: 'Calendario Guardias Forcall',

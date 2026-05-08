@@ -50,7 +50,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       entries.push({
         date: g.date,
         personnel: [g.personnelName],
-        type: g.type
+        type: g.type,
+        kind: g.type === 'Médica' ? 'M' : 'E'
       });
     });
     // Libranzas
@@ -58,7 +59,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       entries.push({
         date: l.date,
         personnel: [l.personnelName],
-        type: l.type
+        type: l.type,
+        kind: 'L'
       });
     });
     // Doblas
@@ -66,7 +68,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       entries.push({
         date: d.date,
         personnel: [d.personnelName],
-        type: d.type
+        type: d.type,
+        kind: 'R'
       });
     });
     // Meetings
@@ -74,7 +77,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       entries.push({
         date: m.date,
         personnel: [m.title],
-        type: m.type
+        type: m.type,
+        kind: 'MT'
       });
     });
     const data: PDFCalendarData = {
