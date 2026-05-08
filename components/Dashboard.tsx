@@ -129,7 +129,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex justify-between items-center px-4 md:px-0 no-print">
            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Cuadrante Consolidado</h3>
            <button 
-            onClick={handleDownloadDashboard}
+            onClick={handleDownloadActiveCalendar}
             className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg active:scale-95"
            >
              <span className="material-symbols-outlined text-sm">picture_as_pdf</span> Descargar Calendario
