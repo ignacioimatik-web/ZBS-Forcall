@@ -105,22 +105,23 @@ export function generateCalendarPDF(data: PDFCalendarData): jsPDF {
         });
 
         if (dayEntries.length > 0) {
-          doc.setFontSize(5.5);
+          doc.setFontSize(4.8);
           doc.setFont('helvetica', 'normal');
-          let textY = y + 8;
+          let textY = y + 7.5;
+          const maxVisible = 4;
           dayEntries.forEach((entry, idx) => {
-            if (idx >= 2 && dayEntries.length > 3) {
-              if (idx === 2) {
+            if (idx >= maxVisible) {
+              if (idx === maxVisible) {
                 doc.setTextColor(primary[0], primary[1], primary[2]);
-                doc.text(`+${dayEntries.length - 2} más`, x + 1.5, textY);
+                doc.text(`+${dayEntries.length - maxVisible} más`, x + 1.5, textY);
               }
               return;
             }
             const names = entry.personnel.join(', ');
-            const truncated = names.length > 18 ? names.substring(0, 17) + '…' : names;
+            const truncated = names.length > 14 ? names.substring(0, 13) + '…' : names;
             doc.setTextColor(dark[0], dark[1], dark[2]);
             doc.text(truncated, x + 1.5, textY);
-            textY += 3.2;
+            textY += 2.8;
           });
         }
 
