@@ -159,7 +159,7 @@ export function useAuth(): UseAuthResult {
             }
 
             console.log('Registro OK, iniciando sesión automáticamente...');
-            const { error: secondSignInError } = await supabase.auth.signInWithPassword({
+            const { data: signInData, error: secondSignInError } = await supabase.auth.signInWithPassword({
               email,
               password: supabasePassword,
             });
@@ -167,6 +167,13 @@ export function useAuth(): UseAuthResult {
             if (secondSignInError) {
               setError(secondSignInError.message);
               return { success: false, error: secondSignInError.message };
+            }
+
+            // Actualizar usuario directamente después del login
+            if (signInData?.user) {
+              const appUser = await fetchProfile(signInData.user.id, signInData.user.email || '');
+              setUser(appUser);
+              setIsLoading(false);
             }
 
             return { success: true, message: 'Cuenta creada e iniciada sesión' };
@@ -177,13 +184,20 @@ export function useAuth(): UseAuthResult {
         return { success: false, error: signInError.message };
       }
 
+      // Actualizar usuario directamente después del login
+      if (data?.user) {
+        const appUser = await fetchProfile(data.user.id, data.user.email || '');
+        setUser(appUser);
+        setIsLoading(false);
+      }
+
       return { success: true };
     } catch (err: any) {
       const msg = err.message || 'Error al iniciar sesión';
       setError(msg);
       return { success: false, error: msg };
     }
-  }, []);
+  }, [fetchProfile]);
 
   const signOut = useCallback(async () => {
     try {
