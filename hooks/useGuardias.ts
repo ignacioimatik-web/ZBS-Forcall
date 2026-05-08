@@ -2,8 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Guardia } from '../types';
 
-// Sin funciones de conversión. Usar SIEMPRE Médica/Enfermería (con tildes) según CHECK constraint
-// La base de datos espera exactamente 'Médica' o 'Enfermería'
+// Tipos fijos según CHECK constraint: 'Médica' o 'Enfermería' (con tildes)
+const VALID_TYPES = ['Médica', 'Enfermería'];
+
+function normalizeToFrontend(dbType: string): 'Médica' | 'Enfermería' {
+  // Aceptar tanto medica como Médica, tanto enfermeria como Enfermería
+  const lowered = dbType.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (lowered === 'medica') return 'Médica';
+  if (lowered === 'enfermeria') return 'Enfermería';
+  return (VALID_TYPES.includes(dbType) ? dbType : 'Médica') as 'Médica' | 'Enfermería';
+}
 
 function fromDBType(type: string): 'Médica' | 'Enfermería' {
   if (type === 'medica') return 'Médica';
