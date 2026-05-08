@@ -29,6 +29,8 @@ interface UnifiedCalendarProps {
   onCancelSwap?: () => void;
   hideHeader?: boolean;
   id?: string;
+  currentMonth?: Date;
+  onMonthChange?: (month: Date) => void;
 }
 
 export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({ 
@@ -36,9 +38,15 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   onAddGuardia, onDeleteGuardia, onAddLibranza, onDeleteLibranza, onAddDobla, onDeleteDobla,
   onSwapEvents, currentUser, activeCategory = 'Todo',
   availablePersonnel = [], bulkMode = false, selectedBulkDates = [], onToggleBulkDate,
-  swapMode = false, onCancelSwap, hideHeader = false, id = "calendar-container", isReadOnly = false
+  swapMode = false, onCancelSwap, hideHeader = false, id = "calendar-container", isReadOnly = false,
+  currentMonth: externalMonth, onMonthChange
 }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [internalMonth, setInternalMonth] = useState(new Date());
+  const currentMonth = externalMonth ?? internalMonth;
+  const setCurrentMonth = (m: Date) => {
+    onMonthChange?.(m);
+    if (!externalMonth) setInternalMonth(m);
+  };
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [personnelName, setPersonnelName] = useState('');

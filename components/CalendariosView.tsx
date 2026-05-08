@@ -4,6 +4,8 @@ import { Meeting, User, Guardia, Libranza, Dobla, ManualHoliday, AuditLog } from
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 import { NotificationToast } from './NotificationToast';
 import { canManageGuardiaCategory, canManagePlanningType } from '../lib/guardiaPermissions';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface CalendariosViewProps {
   meetings: Meeting[]; guardias: Guardia[]; libranzas: Libranza[]; doblas: Dobla[]; manualHolidays: ManualHoliday[];
@@ -16,11 +18,19 @@ interface CalendariosViewProps {
 }
 
 export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
+  const { guardias, libranzas, doblas, meetings } = props;
   const [activeSub, setActiveSub] = useState<'Medicina' | 'Enfermería' | 'Libranzas' | 'Refuerzo'>('Medicina');
   const [bulkPersonnel, setBulkPersonnel] = useState<string | null>(null);
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [swapMode, setSwapMode] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const changeMonth = (offset: number) => {
+    const newDate = new Date(currentMonth);
+    newDate.setMonth(newDate.getMonth() + offset);
+    setCurrentMonth(newDate);
+  };
 
   const doctors = ["Elena Benages", "Delia Mestre", "Fran Castillo", "Fernando Sierra", "Jorge Ramón", "Ilie Popov", "Externo/a"];
   const nurses = ["Xelo García", "Yolanda Lainez", "Maite Beltrán", "Yolanda García", "Rosa Carbó", "Externo/a"];
@@ -101,10 +111,47 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   };
 
   const handleDownloadRegistry = () => {
-    exportCalendarToPDF({
-      elementId: 'registro-permutas-container',
-      filename: `Registro_Permutas_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    
+    doc.setFillColor(234, 88, 12);
+    doc.rect(0, 0, pageW, 20, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Registro de Permutas - ZBS Forcall', 10, 13);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, pageW - 10, 13, { align: 'right' });
+
+    const rows = permutaHistory.map(log => [
+      log.timestamp.toLocaleDateString('es-ES'),
+      log.category,
+      log.details?.from || '',
+      log.details?.to || '',
+      log.user
+    ]);
+
+    autoTable(doc, {
+      head: [['Fecha', 'Categoría', 'De', 'A', 'Autorizado']],
+      body: rows,
+      startY: 26,
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [31, 41, 55], textColor: 255, fontStyle: 'bold', fontSize: 7 },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+      margin: { left: 10, right: 10 },
     });
+
+    doc.setDrawColor(234, 88, 12);
+    doc.setLineWidth(0.5);
+    doc.line(10, doc.internal.pageSize.getHeight() - 12, pageW - 10, doc.internal.pageSize.getHeight() - 12);
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('ZBS Forcall - Gestión Sanitaria', 10, doc.internal.pageSize.getHeight() - 7);
+    doc.text(`Página 1 de 1`, pageW - 10, doc.internal.pageSize.getHeight() - 7, { align: 'right' });
+
+    doc.save(`Registro_Permutas_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`);
   };
 
   const [isDownloading, setIsDownloading] = useState(false);
@@ -183,16 +230,29 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* PANEL DE HERRAMIENTAS - IZQUIERDA */}
         <aside className="w-full lg:w-80 space-y-4 lg:order-1 no-print px-4 md:px-0">
-          <button 
-            onClick={handleDownloadActiveCalendar} 
-            className="w-full p-6 rounded-[2rem] bg-indigo-50 text-indigo-700 border-2 border-indigo-100 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-4 group hover:bg-indigo-100 hover:border-indigo-200"
-          >
-             <span className="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">picture_as_pdf</span>
-             <div className="text-left">
-               <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">Descargar Calendario</span>
-               <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">{activeSub} - PDF</span>
-             </div>
-          </button>
+          <div className="bg-white rounded-[2rem] p-4 border border-gray-100 shadow-sm space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                <span className="material-symbols-outlined text-gray-400">chevron_left</span>
+              </button>
+              <span className="font-black text-gray-800 text-xs capitalize text-center">
+                {currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+              </span>
+              <button onClick={() => changeMonth(1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                <span className="material-symbols-outlined text-gray-400">chevron_right</span>
+              </button>
+            </div>
+            <button 
+              onClick={handleDownloadActiveCalendar} 
+              className="w-full p-5 rounded-[2rem] bg-indigo-50 text-indigo-700 border-2 border-indigo-100 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-3 group hover:bg-indigo-100 hover:border-indigo-200"
+            >
+               <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">picture_as_pdf</span>
+               <div className="text-left">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">Descargar Calendario</span>
+                  <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">{activeSub} - {currentMonth.toLocaleDateString('es-ES', { month: 'long' })}</span>
+               </div>
+            </button>
+          </div>
           
           <button 
             onClick={() => { setSwapMode(!swapMode); setBulkPersonnel(null); }} 
@@ -260,6 +320,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             activeCategory={activeSub as any} availablePersonnel={currentPersonnel}
             bulkMode={!!bulkPersonnel} selectedBulkDates={bulkDates} onToggleBulkDate={toggleBulkDate}
             swapMode={swapMode} onCancelSwap={() => setSwapMode(false)}
+            currentMonth={currentMonth} onMonthChange={setCurrentMonth}
           />
         </main>
       </div>
@@ -302,6 +363,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           </table>
         </div>
       </div>
+      {downloadMsg && <NotificationToast message={downloadMsg} onClose={() => setDownloadMsg(null)} />}
     </div>
   );
 };
