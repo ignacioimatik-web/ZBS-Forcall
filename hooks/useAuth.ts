@@ -144,11 +144,18 @@ export function useAuth(): UseAuthResult {
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
     const supabasePassword = transformPin(password);
+
+    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> =>
+      Promise.race([
+        promise,
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Tiempo de espera agotado')), ms)),
+      ]);
+
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: supabasePassword,
-      });
+      const { data, error: signInError } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password: supabasePassword }),
+        12000
+      );
 
       if (signInError) {
         if (signInError.message === 'Invalid login credentials') {
@@ -173,17 +180,16 @@ export function useAuth(): UseAuthResult {
             }
 
             console.log('Registro OK, iniciando sesión automáticamente...');
-            const { data: signInData, error: secondSignInError } = await supabase.auth.signInWithPassword({
-              email,
-              password: supabasePassword,
-            });
+            const { data: signInData, error: secondSignInError } = await withTimeout(
+              supabase.auth.signInWithPassword({ email, password: supabasePassword }),
+              12000
+            );
 
             if (secondSignInError) {
               setError(secondSignInError.message);
               return { success: false, error: secondSignInError.message };
             }
 
-            // Actualizar usuario directamente después del login
             if (signInData?.user) {
               const appUser = await fetchProfile(signInData.user.id, signInData.user.email || '');
               setUser(appUser);
@@ -198,7 +204,6 @@ export function useAuth(): UseAuthResult {
         return { success: false, error: signInError.message };
       }
 
-      // Actualizar usuario directamente después del login
       if (data?.user) {
         const appUser = await fetchProfile(data.user.id, data.user.email || '');
         setUser(appUser);
