@@ -130,8 +130,8 @@ const App: React.FC = () => {
       modifiedBy: user.id || null,
       modifiedAt: new Date(),
     };
-    const success1 = await updateGuardia(pureGuard1);
-    const success2 = await updateGuardia(pureGuard2);
+    const success1 = await updateGuardia(guard1Update);
+    const success2 = await updateGuardia(guard2Update);
     
     // El trigger de BD (audit_logs) ya registra el cambio como 'CAMBIO'.
     // Recargar logs manualmente para que se vea pronto.
