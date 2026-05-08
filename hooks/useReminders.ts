@@ -46,7 +46,7 @@ export function useReminders(userName?: string): UseRemindersResult {
 
   // Cargar guardias y programar recordatorios al iniciar
   useEffect(() => {
-    if (!user Name) return; // No programar si no hay usuario
+    if (!userName) return; // No programar si no hay usuario
     
     const loadAndSchedule = async () => {
       const hasPermission = await requestPermission();
@@ -60,21 +60,21 @@ export function useReminders(userName?: string): UseRemindersResult {
         const { data: guardias } = await supabase
           .from('guardias')
           .select('*')
-          .eq('personnel_name', user Name)
+          .eq('personnel_name', userName)
           .gte('date', new Date().toISOString().split('T')[0])
           .lte('date', nextWeek.toISOString().split('T')[0]);
 
         const { data: libranzas } = await supabase
           .from('libranzas')
           .select('*')
-          .eq('personnel_name', user Name)
+          .eq('personnel_name', userName)
           .gte('date', new Date().toISOString().split('T')[0])
           .lte('date', nextWeek.toISOString().split('T')[0]);
 
         const { data: doblas } = await supabase
           .from('doblas')
           .select('*')
-          .eq('personnel_name', user Name)
+          .eq('personnel_name', userName)
           .gte('date', new Date().toISOString().split('T')[0])
           .lte('date', nextWeek.toISOString().split('T')[0]);
 
