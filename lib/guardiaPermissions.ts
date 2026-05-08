@@ -12,7 +12,11 @@ const normalize = (value?: string | null) =>
 const matchesAny = (user: User | null, values: string[]) => {
   if (!user) return false;
 
-  const candidates = [normalize(user.id), normalize(user.name), normalize(user.email)];
+  const candidates = [
+    normalize(user.id || ''),
+    normalize(user.name || ''),
+    normalize(user.email || '')
+  ];
   return values.some((value) => candidates.includes(normalize(value)));
 };
 
@@ -21,11 +25,21 @@ export function isMedicineCoordinator(user: User | null) {
 }
 
 export function isNursingCoordinator(user: User | null) {
-  return matchesAny(user, ['xelo', 'xelo garcia', 'xelo garcía']);
+  if (!user) return false;
+  // Verificación por nombre/id/email (legacy)
+  if (matchesAny(user, ['xelo', 'xelo garcia', 'xelo garcía'])) return true;
+  // Verificación por rol y staffGroup (nuevo sistema)
+  if (user.role === 'Coordinador' && user.staffGroup === 'enfermeria') return true;
+  return false;
 }
 
 export function isNursingPlanner(user: User | null) {
-  return matchesAny(user, ['xelo', 'xelo garcia', 'xelo garcía']);
+  if (!user) return false;
+  // Verificación por nombre/id/email (legacy)
+  if (matchesAny(user, ['xelo', 'xelo garcia', 'xelo garcía'])) return true;
+  // Verificación por rol y staffGroup (nuevo sistema)
+  if (user.role === 'Coordinador' && user.staffGroup === 'enfermeria') return true;
+  return false;
 }
 
 export function canManageGuardiaCategory(user: User | null, category: GuardiaCategory) {
