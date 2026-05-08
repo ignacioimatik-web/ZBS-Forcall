@@ -19,10 +19,9 @@ export function useAuth(): UseAuthResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProfile = useCallback(async (userId: string, email: string, retries = 3) => {
+  const fetchProfile = useCallback(async (userId: string, email: string, retries = 1) => {
     for (let i = 0; i < retries; i++) {
       try {
-        console.log(`Intentando obtener perfil para ${userId} (intento ${i + 1})...`);
         const { data, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -43,20 +42,16 @@ export function useAuth(): UseAuthResult {
 
         if (profileError && profileError.code !== 'PGRST116') {
           console.error('Error al obtener perfil:', profileError);
-        } else {
-          console.warn('Perfil no encontrado aún, reintentando...');
         }
       } catch (err) {
         console.error('Error inesperado al obtener perfil:', err);
       }
       
       if (i < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
     
-    // Si el perfil no se encuentra, crear uno fallback basado en datos locales
-    console.warn('Perfil no encontrado en BD, usando datos locales como fallback...');
     const localUser = USERS.find(u => u.email === email);
     if (localUser) {
       return {
