@@ -15,7 +15,7 @@ import { useDoblas } from './hooks/useDoblas';
 import { useVacaciones } from './hooks/useVacaciones';
 import { useMeetings } from './hooks/useMeetings';
 import { useReminders } from './hooks/useReminders';
-import { canManageGuardiaType, canManageVacaciones, getGuardiaPermissionMessage } from './lib/guardiaPermissions';
+import { canManageGuardiaType, canManagePlanningType, canManageVacaciones, getGuardiaPermissionMessage } from './lib/guardiaPermissions';
 
 const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
   const [dots, setDots] = useState('.');
@@ -226,13 +226,14 @@ const App: React.FC = () => {
   }, [user, guardias, updateGuardia]);
 
   const handleUpsertLibranza = useCallback(async (libranza: any) => {
-    const existing = libranzas.find(l => l.id === libranza.id);
-    if (existing) {
-      await updateLibranza(libranza);
-    } else {
-      await addLibranza(libranza);
+    if (!canManagePlanningType(user, libranza.type)) {
+      setNotification('No tienes permiso para añadir libranzas de este tipo.');
+      return;
     }
-  }, [libranzas, addLibranza, updateLibranza]);
+    const existing = libranzas.find(l => l.id === libranza.id);
+    const ok = existing ? await updateLibranza(libranza) : await addLibranza(libranza);
+    if (!ok) setNotification('Error al guardar la libranza. Comprueba que tu perfil tenga el rol correcto en Supabase.');
+  }, [user, libranzas, addLibranza, updateLibranza]);
 
   const handleDeleteVacacion = useCallback(async (id: string) => {
     const existing = vacaciones.find(v => v.id === id);
