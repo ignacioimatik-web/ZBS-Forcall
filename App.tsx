@@ -137,6 +137,10 @@ const App: React.FC = () => {
       setNotification('Solo se permiten permutas de guardias.');
       return false;
     }
+    if (event1.type !== event2.type) {
+      setNotification('No se puede permutar una guardia de medicina con una de enfermería.');
+      return false;
+    }
     // Intercambiar personnelName mediante actualización en sitio
     // Crear objetos LIMPIOS y EXPLÍCITOS para evitar mezclar tipos
     const guard1Update = {
