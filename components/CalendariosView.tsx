@@ -312,16 +312,18 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
              </button>
            </div>
 
-           <button 
-             onClick={() => { setSwapMode(!swapMode); setBulkPersonnel(null); }} 
-             className={`w-full p-6 rounded-[2.5rem] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-4 border-2 ${swapMode ? 'bg-indigo-700 text-white border-indigo-900 ring-4 ring-indigo-500/20 animate-pulse' : 'bg-white text-indigo-700 border-indigo-50 hover:border-indigo-200 shadow-indigo-100/20 shadow-lg'}`}
-           >
-             <span className="material-symbols-outlined text-3xl">{swapMode ? 'sync_alt' : 'swap_calls'}</span>
-             <div className="text-left">
-               <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">{swapMode ? 'PERMUTA ACTIVA' : 'PEDIR PERMUTA'}</span>
-               <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">Toca 2 nombres para cruzar</span>
-             </div>
-          </button>
+          {props.user?.role !== 'Administrador' && (
+            <button 
+              onClick={() => { setSwapMode(!swapMode); setBulkPersonnel(null); }} 
+              className={`w-full p-6 rounded-[2.5rem] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-4 border-2 ${swapMode ? 'bg-indigo-700 text-white border-indigo-900 ring-4 ring-indigo-500/20 animate-pulse' : 'bg-white text-indigo-700 border-indigo-50 hover:border-indigo-200 shadow-indigo-100/20 shadow-lg'}`}
+            >
+              <span className="material-symbols-outlined text-3xl">{swapMode ? 'sync_alt' : 'swap_calls'}</span>
+              <div className="text-left">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">{swapMode ? 'PERMUTA ACTIVA' : 'PEDIR PERMUTA'}</span>
+                <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">Toca 2 nombres para cruzar</span>
+              </div>
+            </button>
+          )}
 
           <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm space-y-4">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 flex items-center gap-2">

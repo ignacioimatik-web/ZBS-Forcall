@@ -141,6 +141,19 @@ const App: React.FC = () => {
       setNotification('No se puede permutar una guardia de medicina con una de enfermería.');
       return false;
     }
+    // Restricciones por rol
+    if (user.role === 'Administrador') {
+      setNotification('Los administradores no pueden realizar permutas.');
+      return false;
+    }
+    if (user.role === 'Medico' && event1.type !== 'medica') {
+      setNotification('Solo puedes permutar guardias de medicina.');
+      return false;
+    }
+    if (user.role === 'enfermera' && event1.type !== 'enfermeria') {
+      setNotification('Solo puedes permutar guardias de enfermería.');
+      return false;
+    }
     // Intercambiar personnelName mediante actualización en sitio
     // Crear objetos LIMPIOS y EXPLÍCITOS para evitar mezclar tipos
     const guard1Update = {
