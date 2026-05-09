@@ -16,6 +16,7 @@ interface CalendariosViewProps {
   onAddDobla: (dobla: Dobla) => void; onDeleteDobla: (id: string) => void;
   onAddMeeting: (meeting: Meeting) => void;
   onSwapGuardias: (event1: Guardia & { _kind?: string }, event2: Guardia & { _kind?: string }) => Promise<boolean>;
+  onUndoSwap?: (log: AuditLog) => Promise<boolean>;
   user: User | null;
 }
 
@@ -35,7 +36,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const [activeSub, setActiveSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo'>('Medicina');
   const [bulkPersonnel, setBulkPersonnel] = useState<string | null>(null);
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
-  const { logs: auditLogs, addLog } = useAuditLogs();
+  const { logs: auditLogs, addLog, deleteLog } = useAuditLogs();
   const [swapMode, setSwapMode] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -403,6 +404,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">Intercambio</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">Días</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right">Autorizado</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -418,11 +420,25 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                     <td className="px-6 py-5"><div className="flex items-center gap-3"><span className="text-sm font-black text-indigo-700">{log.details?.from}</span><span className="material-symbols-outlined text-gray-300 text-sm">sync_alt</span><span className="text-sm font-black text-indigo-700">{log.details?.to}</span></div></td>
                     <td className="px-6 py-5"><div className="flex gap-2"><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{d1}</span><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{d2}</span></div></td>
                     <td className="px-6 py-5 text-right"><span className="text-xs font-black text-gray-600 uppercase tracking-tighter">{log.user}</span></td>
+                    <td className="px-6 py-5 text-right">
+                      {canManageActiveCategory && props.onUndoSwap && (
+                        <button
+                          onClick={async () => {
+                            if (!confirm('¿Deshacer esta permuta? Se intercambiarán los profesionales de nuevo.')) return;
+                            const ok = await props.onUndoSwap!(log);
+                            if (ok) deleteLog(log.id);
+                          }}
+                          className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition-all active:scale-95"
+                        >
+                          Deshacer
+                        </button>
+                      )}
+                    </td>
                   </tr>
                   );
                 }))
               : (
-                <tr><td colSpan={5} className="px-6 py-12 text-center opacity-30 text-[10px] font-black uppercase tracking-widest">Sin registros</td></tr>
+                <tr><td colSpan={6} className="px-6 py-12 text-center opacity-30 text-[10px] font-black uppercase tracking-widest">Sin registros</td></tr>
               )}
             </tbody>
           </table>

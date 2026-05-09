@@ -187,6 +187,40 @@ const App: React.FC = () => {
     }
   }, [user, updateGuardia]);
 
+  const handleUndoSwap = useCallback(async (log: any): Promise<boolean> => {
+    if (!user) return false;
+    const details = log.details;
+    if (!details || !details.date1 || !details.date2) return false;
+
+    const date1 = new Date(details.date1);
+    const date2 = new Date(details.date2);
+
+    const guardiaA = guardias.find(g =>
+      g.date.toDateString() === date1.toDateString() && g.personnelName === details.to
+    );
+    const guardiaB = guardias.find(g =>
+      g.date.toDateString() === date2.toDateString() && g.personnelName === details.from
+    );
+
+    if (!guardiaA || !guardiaB) {
+      setNotification('No se encontraron las guardias para deshacer la permuta.');
+      return false;
+    }
+
+    const updateA = { ...guardiaA, personnelName: details.from, isChange: true, modifiedBy: user.id || null, modifiedAt: new Date() };
+    const updateB = { ...guardiaB, personnelName: details.to, isChange: true, modifiedBy: user.id || null, modifiedAt: new Date() };
+
+    const ok1 = await updateGuardia(updateA);
+    const ok2 = await updateGuardia(updateB);
+
+    if (ok1 && ok2) {
+      setNotification('Permuta deshecha correctamente.');
+      return true;
+    }
+    setNotification('Error al deshacer la permuta.');
+    return false;
+  }, [user, guardias, updateGuardia]);
+
   const handleUpsertLibranza = useCallback(async (libranza: any) => {
     const existing = libranzas.find(l => l.id === libranza.id);
     if (existing) {
@@ -241,6 +275,7 @@ const App: React.FC = () => {
             onDeleteDobla={deleteDobla}
             onAddMeeting={handleUpsertSession}
             onSwapGuardias={handleSwapGuardias}
+            onUndoSwap={handleUndoSwap}
             user={user}
           />
         );

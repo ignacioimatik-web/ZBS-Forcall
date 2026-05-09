@@ -7,6 +7,7 @@ interface UseAuditLogsResult {
   isLoading: boolean;
   error: string | null;
   addLog: (log: Omit<AuditLog, 'id' | 'timestamp'>) => Promise<void>;
+  deleteLog: (id: string) => Promise<boolean>;
   refresh: () => Promise<void>;
 }
 
@@ -104,6 +105,26 @@ export function useAuditLogs(): UseAuditLogsResult {
     }
   }, [loadLogs]);
 
+  const deleteLog = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      const { error: deleteError } = await supabase
+        .from('audit_logs')
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) {
+        console.error('Error deleting audit log:', deleteError);
+        return false;
+      }
+
+      setLogs(prev => prev.filter(l => l.id !== id));
+      return true;
+    } catch (err: any) {
+      console.error('Unexpected error deleting audit log:', err);
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     loadLogs();
   }, [loadLogs]);
@@ -113,6 +134,7 @@ export function useAuditLogs(): UseAuditLogsResult {
     isLoading,
     error,
     addLog,
+    deleteLog,
     refresh: loadLogs,
   };
 }
