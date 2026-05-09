@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
-import { Meeting, MeetingType, Guardia, User, Libranza, Dobla } from '../types';
+import { Meeting, MeetingType, Guardia, User, Libranza, Dobla, Vacacion } from '../types';
 import { getHolidayName } from '../utils';
-import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType } from '../lib/guardiaPermissions';
+import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType, canManageVacaciones } from '../lib/guardiaPermissions';
 import { ConfirmationModal } from './ConfirmationModal';
 
 declare var html2pdf: any;
@@ -12,16 +12,19 @@ interface UnifiedCalendarProps {
   guardias: Guardia[];
   libranzas?: Libranza[];
   doblas?: Dobla[];
+  vacaciones?: Vacacion[];
   onAddGuardia: (guardia: Guardia) => void;
   onDeleteGuardia: (id: string) => void;
   onAddLibranza: (libranza: Libranza) => void;
   onDeleteLibranza: (id: string) => void;
   onAddDobla: (dobla: Dobla) => void;
   onDeleteDobla: (id: string) => void;
+  onAddVacacion?: (vacacion: Vacacion) => void;
+  onDeleteVacacion?: (id: string) => void;
   onSwapEvents?: (event1: any, event2: any) => void;
   currentUser: User | null;
   isReadOnly?: boolean;
-  activeCategory?: 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Todo';
+  activeCategory?: 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones' | 'Todo';
   availablePersonnel?: string[];
   bulkMode?: boolean;
   selectedBulkDates?: Date[];
@@ -35,8 +38,9 @@ interface UnifiedCalendarProps {
 }
 
 export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({ 
-  meetings, guardias, libranzas = [], doblas = [],
+  meetings, guardias, libranzas = [], doblas = [], vacaciones = [],
   onAddGuardia, onDeleteGuardia, onAddLibranza, onDeleteLibranza, onAddDobla, onDeleteDobla,
+  onAddVacacion, onDeleteVacacion,
   onSwapEvents, currentUser, activeCategory = 'Todo',
   availablePersonnel = [], bulkMode = false, selectedBulkDates = [], onToggleBulkDate,
   swapMode = false, onCancelSwap, hideHeader = false, id = "calendar-container", isReadOnly = false,
@@ -56,14 +60,18 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
 
   const isGuardiaCategory = activeCategory === 'Medicina' || activeCategory === 'enfermeria';
   const isPlanningCategory = activeCategory === 'Libranzas' || activeCategory === 'Refuerzo';
+  const isVacacionesCategory = activeCategory === 'Vacaciones';
   const planningType = activeCategory === 'Libranzas' || activeCategory === 'Refuerzo'
     ? (availablePersonnel.some((person) => person.includes('Elena') || person.includes('Delia') || person.includes('Fran') || person.includes('Fernando') || person.includes('Jorge') || person.includes('Ilie')) ? 'medica' : 'enfermeria')
     : 'medica';
+  const vacacionesType = availablePersonnel.some(p => p.includes('Elena') || p.includes('Delia') || p.includes('Fran') || p.includes('Fernando') || p.includes('Jorge') || p.includes('Ilie')) ? 'medica' : 'enfermeria';
   const canManageActiveCategory = !isReadOnly && isGuardiaCategory
     ? canManageGuardiaCategory(currentUser, activeCategory)
     : !isReadOnly && isPlanningCategory
       ? canManagePlanningType(currentUser, planningType)
-      : false;
+      : !isReadOnly && isVacacionesCategory
+        ? canManageVacaciones(currentUser, vacacionesType)
+        : false;
   const canSwapInActiveCategory = !isReadOnly && isGuardiaCategory && !!currentUser;
 
   const daysInMonth = useMemo(() => {
@@ -86,6 +94,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
         ...guardias.filter(g => g.date.toDateString() === dStr).map(g => ({ ...g, _kind: 'guardia' })),
         ...libranzas.filter(l => l.date.toDateString() === dStr).map(l => ({ ...l, _kind: 'libranza' })),
         ...doblas.filter(d => d.date.toDateString() === dStr).map(d => ({ ...d, _kind: 'dobla' })),
+        ...vacaciones.filter(v => v.date.toDateString() === dStr).map(v => ({ ...v, _kind: 'vacacion' })),
         ...meetings.filter(m => m.date.toDateString() === dStr).map(m => ({ ...m, _kind: 'meeting' }))
       ];
     } else if (activeCategory === 'Medicina') {
@@ -96,6 +105,8 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
       events = libranzas.filter(l => l.date.toDateString() === dStr).map(l => ({ ...l, _kind: 'libranza' }));
     } else if (activeCategory === 'Refuerzo') {
       events = doblas.filter(d => d.date.toDateString() === dStr).map(d => ({ ...d, _kind: 'dobla' }));
+    } else if (activeCategory === 'Vacaciones') {
+      events = vacaciones.filter(v => v.date.toDateString() === dStr).map(v => ({ ...v, _kind: 'vacacion' }));
     }
     return { events, holiday: getHolidayName(date) };
   };
@@ -115,6 +126,9 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     }
     if (ev._kind === 'meeting') {
       return 'bg-sky-100 text-sky-900 border-sky-300';
+    }
+    if (ev._kind === 'vacacion') {
+      return 'bg-purple-100 text-purple-900 border-purple-300';
     }
     
     // Guardias: discriminar por type
@@ -146,7 +160,8 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
       return;
     }
     const canDelete = (ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) ||
-      ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type));
+      ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)) ||
+      (ev._kind === 'vacacion' && canManageVacaciones(currentUser, ev.type));
     if (canDelete) {
       setDeleteTarget(ev);
     }
@@ -176,6 +191,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     else if (activeCategory === 'enfermeria') onAddGuardia({ ...common, type: 'enfermeria' } as any);
     else if (activeCategory === 'Libranzas') onAddLibranza({ ...common, id: 'lib-' + common.id, type: planningType } as any);
     else if (activeCategory === 'Refuerzo') onAddDobla({ ...common, id: 'dob-' + common.id, type: planningType } as any);
+    else if (activeCategory === 'Vacaciones') onAddVacacion?.({ ...common, id: 'vac-' + common.id, type: vacacionesType } as any);
     setIsModalOpen(false);
   };
 
@@ -303,6 +319,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
           if (deleteTarget._kind === 'libranza') onDeleteLibranza(deleteTarget.id);
           else if (deleteTarget._kind === 'dobla') onDeleteDobla(deleteTarget.id);
           else if (deleteTarget._kind === 'guardia') onDeleteGuardia(deleteTarget.id);
+          else if (deleteTarget._kind === 'vacacion') onDeleteVacacion?.(deleteTarget.id);
           setDeleteTarget(null);
         }}
         onCancel={() => setDeleteTarget(null)}

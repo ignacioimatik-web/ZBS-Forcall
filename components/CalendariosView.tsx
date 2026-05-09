@@ -1,19 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { UnifiedCalendar } from './UnifiedCalendar';
-import { Meeting, User, Guardia, Libranza, Dobla, ManualHoliday, AuditLog } from '../types';
+import { Meeting, User, Guardia, Libranza, Dobla, Vacacion, ManualHoliday, AuditLog } from '../types';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 import { generateICS, downloadICS } from '../lib/calendarExport';
 import { NotificationToast } from './NotificationToast';
-import { canManageGuardiaCategory, canManagePlanningType } from '../lib/guardiaPermissions';
+import { canManageGuardiaCategory, canManagePlanningType, canManageVacaciones } from '../lib/guardiaPermissions';
 import { useAuditLogs } from '../hooks/useAuditLogs';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface CalendariosViewProps {
-  meetings: Meeting[]; guardias: Guardia[]; libranzas: Libranza[]; doblas: Dobla[]; manualHolidays: ManualHoliday[];
+  meetings: Meeting[]; guardias: Guardia[]; libranzas: Libranza[]; doblas: Dobla[]; vacaciones: Vacacion[]; manualHolidays: ManualHoliday[];
   onAddGuardia: (guardia: Guardia) => void; onDeleteGuardia: (id: string) => void;
   onAddLibranza: (libranza: Libranza) => void; onDeleteLibranza: (id: string) => void;
   onAddDobla: (dobla: Dobla) => void; onDeleteDobla: (id: string) => void;
+  onAddVacacion: (vacacion: Vacacion) => void; onDeleteVacacion: (id: string) => void;
   onAddMeeting: (meeting: Meeting) => void;
   onSwapGuardias: (event1: Guardia & { _kind?: string }, event2: Guardia & { _kind?: string }) => Promise<boolean>;
   onUndoSwap?: (log: AuditLog) => Promise<boolean>;
@@ -32,8 +33,8 @@ function safeDayLabel(value: any): string {
 }
 
 export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
-  const { guardias, libranzas, doblas, meetings } = props;
-  const [activeSub, setActiveSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo'>('Medicina');
+  const { guardias, libranzas, doblas, vacaciones, meetings } = props;
+  const [activeSub, setActiveSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'>('Medicina');
   const [bulkPersonnel, setBulkPersonnel] = useState<string | null>(null);
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
   const { logs: auditLogs, addLog, deleteLog } = useAuditLogs();
@@ -56,6 +57,16 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
         : canManagePlanningType(props.user, 'enfermeria')
           ? nurses
           : [];
+  const isVacacionesCategory = activeSub === 'Vacaciones';
+  const vacacionesPersonnel = isVacacionesCategory
+    ? canManageVacaciones(props.user, 'medica') && canManageVacaciones(props.user, 'enfermeria')
+      ? [...doctors, ...nurses]
+      : canManageVacaciones(props.user, 'medica')
+        ? doctors
+        : canManageVacaciones(props.user, 'enfermeria')
+          ? nurses
+          : []
+    : [];
   const currentPersonnel =
     activeSub === 'enfermeria'
       ? nurses
@@ -65,14 +76,18 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           ? planningPersonnel
           : activeSub === 'Libranzas'
             ? planningPersonnel
-            : [...doctors, ...nurses];
+            : isVacacionesCategory
+              ? vacacionesPersonnel
+              : [...doctors, ...nurses];
   const isGuardiaCategory = activeSub === 'Medicina' || activeSub === 'enfermeria';
   const isPlanningCategory = activeSub === 'Libranzas' || activeSub === 'Refuerzo';
   const canManageActiveCategory = isGuardiaCategory
     ? canManageGuardiaCategory(props.user, activeSub)
     : isPlanningCategory
       ? planningPersonnel.length > 0
-      : false;
+      : isVacacionesCategory
+        ? vacacionesPersonnel.length > 0
+        : false;
 
   useEffect(() => {
     const initLog = { 
@@ -98,6 +113,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
       else if (activeSub === 'enfermeria') props.onAddGuardia({ ...common, type: 'enfermeria' } as any);
       else if (activeSub === 'Libranzas') props.onAddLibranza({ ...common, id: 'lib-' + common.id, type: personnelType } as any);
       else if (activeSub === 'Refuerzo') props.onAddDobla({ ...common, id: 'dob-' + common.id, type: personnelType } as any);
+      else if (activeSub === 'Vacaciones') props.onAddVacacion({ ...common, id: 'vac-' + common.id, type: personnelType } as any);
     });
     addLog({ type: 'CAMBIO', user: props.user?.name || 'Usuario', description: `Asignación masiva: ${bulkPersonnel} (${bulkDates.length} turnos) en ${activeSub}.`, category: activeSub });
     setBulkDates([]); setBulkPersonnel(null);
@@ -219,6 +235,10 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
       doblas.forEach(d => {
         entries.push({ date: d.date, personnel: [d.personnelName], type: d.type, kind: 'R' });
       });
+    } else if (activeSub === 'Vacaciones') {
+      vacaciones.forEach(v => {
+        entries.push({ date: v.date, personnel: [v.personnelName], type: v.type, kind: 'V' });
+      });
     }
     const data: PDFCalendarData = {
       title: `Calendario ${activeSub} Forcall`,
@@ -243,7 +263,8 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     { id: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20' },
     { id: 'enfermeria', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20' },
     { id: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20' },
-    { id: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20' }
+    { id: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20' },
+    { id: 'Vacaciones', icon: 'flight', activeClass: 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-purple-200 ring-purple-500/20' }
   ];
 
   const permutaHistory = useMemo(() => auditLogs.filter(log => log.type === 'PERMUTA'), [auditLogs]);
@@ -350,6 +371,11 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                 En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Xelo García puede gestionar enfermeria.
               </div>
             )}
+            {!canManageActiveCategory && isVacacionesCategory && (
+              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
+                Solo Elena Benages puede gestionar vacaciones de Medicina y Xelo García de enfermeria.
+              </div>
+            )}
             {bulkPersonnel && (
               <div className="space-y-4 animate-slide-in-up">
                 <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
@@ -372,10 +398,11 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
         <main className="flex-1 lg:order-2">
           <UnifiedCalendar 
             id="view-calendar"
-            meetings={props.meetings} guardias={props.guardias} libranzas={props.libranzas} doblas={props.doblas}
+            meetings={props.meetings} guardias={props.guardias} libranzas={props.libranzas} doblas={props.doblas} vacaciones={props.vacaciones}
             onAddGuardia={props.onAddGuardia} onDeleteGuardia={props.onDeleteGuardia}
             onAddLibranza={props.onAddLibranza} onDeleteLibranza={props.onDeleteLibranza}
             onAddDobla={props.onAddDobla} onDeleteDobla={props.onDeleteDobla}
+            onAddVacacion={props.onAddVacacion} onDeleteVacacion={props.onDeleteVacacion}
             onSwapEvents={handleSwapEvents}
             currentUser={props.user}
             activeCategory={activeSub as any} availablePersonnel={currentPersonnel}

@@ -129,6 +129,16 @@ export interface Dobla {
   modifiedAt?: Date;
 }
 
+export interface Vacacion {
+  id: string;
+  date: Date;
+  type: PersonnelType;
+  personnelName: string;
+  isChange?: boolean;
+  modifiedBy?: string;
+  modifiedAt?: Date;
+}
+
 export interface ManualHoliday {
   id: string;
   date: Date;

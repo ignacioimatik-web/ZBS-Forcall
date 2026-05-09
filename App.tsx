@@ -7,14 +7,15 @@ import { NotificationToast } from './components/NotificationToast';
 import { LoginScreen } from './components/LoginScreen';
 import { AlertasView } from './components/AlertasView';
 import { TranscriptionTool } from './components/TranscriptionTool';
-import { ManualHoliday } from './types';
+import { ManualHoliday, Vacacion } from './types';
 import { useAuth } from './hooks/useAuth';
 import { useGuardias } from './hooks/useGuardias';
 import { useLibranzas } from './hooks/useLibranzas';
 import { useDoblas } from './hooks/useDoblas';
+import { useVacaciones } from './hooks/useVacaciones';
 import { useMeetings } from './hooks/useMeetings';
 import { useReminders } from './hooks/useReminders';
-import { canManageGuardiaType, getGuardiaPermissionMessage } from './lib/guardiaPermissions';
+import { canManageGuardiaType, canManageVacaciones, getGuardiaPermissionMessage } from './lib/guardiaPermissions';
 
 const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
   const [dots, setDots] = useState('.');
@@ -50,6 +51,7 @@ const App: React.FC = () => {
   const { guardias, addGuardia, updateGuardia, deleteGuardia, isLoading: guardiasLoading, refresh: refreshGuardias } = useGuardias();
   const { libranzas, addLibranza, updateLibranza, deleteLibranza, isLoading: libranzasLoading, refresh: refreshLibranzas } = useLibranzas();
   const { doblas, addDobla, updateDobla, deleteDobla, isLoading: doblasLoading, refresh: refreshDoblas } = useDoblas();
+  const { vacaciones, addVacacion, deleteVacacion, isLoading: vacacionesLoading, refresh: refreshVacaciones } = useVacaciones();
   const { meetings, addMeeting, updateMeeting, deleteMeeting, isLoading: meetingsLoading, refresh: refreshMeetings } = useMeetings();
 
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -66,10 +68,11 @@ const App: React.FC = () => {
       refreshGuardias();
       refreshLibranzas();
       refreshDoblas();
+      refreshVacaciones();
       refreshMeetings();
     }
     prevUserRef.current = user;
-  }, [user, refreshGuardias, refreshLibranzas, refreshDoblas, refreshMeetings]);
+  }, [user, refreshGuardias, refreshLibranzas, refreshDoblas, refreshVacaciones, refreshMeetings]);
 
   // Refrescar datos al volver a la app (cambiar de pestaña, desbloquear iPad, etc.)
   useEffect(() => {
@@ -79,14 +82,15 @@ const App: React.FC = () => {
         refreshGuardias();
         refreshLibranzas();
         refreshDoblas();
+        refreshVacaciones();
         refreshMeetings();
       }
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
-  }, [user, refreshGuardias, refreshLibranzas, refreshDoblas, refreshMeetings]);
+  }, [user, refreshGuardias, refreshLibranzas, refreshDoblas, refreshVacaciones, refreshMeetings]);
 
-  const isDataLoading = guardiasLoading || libranzasLoading || doblasLoading || meetingsLoading;
+  const isDataLoading = guardiasLoading || libranzasLoading || doblasLoading || vacacionesLoading || meetingsLoading;
 
   const handleLogout = useCallback(async (reason?: string) => {
     await signOut();
@@ -230,6 +234,16 @@ const App: React.FC = () => {
     }
   }, [libranzas, addLibranza, updateLibranza]);
 
+  const handleDeleteVacacion = useCallback(async (id: string) => {
+    const existing = vacaciones.find(v => v.id === id);
+    if (!existing) return;
+    if (!canManageVacaciones(user, existing.type)) {
+      setNotification('No tienes permiso para quitar esta vacación.');
+      return;
+    }
+    await deleteVacacion(id);
+  }, [user, vacaciones, deleteVacacion]);
+
   const handleUpsertDobla = useCallback(async (dobla: any) => {
     const existing = doblas.find(d => d.id === dobla.id);
     if (existing) {
@@ -266,6 +280,7 @@ const App: React.FC = () => {
             guardias={guardias}
             libranzas={libranzas}
             doblas={doblas}
+            vacaciones={vacaciones}
             manualHolidays={manualHolidays}
             onAddGuardia={handleUpsertGuardia}
             onDeleteGuardia={handleDeleteGuardia}
@@ -273,6 +288,8 @@ const App: React.FC = () => {
             onDeleteLibranza={deleteLibranza}
             onAddDobla={handleUpsertDobla}
             onDeleteDobla={deleteDobla}
+            onAddVacacion={addVacacion}
+            onDeleteVacacion={handleDeleteVacacion}
             onAddMeeting={handleUpsertSession}
             onSwapGuardias={handleSwapGuardias}
             onUndoSwap={handleUndoSwap}

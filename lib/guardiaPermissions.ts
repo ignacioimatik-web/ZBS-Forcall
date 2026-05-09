@@ -68,6 +68,11 @@ export function getGuardiaPermissionMessage(type: Guardia['type']) {
     : 'Solo Xelo García puede añadir o quitar guardias de enfermeria.';
 }
 
+export function canManageVacaciones(user: User | null, type: 'medica' | 'enfermeria') {
+  if (type === 'medica') return isMedicineCoordinator(user);
+  return isNursingCoordinator(user);
+}
+
 export function getPlanningPermissionMessage(type: Guardia['type']) {
   return type === 'medica'
     ? 'Solo Elena Benages puede gestionar libranzas y refuerzo de Medicina.'
