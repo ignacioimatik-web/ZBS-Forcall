@@ -71,6 +71,21 @@ const App: React.FC = () => {
     prevUserRef.current = user;
   }, [user, refreshGuardias, refreshLibranzas, refreshDoblas, refreshMeetings]);
 
+  // Refrescar datos al volver a la app (cambiar de pestaña, desbloquear iPad, etc.)
+  useEffect(() => {
+    if (!user) return;
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshGuardias();
+        refreshLibranzas();
+        refreshDoblas();
+        refreshMeetings();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [user, refreshGuardias, refreshLibranzas, refreshDoblas, refreshMeetings]);
+
   const isDataLoading = guardiasLoading || libranzasLoading || doblasLoading || meetingsLoading;
 
   const handleLogout = useCallback(async (reason?: string) => {
