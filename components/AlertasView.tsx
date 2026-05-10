@@ -26,6 +26,35 @@ interface ForecastDay {
   condition: 'Sunny' | 'Cloudy' | 'Rain' | 'Snow';
 }
 
+const TOWNS = [
+  { id: 'forcall', town: 'Forcall', lat: 40.646, lng: -0.200 },
+  { id: 'morella', town: 'Morella', lat: 40.620, lng: -0.100 },
+  { id: 'cinctorres', town: 'Cinctorres', lat: 40.583, lng: -0.217 },
+  { id: 'portell', town: 'Portell de Morella', lat: 40.533, lng: -0.263 },
+  { id: 'villores', town: 'Villores', lat: 40.667, lng: -0.200 },
+  { id: 'la_mata', town: 'La Mata de Morella', lat: 40.617, lng: -0.283 },
+  { id: 'olocau', town: 'Olocau del Rey', lat: 40.633, lng: -0.350 },
+];
+
+function wmoToCondition(code: number): WeatherPoint['condition'] {
+  if (code === 0) return 'Sunny';
+  if (code <= 3) return 'Cloudy';
+  if (code <= 48) return 'Fog';
+  if (code <= 67) return 'Rain';
+  if (code <= 77) return 'Snow';
+  if (code <= 82) return 'Rain';
+  return 'Rain';
+}
+
+function wmoToForecastCondition(code: number): ForecastDay['condition'] {
+  if (code === 0) return 'Sunny';
+  if (code <= 3) return 'Cloudy';
+  if (code <= 48) return 'Cloudy';
+  if (code <= 67) return 'Rain';
+  if (code <= 77) return 'Snow';
+  return 'Rain';
+}
+
 interface CivilProtectionBrief {
   title: string;
   summary: string;
@@ -88,13 +117,9 @@ export const AlertasView: React.FC = () => {
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   const [weatherLoading, setWeatherLoading] = useState(true);
-  const [currentWeather] = useState<WeatherPoint[]>([
-    { id: '1', town: 'Forcall', lat: 40.6433, lng: -0.23, temp: 12.4, condition: 'Sunny', humidity: 40, windSpeed: 10, alertLevel: 'Verde' },
-    { id: '2', town: 'Morella', lat: 40.6186, lng: -0.1017, temp: 8.2, condition: 'Wind', humidity: 35, windSpeed: 40, alertLevel: 'Verde' },
-    { id: '3', town: 'Cinctorres', lat: 40.5833, lng: -0.23, temp: 10.1, condition: 'Cloudy', humidity: 50, windSpeed: 15, alertLevel: 'Verde' },
-    { id: '4', town: 'Portell de Morella', lat: 40.5333, lng: -0.2633, temp: 7.5, condition: 'Fog', humidity: 85, windSpeed: 5, alertLevel: 'Verde' },
-    { id: '5', town: 'Villores', lat: 40.67, lng: -0.2, temp: 13.0, condition: 'Sunny', humidity: 38, windSpeed: 12, alertLevel: 'Verde' }
-  ]);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [currentWeather, setCurrentWeather] = useState<WeatherPoint[]>([]);
+  const [forecast, setForecast] = useState<ForecastDay[]>([]);
 
   const [categories, setCategories] = useState<PhoneCategory[]>([
     {
@@ -138,12 +163,6 @@ export const AlertasView: React.FC = () => {
     }
   ]);
 
-  const forecast: ForecastDay[] = [
-    { date: new Date(new Date().setDate(new Date().getDate() + 1)), min: 4, max: 14, condition: 'Sunny' },
-    { date: new Date(new Date().setDate(new Date().getDate() + 2)), min: 2, max: 11, condition: 'Cloudy' },
-    { date: new Date(new Date().setDate(new Date().getDate() + 3)), min: -1, max: 8, condition: 'Snow' }
-  ];
-
   const protocols = [
     { id: 'wind', title: 'Aviso Viento', icon: 'air', content: 'Precaución en N-232 y CV-125.' },
   ];
@@ -152,10 +171,51 @@ export const AlertasView: React.FC = () => {
     if ('Notification' in window) {
       setNotificationPermission(Notification.permission);
     }
-    const timer = setTimeout(() => setWeatherLoading(false), 500);
+    fetchWeather();
     fetchCivilProtectionStatus();
-    return () => clearTimeout(timer);
   }, []);
+
+  const fetchWeather = async () => {
+    setWeatherLoading(true);
+    setWeatherError(null);
+    try {
+      const results = await Promise.all(TOWNS.map(async (t) => {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${t.lat}&longitude=${t.lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=3&timezone=Europe/Madrid`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const c = data.current;
+        return { town: t, current: c, daily: data.daily };
+      }));
+
+      const points: WeatherPoint[] = results.map(r => ({
+        id: r.town.id,
+        town: r.town.town,
+        lat: r.town.lat,
+        lng: r.town.lng,
+        temp: r.current.temperature_2m,
+        condition: wmoToCondition(r.current.weather_code),
+        humidity: r.current.relative_humidity_2m,
+        windSpeed: r.current.wind_speed_10m,
+      }));
+      setCurrentWeather(points);
+
+      if (results.length > 0) {
+        const first = results[0];
+        const days: ForecastDay[] = first.daily.time.map((dateStr: string, i: number) => ({
+          date: new Date(dateStr),
+          min: first.daily.temperature_2m_min[i],
+          max: first.daily.temperature_2m_max[i],
+          condition: wmoToForecastCondition(first.daily.weather_code[i]),
+        }));
+        setForecast(days);
+      }
+    } catch (err) {
+      console.error('Error fetching weather:', err);
+      setWeatherError('No se ha podido obtener los datos meteorológicos.');
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
 
   const fetchCivilProtectionStatus = async () => {
     setCivilProtectionLoading(true);
@@ -186,7 +246,9 @@ export const AlertasView: React.FC = () => {
     switch (condition) {
       case 'Sunny': return { icon: 'sunny', color: 'text-amber-500', bg: 'bg-amber-100' };
       case 'Cloudy': return { icon: 'cloud', color: 'text-gray-500', bg: 'bg-gray-100' };
+      case 'Rain': return { icon: 'rainy', color: 'text-blue-600', bg: 'bg-blue-100' };
       case 'Snow': return { icon: 'ac_unit', color: 'text-cyan-500', bg: 'bg-cyan-50' };
+      case 'Fog': return { icon: 'foggy', color: 'text-gray-400', bg: 'bg-gray-200' };
       case 'Wind': return { icon: 'air', color: 'text-teal-600', bg: 'bg-teal-100' };
       default: return { icon: 'thermostat', color: 'text-gray-400', bg: 'bg-gray-100' };
     }
@@ -404,7 +466,23 @@ export const AlertasView: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tiempo actual</h3>
+              <div className="flex gap-2">
+                {weatherError && <span className="text-[8px] text-red-500 font-bold self-center">{weatherError}</span>}
+                <button onClick={fetchWeather} disabled={weatherLoading} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 text-[9px] font-black uppercase tracking-widest transition-all">
+                  <span className={`material-symbols-outlined text-sm ${weatherLoading ? 'animate-spin' : ''}`}>refresh</span>
+                  Actualizar
+                </button>
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {weatherLoading && currentWeather.length === 0 ? (
+                <div className="sm:col-span-2 flex items-center justify-center py-12 text-gray-400">
+                  <span className="material-symbols-outlined animate-spin mr-2">refresh</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Cargando datos meteorológicos...</span>
+                </div>
+              ) : null}
               {currentWeather.map(p => {
                 const s = getIconStyle(p.condition);
                 return (
