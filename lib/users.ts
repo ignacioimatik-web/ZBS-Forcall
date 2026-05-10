@@ -31,7 +31,7 @@ export const USERS: LocalUser[] = [
 
 export const CATEGORIES: Array<{ id: string; label: string; icon: string }> = [
   { id: 'Medicina', label: 'Medicina', icon: 'stethoscope' },
-  { id: 'enfermeria', label: 'enfermeria', icon: 'medical_services' },
+  { id: 'enfermeria', label: 'Enfermeria', icon: 'medical_services' },
   { id: 'Administrativos', label: 'Administrativos', icon: 'admin_panel_settings' },
 ];
 

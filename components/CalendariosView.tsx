@@ -211,7 +211,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('ZBS Forcall - Gestión Sanitaria', 10, doc.internal.pageSize.getHeight() - 7);
+    doc.text('© 2026 ZBS Forcall — Gestión Sanitaria V1.4', 10, doc.internal.pageSize.getHeight() - 7);
     doc.text(`Página 1 de 1`, pageW - 10, doc.internal.pageSize.getHeight() - 7, { align: 'right' });
 
     doc.save(`Registro_Permutas_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`);
@@ -266,11 +266,11 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   };
 
   const subNav = [
-    { id: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20' },
-    { id: 'enfermeria', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20' },
-    { id: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20' },
-    { id: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20' },
-    { id: 'Vacaciones', icon: 'flight', activeClass: 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-purple-200 ring-purple-500/20' }
+    { id: 'Medicina', label: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20' },
+    { id: 'enfermeria', label: 'Enfermeria', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20' },
+    { id: 'Libranzas', label: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20' },
+    { id: 'Refuerzo', label: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20' },
+    { id: 'Vacaciones', label: 'Vacaciones', icon: 'flight', activeClass: 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-purple-200 ring-purple-500/20' }
   ];
 
   const permutaHistory = useMemo(() => auditLogs.filter(log => log.type === 'PERMUTA'), [auditLogs]);
@@ -290,7 +290,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             }`}
           >
             <span className="material-symbols-outlined text-2xl">{item.icon}</span>
-            <span className="text-[12px] font-black uppercase tracking-widest">{item.id}</span>
+            <span className="text-[12px] font-black uppercase tracking-widest">{item.label}</span>
           </button>
         ))}
       </div>
@@ -374,12 +374,12 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             )}
             {!canManageActiveCategory && isPlanningCategory && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Xelo García puede gestionar enfermeria.
+                En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Xelo García puede gestionar Enfermeria.
               </div>
             )}
             {!canManageActiveCategory && isVacacionesCategory && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                Solo Elena Benages puede gestionar vacaciones de Medicina y Xelo García de enfermeria.
+                Solo Elena Benages puede gestionar vacaciones de Medicina y Xelo García de Enfermeria.
               </div>
             )}
             {bulkPersonnel && (

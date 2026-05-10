@@ -31,7 +31,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ meetings }) => {
         <div className="flex gap-2 text-xs">
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Equipo</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> Medicina</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-pink-500"></span> enfermeria</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-pink-500"></span> Enfermeria</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500"></span> Clínica</span>
         </div>
       </div>

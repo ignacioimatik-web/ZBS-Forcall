@@ -298,7 +298,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       </div>
 
       <div className="relative z-10 mt-6 text-center text-white/60 text-xs">
-        <p>© 2026 ZBS Forcall — Gestión Sanitaria</p>
+        <p>© 2026 ZBS Forcall — Gestión Sanitaria V1.4</p>
       </div>
     </div>
   );

@@ -268,7 +268,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-red-100 rounded border border-red-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Guardia enfermeria</span>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Guardia Enfermeria</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-orange-100 rounded border border-orange-200"></div>
@@ -308,7 +308,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-red-700 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">vaccines</span> Personal enfermeria
+                  <span className="material-symbols-outlined text-sm">vaccines</span> Personal Enfermeria
                 </label>
                 <input
                   type="text"

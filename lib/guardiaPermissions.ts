@@ -65,7 +65,7 @@ export function canManagePlanningType(user: User | null, type: Guardia['type']) 
 export function getGuardiaPermissionMessage(type: Guardia['type']) {
   return type === 'medica'
     ? 'Solo Elena Benages puede añadir o quitar guardias de Medicina.'
-    : 'Solo Xelo García puede añadir o quitar guardias de enfermeria.';
+    : 'Solo Xelo García puede añadir o quitar guardias de Enfermeria.';
 }
 
 export function canManageVacaciones(user: User | null, type: 'medica' | 'enfermeria') {
@@ -76,5 +76,5 @@ export function canManageVacaciones(user: User | null, type: 'medica' | 'enferme
 export function getPlanningPermissionMessage(type: Guardia['type']) {
   return type === 'medica'
     ? 'Solo Elena Benages puede gestionar libranzas y refuerzo de Medicina.'
-    : 'Solo Xelo García puede gestionar libranzas y refuerzo de enfermeria.';
+    : 'Solo Xelo García puede gestionar libranzas y refuerzo de Enfermeria.';
 }

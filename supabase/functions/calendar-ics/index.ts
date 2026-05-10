@@ -82,17 +82,17 @@ serve(async (req) => {
     };
 
     guardias?.forEach((g: any) => {
-      const type = g.type === 'medica' ? 'Guardia medica' : 'Guardia enfermeria';
+      const type = g.type === 'medica' ? 'Guardia Medica' : 'Guardia Enfermeria';
       addEvent(`${type}: ${g.personnel_name}`, g.date, type);
     });
 
     libranzas?.forEach((l: any) => {
-      const type = l.type === 'medica' ? 'Libranza medica' : 'Libranza enfermeria';
+      const type = l.type === 'medica' ? 'Libranza Medica' : 'Libranza Enfermeria';
       addEvent(`${type}: ${l.personnel_name}`, l.date, type);
     });
 
     doblas?.forEach((d: any) => {
-      const type = d.type === 'medica' ? 'Dobla medica' : 'Dobla enfermeria';
+      const type = d.type === 'medica' ? 'Dobla Medica' : 'Dobla Enfermeria';
       addEvent(`${type}: ${d.personnel_name}`, d.date, type);
     });
 

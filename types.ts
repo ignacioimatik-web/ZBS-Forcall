@@ -3,7 +3,7 @@ import type { AppRole } from './lib/database.types';
 export enum MeetingType {
   TEAM = 'Reunión de Equipo',
   MEDICINE = 'Reunión Medicina',
-  NURSING = 'Reunión enfermeria',
+  NURSING = 'Reunión Enfermeria',
   CLINICAL = 'Sesión Clínica',
   WORKSHOP = 'Taller',
   OTHER = 'Otros'
