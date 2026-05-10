@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { Meeting, User, Guardia, Libranza, Dobla, Vacacion, ManualHoliday, AuditLog } from '../types';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
