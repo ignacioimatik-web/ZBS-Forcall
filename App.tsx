@@ -7,7 +7,6 @@ import { NotificationToast } from './components/NotificationToast';
 import { LoginScreen } from './components/LoginScreen';
 import { AlertasView } from './components/AlertasView';
 import { NoticiasView } from './components/NoticiasView';
-import { VademecumView } from './components/VademecumView';
 import { TranscriptionTool } from './components/TranscriptionTool';
 import { ManualHoliday, Vacacion } from './types';
 import { useAuth } from './hooks/useAuth';
@@ -306,8 +305,6 @@ const App: React.FC = () => {
         return <AlertasView />;
       case 'Noticias':
         return <NoticiasView />;
-      case 'Vademécum':
-        return <VademecumView />;
       default:
         return null;
     }
