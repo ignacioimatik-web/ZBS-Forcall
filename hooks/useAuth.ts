@@ -219,15 +219,10 @@ export function useAuth(): UseAuthResult {
   }, [fetchProfile]);
 
   const signOut = useCallback(async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.error('Error signing out:', err);
-    } finally {
-      setUser(null);
-      setError(null);
-      setIsLoading(false);
-    }
+    setUser(null);
+    setError(null);
+    setIsLoading(false);
+    supabase.auth.signOut().catch(err => console.error('Error signing out:', err));
   }, []);
 
   // Temporizador de inactividad (1 hora = 3600000 ms)
