@@ -180,7 +180,7 @@ export const AlertasView: React.FC = () => {
     setWeatherError(null);
     try {
       const results = await Promise.all(TOWNS.map(async (t) => {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${t.lat}&longitude=${t.lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=3&timezone=Europe/Madrid`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${t.lat}&longitude=${t.lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=5&timezone=Europe/Madrid`;
         const res = await fetch(url);
         const data = await res.json();
         const c = data.current;
@@ -503,7 +503,7 @@ export const AlertasView: React.FC = () => {
 
           <div className="space-y-4">
             <div className="bg-sky-50 rounded-3xl p-6 border border-sky-100">
-              <h3 className="text-[10px] font-black text-sky-800 uppercase tracking-widest mb-4">Previsión 3 Días</h3>
+              <h3 className="text-[10px] font-black text-sky-800 uppercase tracking-widest mb-4">Previsión 5 Días</h3>
               <div className="space-y-3">
                 {forecast.map((f, i) => (
                   <div key={i} className="flex justify-between items-center bg-white/50 p-2 rounded-xl text-xs font-bold">
