@@ -6,6 +6,7 @@ import { CalendariosView } from './components/CalendariosView';
 import { NotificationToast } from './components/NotificationToast';
 import { LoginScreen } from './components/LoginScreen';
 import { AlertasView } from './components/AlertasView';
+import { Footer } from './components/Footer';
 import { TranscriptionTool } from './components/TranscriptionTool';
 import { ManualHoliday, Vacacion } from './types';
 import { useAuth } from './hooks/useAuth';
@@ -328,9 +329,10 @@ const App: React.FC = () => {
           <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
         </div>
       )}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-8rem)]">
         {renderContent()}
       </main>
+      <Footer />
       {notification && <NotificationToast message={notification} onClose={() => setNotification(null)} />}
     </div>
   );
