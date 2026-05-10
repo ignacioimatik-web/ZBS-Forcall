@@ -6,6 +6,17 @@ import { USERS } from '../lib/users';
 
 const STORAGE_KEY = 'zbs_forcall_user';
 
+function clearSupabaseSession() {
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('sb-')) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach(key => localStorage.removeItem(key));
+}
+
 interface UseAuthResult {
   user: User | null;
   isLoading: boolean;
@@ -98,10 +109,17 @@ export function useAuth(): UseAuthResult {
           console.log('Session found for user:', session.user.id);
           const appUser = await fetchProfile(session.user.id, session.user.email || '');
           if (isMounted) {
-            setUser(appUser);
+            if (appUser) {
+              setUser(appUser);
+            } else {
+              console.warn('Session exists but no profile found — clearing session');
+              await supabase.auth.signOut();
+              clearSupabaseSession();
+            }
           }
         } else {
           console.log('No active session found');
+          clearSupabaseSession();
         }
       } catch (err) {
         console.error('Critical error in initAuth:', err);
@@ -143,6 +161,7 @@ export function useAuth(): UseAuthResult {
 
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
+    clearSupabaseSession();
     const supabasePassword = transformPin(password);
 
     const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> =>
@@ -222,7 +241,15 @@ export function useAuth(): UseAuthResult {
     setUser(null);
     setError(null);
     setIsLoading(false);
-    supabase.auth.signOut().catch(err => console.error('Error signing out:', err));
+    try {
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+      ]);
+    } catch {
+      // Ignore timeout/errors — clear local state regardless
+    }
+    clearSupabaseSession();
   }, []);
 
   // Temporizador de inactividad (1 hora = 3600000 ms)
