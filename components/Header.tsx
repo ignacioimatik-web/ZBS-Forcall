@@ -8,7 +8,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogout }) => {
-  const tabs = ['Unificado', 'Guardias', 'Dictado', 'Alertas', 'Noticias'];
+  const tabs = ['Unificado', 'Guardias', 'Dictado', 'Alertas'];
 
   return (
     <header className="bg-gradient-to-r from-forcall-900 via-forcall-800 to-earth-900 text-white shadow-lg sticky top-0 z-50">
@@ -62,8 +62,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
                <span className="material-symbols-outlined text-lg">
                   {tab === 'Unificado' ? 'dashboard' : 
                    tab === 'Guardias' ? 'calendar_month' : 
-                   tab === 'Dictado' ? 'mic' : 
-                   tab === 'Noticias' ? 'newspaper' : 'campaign'}
+                   tab === 'Dictado' ? 'mic' : 'campaign'}
                </span>
                <span className="whitespace-nowrap text-[10px] uppercase font-black tracking-tighter">{tab}</span>
             </button>
