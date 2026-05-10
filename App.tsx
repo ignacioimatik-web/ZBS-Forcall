@@ -6,6 +6,7 @@ import { CalendariosView } from './components/CalendariosView';
 import { NotificationToast } from './components/NotificationToast';
 import { LoginScreen } from './components/LoginScreen';
 import { AlertasView } from './components/AlertasView';
+import { NoticiasView } from './components/NoticiasView';
 import { TranscriptionTool } from './components/TranscriptionTool';
 import { ManualHoliday, Vacacion } from './types';
 import { useAuth } from './hooks/useAuth';
@@ -302,6 +303,8 @@ const App: React.FC = () => {
         return <TranscriptionTool />;
       case 'Alertas':
         return <AlertasView />;
+      case 'Noticias':
+        return <NoticiasView />;
       default:
         return null;
     }
