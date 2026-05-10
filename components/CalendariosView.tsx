@@ -89,33 +89,39 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
         ? vacacionesPersonnel.length > 0
         : false;
 
+  const hasLoggedRef = useRef(false);
   useEffect(() => {
-    const initLog = { 
-      type: 'VALIDACION' as const, 
+    if (hasLoggedRef.current) return;
+    hasLoggedRef.current = true;
+    addLog({ 
+      type: 'VALIDACION', 
       user: 'Sistema', 
-      description: `Iniciada sesión de gestión en categoría: ${activeSub}`, 
+      description: `Inicio de sesión de gestión`, 
       category: activeSub 
-    };
-    addLog(initLog);
-  }, [activeSub, addLog]);
+    });
+  }, [addLog]);
 
   const toggleBulkDate = (date: Date) => {
     setBulkDates(prev => prev.find(d => d.toDateString() === date.toDateString()) ? prev.filter(d => d.toDateString() !== date.toDateString()) : [...prev, date]);
   };
 
-  const handleSaveBulk = () => {
+  const handleSaveBulk = async () => {
     if (!bulkPersonnel || bulkDates.length === 0 || !canManageActiveCategory) return;
     const isNurse = nurses.includes(bulkPersonnel);
     const personnelType = isNurse ? 'enfermeria' : 'medica';
-    bulkDates.forEach(date => {
+    const results = await Promise.allSettled(bulkDates.map(async date => {
       const common = { id: Math.random().toString(36).substr(2, 9), date, personnelName: bulkPersonnel, isChange: false, modifiedBy: props.user?.id || null, modifiedAt: new Date() };
-      if (activeSub === 'Medicina') props.onAddGuardia({ ...common, type: 'medica' } as any);
-      else if (activeSub === 'enfermeria') props.onAddGuardia({ ...common, type: 'enfermeria' } as any);
-      else if (activeSub === 'Libranzas') props.onAddLibranza({ ...common, id: 'lib-' + common.id, type: personnelType } as any);
-      else if (activeSub === 'Refuerzo') props.onAddDobla({ ...common, id: 'dob-' + common.id, type: personnelType } as any);
-      else if (activeSub === 'Vacaciones') props.onAddVacacion({ ...common, id: 'vac-' + common.id, type: personnelType } as any);
-    });
-    addLog({ type: 'CAMBIO', user: props.user?.name || 'Usuario', description: `Asignación masiva: ${bulkPersonnel} (${bulkDates.length} turnos) en ${activeSub}.`, category: activeSub });
+      if (activeSub === 'Medicina') return props.onAddGuardia({ ...common, type: 'medica' });
+      if (activeSub === 'enfermeria') return props.onAddGuardia({ ...common, type: 'enfermeria' });
+      if (activeSub === 'Libranzas') return props.onAddLibranza({ ...common, id: 'lib-' + common.id, type: personnelType });
+      if (activeSub === 'Refuerzo') return props.onAddDobla({ ...common, id: 'dob-' + common.id, type: personnelType });
+      if (activeSub === 'Vacaciones') return props.onAddVacacion({ ...common, id: 'vac-' + common.id, type: personnelType });
+    }));
+    const failed = results.filter(r => r.status === 'rejected').length;
+    addLog({ type: 'CAMBIO', user: props.user?.name || 'Usuario', description: failed === 0
+      ? `Asignación masiva exitosa: ${bulkPersonnel} (${bulkDates.length} turnos) en ${activeSub}.`
+      : `Asignación masiva con errores: ${bulkPersonnel} (${failed}/${bulkDates.length} fallos) en ${activeSub}.`,
+      category: activeSub });
     setBulkDates([]); setBulkPersonnel(null);
   };
 
@@ -276,7 +282,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
         {subNav.map(item => (
           <button 
             key={item.id} 
-            onClick={() => { setActiveSub(item.id as any); setBulkPersonnel(null); setBulkDates([]); setSwapMode(false); }}
+            onClick={() => { setActiveSub(item.id as 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'); setBulkPersonnel(null); setBulkDates([]); setSwapMode(false); }}
             className={`flex items-center gap-3 px-6 py-4 rounded-2xl border transition-all whitespace-nowrap shadow-sm ${
               activeSub === item.id 
                 ? `${item.activeClass} ring-4 shadow-xl scale-105 z-10 border-transparent` 
@@ -396,19 +402,35 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
 
         {/* CALENDARIO - DERECHA */}
         <main className="flex-1 lg:order-2">
-          <UnifiedCalendar 
-            id="view-calendar"
-            meetings={props.meetings} guardias={props.guardias} libranzas={props.libranzas} doblas={props.doblas} vacaciones={props.vacaciones}
-            onAddGuardia={props.onAddGuardia} onDeleteGuardia={props.onDeleteGuardia}
-            onAddLibranza={props.onAddLibranza} onDeleteLibranza={props.onDeleteLibranza}
-            onAddDobla={props.onAddDobla} onDeleteDobla={props.onDeleteDobla}
-            onAddVacacion={props.onAddVacacion} onDeleteVacacion={props.onDeleteVacacion}
+          <UnifiedCalendar
+            key={activeSub}
+            meetings={meetings}
+            guardias={guardias}
+            libranzas={libranzas}
+            doblas={doblas}
+            vacaciones={vacaciones}
+            onAddGuardia={props.onAddGuardia}
+            onDeleteGuardia={props.onDeleteGuardia}
+            onAddLibranza={props.onAddLibranza}
+            onDeleteLibranza={props.onDeleteLibranza}
+            onAddDobla={props.onAddDobla}
+            onDeleteDobla={props.onDeleteDobla}
+            onAddVacacion={props.onAddVacacion}
+            onDeleteVacacion={props.onDeleteVacacion}
             onSwapEvents={handleSwapEvents}
             currentUser={props.user}
-            activeCategory={activeSub as any} availablePersonnel={currentPersonnel}
-            bulkMode={!!bulkPersonnel} selectedBulkDates={bulkDates} onToggleBulkDate={toggleBulkDate}
-            swapMode={swapMode} onCancelSwap={() => setSwapMode(false)}
-            currentMonth={currentMonth} onMonthChange={setCurrentMonth}
+            isReadOnly={!canManageActiveCategory && !isGuardiaCategory}
+            activeCategory={activeSub}
+            availablePersonnel={currentPersonnel.filter(Boolean)}
+            bulkMode={bulkPersonnel !== null}
+            selectedBulkDates={bulkDates}
+            onToggleBulkDate={toggleBulkDate}
+            swapMode={swapMode}
+            onCancelSwap={() => setSwapMode(false)}
+            currentMonth={currentMonth}
+            onMonthChange={setCurrentMonth}
+            id="calendario-principal"
+            getPersonnelType={(name) => nurses.includes(name) ? 'enfermeria' : 'medica'}
           />
         </main>
       </div>
@@ -438,8 +460,8 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
               {permutaHistory.length > 0 ? (
                 permutaHistory.map(log => {
                   const ts = safeFormatDate(log.timestamp);
-                  const d1 = log.details ? safeDayLabel((log.details as any).date1) : '-';
-                  const d2 = log.details ? safeDayLabel((log.details as any).date2) : '-';
+                  const d1 = log.details ? safeDayLabel(log.details.date1) : '-';
+                  const d2 = log.details ? safeDayLabel(log.details.date2) : '-';
                   return (
                   <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-5"><div className="flex flex-col"><span className="text-sm font-black text-gray-800">{ts}</span></div></td>

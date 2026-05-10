@@ -128,8 +128,7 @@ const App: React.FC = () => {
       setNotification(getGuardiaPermissionMessage(existing.type));
       return false;
     }
-    await deleteGuardia(id);
-    return true;
+    return await deleteGuardia(id);
   }, [user, guardias, deleteGuardia]);
 
   const handleSwapGuardias = useCallback(async (event1: any, event2: any) => {
@@ -242,17 +241,19 @@ const App: React.FC = () => {
       setNotification('No tienes permiso para quitar esta vacación.');
       return;
     }
-    await deleteVacacion(id);
+    const ok = await deleteVacacion(id);
+    if (!ok) setNotification('Error al quitar la vacación.');
   }, [user, vacaciones, deleteVacacion]);
 
   const handleUpsertDobla = useCallback(async (dobla: any) => {
-    const existing = doblas.find(d => d.id === dobla.id);
-    if (existing) {
-      await updateDobla(dobla);
-    } else {
-      await addDobla(dobla);
+    if (!canManagePlanningType(user, dobla.type)) {
+      setNotification('No tienes permiso para gestionar refuerzos de este tipo.');
+      return;
     }
-  }, [doblas, addDobla, updateDobla]);
+    const existing = doblas.find(d => d.id === dobla.id);
+    const ok = existing ? await updateDobla(dobla) : await addDobla(dobla);
+    if (!ok) setNotification('Error al guardar el refuerzo. Comprueba tu rol en Supabase.');
+  }, [user, doblas, addDobla, updateDobla]);
 
   const renderContent = () => {
     switch (activeTab) {

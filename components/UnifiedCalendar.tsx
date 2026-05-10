@@ -31,6 +31,7 @@ interface UnifiedCalendarProps {
   onToggleBulkDate?: (date: Date) => void;
   swapMode?: boolean;
   onCancelSwap?: () => void;
+  getPersonnelType?: (name: string) => 'medica' | 'enfermeria';
   hideHeader?: boolean;
   id?: string;
   currentMonth?: Date;
@@ -44,7 +45,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   onSwapEvents, currentUser, activeCategory = 'Todo',
   availablePersonnel = [], bulkMode = false, selectedBulkDates = [], onToggleBulkDate,
   swapMode = false, onCancelSwap, hideHeader = false, id = "calendar-container", isReadOnly = false,
-  currentMonth: externalMonth, onMonthChange
+  currentMonth: externalMonth, onMonthChange, getPersonnelType
 }) => {
   const [internalMonth, setInternalMonth] = useState(new Date());
   const currentMonth = externalMonth ?? internalMonth;
@@ -187,11 +188,12 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
        modifiedBy: currentUser?.id,
       modifiedAt: new Date()
     };
-    if (activeCategory === 'Medicina') onAddGuardia({ ...common, type: 'medica' } as any);
-    else if (activeCategory === 'enfermeria') onAddGuardia({ ...common, type: 'enfermeria' } as any);
-    else if (activeCategory === 'Libranzas') onAddLibranza({ ...common, id: 'lib-' + common.id, type: planningType } as any);
-    else if (activeCategory === 'Refuerzo') onAddDobla({ ...common, id: 'dob-' + common.id, type: planningType } as any);
-    else if (activeCategory === 'Vacaciones') onAddVacacion?.({ ...common, id: 'vac-' + common.id, type: vacacionesType } as any);
+    const personType = getPersonnelType ? getPersonnelType(personnelName) : 'medica';
+    if (activeCategory === 'Medicina') onAddGuardia({ ...common, type: 'medica' });
+    else if (activeCategory === 'enfermeria') onAddGuardia({ ...common, type: 'enfermeria' });
+    else if (activeCategory === 'Libranzas') onAddLibranza({ ...common, id: 'lib-' + common.id, type: personType });
+    else if (activeCategory === 'Refuerzo') onAddDobla({ ...common, id: 'dob-' + common.id, type: personType });
+    else if (activeCategory === 'Vacaciones') onAddVacacion?.({ ...common, id: 'vac-' + common.id, type: personType });
     setIsModalOpen(false);
   };
 

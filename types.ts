@@ -157,7 +157,7 @@ export interface ChatMessage {
 
 export interface AuditLog {
   id: string;
-  type: 'VALIDATION' | 'CAMBIO' | 'PERMUTA';
+  type: 'VALIDACION' | 'CAMBIO' | 'PERMUTA';
   user: string;
   timestamp: Date;
   description: string;

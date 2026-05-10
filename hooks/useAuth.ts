@@ -235,14 +235,27 @@ export function useAuth(): UseAuthResult {
     if (!user) return;
 
     const INACTIVITY_TIMEOUT = 3600000; // 1 hora
+    const WARNING_BEFORE = 60000; // 1 minuto antes
     let inactivityTimer: NodeJS.Timeout;
+    let warningTimer: NodeJS.Timeout;
+
+    const doSignOut = () => {
+      console.log('Sesión cerrada por inactividad (1 hora)');
+      signOut();
+    };
 
     const resetTimer = () => {
       clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(() => {
-        console.log('Sesión cerrada por inactividad (1 hora)');
-        signOut();
-      }, INACTIVITY_TIMEOUT);
+      clearTimeout(warningTimer);
+      warningTimer = setTimeout(() => {
+        clearTimeout(inactivityTimer);
+        if (window.confirm('¿Todavía estás ahí? Pulsa OK para mantener la sesión activa.')) {
+          resetTimer();
+        } else {
+          doSignOut();
+        }
+      }, INACTIVITY_TIMEOUT - WARNING_BEFORE);
+      inactivityTimer = setTimeout(doSignOut, INACTIVITY_TIMEOUT);
     };
 
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
@@ -255,6 +268,7 @@ export function useAuth(): UseAuthResult {
 
     return () => {
       clearTimeout(inactivityTimer);
+      clearTimeout(warningTimer);
       events.forEach(event => {
         document.removeEventListener(event, resetTimer);
       });

@@ -35,7 +35,6 @@ export function useReminders(userName?: string): UseRemindersResult {
       if (Notification.permission === 'granted') {
         new Notification(title, {
           body,
-          icon: '/icon-192x192.png', // Asegúrate de tener este icono
           tag: key,
           requireInteraction: true
         });
