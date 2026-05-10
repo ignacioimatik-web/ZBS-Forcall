@@ -55,7 +55,7 @@ const App: React.FC = () => {
   const { vacaciones, addVacacion, deleteVacacion, isLoading: vacacionesLoading, refresh: refreshVacaciones } = useVacaciones();
   const { meetings, addMeeting, updateMeeting, deleteMeeting, isLoading: meetingsLoading, refresh: refreshMeetings } = useMeetings();
 
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTab] = useState('Unificado');
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -95,7 +95,7 @@ const App: React.FC = () => {
 
   const handleLogout = useCallback(async (reason?: string) => {
     await signOut();
-    setActiveTab('Dashboard');
+    setActiveTab('Unificado');
     if (reason) setNotification(reason);
   }, [signOut]);
 
@@ -258,7 +258,7 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'Dashboard':
+      case 'Unificado':
         return (
           <Dashboard
             meetings={meetings}
