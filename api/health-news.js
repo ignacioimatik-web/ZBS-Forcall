@@ -33,81 +33,6 @@ const cleanText = (value = '') =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const FALLBACK_ARTICLES = [
-  {
-    id: '1',
-    title: 'El Departamento de Salud de Vinaròs refuerza la atención primaria en Els Ports',
-    summary: 'El Departamento de Salud de Vinaròs ha anunciado un plan de refuerzo para los centros de atención primaria de la comarca de Els Ports, incluyendo los consultorios de Forcall, Morella y Cinctorres, con el objetivo de mejorar la cobertura sanitaria en la zona.',
-    sourceUrl: 'https://www.san.gva.es',
-    sourceName: 'GVA Sanitat',
-    category: 'Atención Primaria',
-    publishedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Campaña de vacunación contra la gripe en la Comunidad Valenciana',
-    summary: 'La Conselleria de Sanitat ha iniciado la campaña de vacunación contra la gripe para la temporada 2025-2026, con especial énfasis en la población mayor de 60 años y profesionales sanitarios de los centros de salud de la provincia de Castellón.',
-    sourceUrl: 'https://www.san.gva.es',
-    sourceName: 'GVA Sanitat',
-    category: 'Vacunación',
-    publishedAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: '3',
-    title: 'El Hospital Comarcal de Vinaròs incorpora nueva tecnología de diagnóstico por imagen',
-    summary: 'El Hospital Comarcal de Vinaròs ha puesto en marcha un nuevo equipo de resonancia magnética que permitirá reducir las listas de espera y evitar desplazamientos a los pacientes de la comarca de Els Ports y el Baix Maestrat.',
-    sourceUrl: 'https://www.san.gva.es',
-    sourceName: 'GVA Sanitat',
-    category: 'Tecnología Sanitaria',
-    publishedAt: new Date(Date.now() - 172800000).toISOString(),
-  },
-  {
-    id: '4',
-    title: 'Formación en emergencias para el personal sanitario de los consultorios rurales',
-    summary: 'El Centro de Emergencias Sanitarias de la Comunitat Valenciana ha organizado jornadas de formación en atención de urgencias y emergencias para el personal sanitario de los consultorios rurales de Els Ports.',
-    sourceUrl: 'https://www.san.gva.es',
-    sourceName: 'GVA Sanitat',
-    category: 'Formación',
-    publishedAt: new Date(Date.now() - 259200000).toISOString(),
-  },
-  {
-    id: '5',
-    title: 'Plan de salud bucodental infantil en la provincia de Castellón',
-    summary: 'La Conselleria de Sanitat ha ampliado el programa de salud bucodental infantil a todos los municipios de Castellón, garantizando revisiones gratuitas en los consultorios locales para niños de 6 a 14 años.',
-    sourceUrl: 'https://www.san.gva.es',
-    sourceName: 'GVA Sanitat',
-    category: 'Salud Pública',
-    publishedAt: new Date(Date.now() - 345600000).toISOString(),
-  },
-  {
-    id: '6',
-    title: 'Telemedicina en los consultorios rurales de Els Ports: balance positivo',
-    summary: 'El programa piloto de telemedicina implantado en los consultorios rurales de Els Ports ha permitido realizar más de 500 consultas especializadas a distancia en los primeros seis meses, evitando desplazamientos a los pacientes.',
-    sourceUrl: 'https://www.san.gva.es',
-    sourceName: 'GVA Sanitat',
-    category: 'Telemedicina',
-    publishedAt: new Date(Date.now() - 432000000).toISOString(),
-  },
-  {
-    id: '7',
-    title: 'Recomendaciones para prevenir los efectos del frío en la salud',
-    summary: 'La Conselleria de Sanitat ha activado el plan de vigilancia ante temperaturas frías en la Comunitat Valenciana, con recomendaciones específicas para la población de las comarcas del interior como Els Ports.',
-    sourceUrl: 'https://www.san.gva.es',
-    sourceName: 'GVA Sanitat',
-    category: 'Prevención',
-    publishedAt: new Date(Date.now() - 518400000).toISOString(),
-  },
-  {
-    id: '8',
-    title: 'El servicio SAMU renueva su flota de ambulancias en la provincia de Castellón',
-    summary: 'El Servicio de Atención Médica de Urgencias (SAMU) ha renovado la flota de ambulancias con base en la provincia de Castellón, incorporando vehículos con mejor equipamiento para la asistencia en zonas rurales y de montaña.',
-    sourceUrl: 'https://www.san.gva.es',
-    sourceName: 'GVA Sanitat',
-    category: 'Emergencias',
-    publishedAt: new Date(Date.now() - 604800000).toISOString(),
-  },
-];
-
 function parseRSS(xmlText) {
   const items = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
@@ -192,32 +117,22 @@ export default async function handler(req, res) {
       }
     }
 
-    if (articles.length === 0) {
-      articles = FALLBACK_ARTICLES.map(a => ({
+    if (articles.length > 0) {
+      const mapped = articles.slice(0, 12).map((a, i) => ({
+        id: String(i + 1),
         title: a.title,
-        link: a.sourceUrl,
-        description: a.summary,
-        pubDate: a.publishedAt,
-        category: a.category,
+        summary: a.description || a.title,
+        sourceUrl: a.link || 'https://www.san.gva.es',
+        sourceName: 'GVA Sanitat',
+        category: categorizeArticle(a.title, a.description),
+        publishedAt: a.pubDate || new Date(Date.now() - i * 86400000).toISOString(),
       }));
+      res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=1800');
+      res.status(200).json({ articles: mapped });
+    } else {
+      res.status(503).json({ articles: [], error: 'No se pudieron obtener noticias de las fuentes oficiales.' });
     }
-
-    const mapped = articles.slice(0, 12).map((a, i) => ({
-      id: String(i + 1),
-      title: a.title,
-      summary: a.description || a.title,
-      sourceUrl: a.link || 'https://www.san.gva.es',
-      sourceName: 'GVA Sanitat',
-      category: categorizeArticle(a.title, a.description),
-      publishedAt: a.pubDate || new Date(Date.now() - i * 86400000).toISOString(),
-    }));
-
-    res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=1800');
-    res.status(200).json({ articles: mapped });
   } catch (error) {
-    res.status(200).json({
-      articles: FALLBACK_ARTICLES,
-      notice: 'Mostrando información de referencia. No se pudo conectar con fuentes oficiales.',
-    });
+    res.status(503).json({ articles: [], error: 'Error al conectar con las fuentes de noticias.' });
   }
 }

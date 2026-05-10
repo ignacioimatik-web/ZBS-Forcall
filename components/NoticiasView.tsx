@@ -19,14 +19,19 @@ export const NoticiasView: React.FC = () => {
   const fetchNews = async () => {
     setLoading(true);
     setError(null);
+    setNotice(null);
     try {
       const res = await fetch(`/api/health-news?t=${Date.now()}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`Error ${res.status}`);
       const data = await res.json();
-      setArticles(data.articles || []);
-      if (data.notice) setNotice(data.notice);
+      if (!res.ok || data.error) {
+        setError(data.error || 'No se han podido cargar las noticias.');
+        setArticles([]);
+      } else {
+        setArticles(data.articles || []);
+        if (data.articles?.length === 0) setError('No hay noticias disponibles en este momento.');
+      }
     } catch {
-      setError('No se han podido cargar las noticias.');
+      setError('No se ha podido conectar con el servidor de noticias.');
     } finally {
       setLoading(false);
     }
@@ -104,6 +109,13 @@ export const NoticiasView: React.FC = () => {
         <div className="flex items-center justify-center py-24 text-gray-400">
           <span className="material-symbols-outlined animate-spin mr-3">refresh</span>
           <span className="text-xs font-black uppercase tracking-widest">Cargando crónica...</span>
+        </div>
+      ) : !loading && articles.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+          <span className="material-symbols-outlined text-4xl mb-3">newspaper</span>
+          <p className="text-xs font-black uppercase tracking-widest text-center">No hay noticias disponibles</p>
+          <p className="text-[10px] font-bold text-gray-400 mt-1 text-center">No se ha podido conectar con las fuentes oficiales. Inténtalo más tarde.</p>
+          <button onClick={fetchNews} className="mt-4 px-4 py-2 rounded-xl bg-gray-900 text-white text-[9px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all">Reintentar</button>
         </div>
       ) : (
         <div className="space-y-8">
