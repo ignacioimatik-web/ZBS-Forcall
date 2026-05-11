@@ -48,17 +48,17 @@ serve(async (req) => {
     const { data: guardias } = await supabase
       .from('guardias')
       .select('*')
-      .eq('personnel_name', user Name);
+      .eq('personnel_name', userName);
 
     const { data: libranzas } = await supabase
       .from('libranzas')
       .select('*')
-      .eq('personnel_name', user Name);
+      .eq('personnel_name', userName);
 
     const { data: doblas } = await supabase
       .from('doblas')
       .select('*')
-      .eq('personnel_name', user Name);
+      .eq('personnel_name', userName);
 
     // Generar ICS
     const formatDate = (date: string | Date) => {
