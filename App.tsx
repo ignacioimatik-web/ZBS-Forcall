@@ -7,7 +7,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { AlertasView } from './components/AlertasView';
 import { Footer } from './components/Footer';
 import { TranscriptionTool } from './components/TranscriptionTool';
-import { ManualHoliday, Vacacion } from './types';
+import { ManualHoliday, Vacacion, Meeting, Guardia, Libranza, Dobla, AuditLog } from './types';
 import { useAuth } from './hooks/useAuth';
 import { useGuardias } from './hooks/useGuardias';
 import { useLibranzas } from './hooks/useLibranzas';
@@ -94,7 +94,7 @@ const App: React.FC = () => {
     if (reason) setNotification(reason);
   }, [signOut]);
 
-  const handleUpsertSession = useCallback(async (session: any) => {
+  const handleUpsertSession = useCallback(async (session: Meeting) => {
     const existing = meetings.find(m => m.id === session.id);
     if (existing) {
       await updateMeeting(session);
@@ -103,7 +103,7 @@ const App: React.FC = () => {
     }
   }, [meetings, addMeeting, updateMeeting]);
 
-  const handleUpsertGuardia = useCallback(async (guardia: any) => {
+  const handleUpsertGuardia = useCallback(async (guardia: Guardia) => {
     if (!canManageGuardiaType(user, guardia.type)) {
       setNotification(getGuardiaPermissionMessage(guardia.type));
       return false;
@@ -127,7 +127,7 @@ const App: React.FC = () => {
     return await deleteGuardia(id);
   }, [user, guardias, deleteGuardia]);
 
-  const handleSwapGuardias = useCallback(async (event1: any, event2: any) => {
+  const handleSwapGuardias = useCallback(async (event1: Guardia & { _kind?: string }, event2: Guardia & { _kind?: string }) => {
     if (!user) {
       setNotification('Debes iniciar sesión para hacer una permuta.');
       return false;
@@ -186,7 +186,7 @@ const App: React.FC = () => {
     }
   }, [user, updateGuardia]);
 
-  const handleUndoSwap = useCallback(async (log: any): Promise<boolean> => {
+  const handleUndoSwap = useCallback(async (log: AuditLog): Promise<boolean> => {
     if (!user) return false;
     const details = log.details;
     if (!details || !details.date1 || !details.date2) return false;
@@ -220,7 +220,7 @@ const App: React.FC = () => {
     return false;
   }, [user, guardias, updateGuardia]);
 
-  const handleUpsertLibranza = useCallback(async (libranza: any) => {
+  const handleUpsertLibranza = useCallback(async (libranza: Libranza) => {
     if (!canManagePlanningType(user, libranza.type)) {
       setNotification('No tienes permiso para añadir libranzas de este tipo.');
       return;
@@ -241,7 +241,7 @@ const App: React.FC = () => {
     if (!ok) setNotification('Error al quitar la vacación.');
   }, [user, vacaciones, deleteVacacion]);
 
-  const handleUpsertDobla = useCallback(async (dobla: any) => {
+  const handleUpsertDobla = useCallback(async (dobla: Dobla) => {
     if (!canManagePlanningType(user, dobla.type)) {
       setNotification('No tienes permiso para gestionar refuerzos de este tipo.');
       return;

@@ -30,11 +30,6 @@ export const SesionesView: React.FC<SesionesViewProps> = ({
   const [viewMode, setViewMode] = useState<'calendar' | 'manager'>('calendar');
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
 
-  const handleNavigateToSession = (id: string) => {
-    setSelectedMeetingId(id);
-    setViewMode('manager');
-  };
-
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       {/* Header Seccional */}
@@ -95,7 +90,6 @@ export const SesionesView: React.FC<SesionesViewProps> = ({
               onDeleteDobla={() => {}}
               onAddMeeting={onAddMeeting}
               currentUser={user}
-              onNavigateToSession={handleNavigateToSession}
             />
           </div>
         ) : (

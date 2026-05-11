@@ -7,6 +7,18 @@ import { ConfirmationModal } from './ConfirmationModal';
 
 declare var html2pdf: any;
 
+interface CalendarEvent {
+  _kind: string;
+  id: string;
+  date: Date;
+  personnelName?: string;
+  title?: string;
+  type?: string;
+  isChange?: boolean;
+  modifiedBy?: string | null;
+  modifiedAt?: Date;
+}
+
 interface UnifiedCalendarProps {
   meetings: Meeting[];
   guardias: Guardia[];
@@ -21,7 +33,7 @@ interface UnifiedCalendarProps {
   onDeleteDobla: (id: string) => void;
   onAddVacacion?: (vacacion: Vacacion) => void;
   onDeleteVacacion?: (id: string) => void;
-  onSwapEvents?: (event1: any, event2: any) => void;
+  onSwapEvents?: (event1: CalendarEvent, event2: CalendarEvent) => void;
   currentUser: User | null;
   isReadOnly?: boolean;
   activeCategory?: 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones' | 'Todo';
@@ -56,8 +68,8 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [personnelName, setPersonnelName] = useState('');
-  const [firstSwapTarget, setFirstSwapTarget] = useState<any | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [firstSwapTarget, setFirstSwapTarget] = useState<CalendarEvent | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -96,7 +108,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
 
   const getEventsForDay = (date: Date) => {
     const dStr = date.toDateString();
-    let events: any[] = [];
+    let events: CalendarEvent[] = [];
     if (activeCategory === 'Todo') {
       events = [
         ...guardias.filter(g => g.date.toDateString() === dStr).map(g => ({ ...g, _kind: 'guardia' })),
@@ -119,7 +131,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     return { events, holiday: getHolidayName(date) };
   };
 
-  const getEventStyle = (ev: any) => {
+  const getEventStyle = (ev: CalendarEvent) => {
     // Swap target siempre tiene prioridad visual
     if (firstSwapTarget?.id === ev.id) return 'bg-indigo-700 text-white border-indigo-900 ring-4 ring-indigo-200 animate-pulse z-50';
     
@@ -153,7 +165,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     return 'bg-sky-100 text-sky-900 border-sky-300';
   };
 
-  const handleEntryClick = (e: React.MouseEvent, ev: any) => {
+  const handleEntryClick = (e: React.MouseEvent, ev: CalendarEvent) => {
     e.stopPropagation();
     if (bulkMode) return;
     if (swapMode && canSwapInActiveCategory && onSwapEvents) {
@@ -270,7 +282,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                 {isFestivo && <span className="hidden md:block w-3 h-3 bg-red-500 rounded-full shadow-sm animate-pulse" title={holiday}></span>}
               </div>
               <div className="flex-1 space-y-1 md:space-y-1 max-h-[260px] overflow-y-auto scrollbar-thin">
-                {events.map((ev: any, idx) => {
+                {events.map((ev: CalendarEvent, idx) => {
                   const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
                   const badge: { label: string; style: string } | null =
                     ev._kind === 'libranza' ? { label: 'L', style: 'bg-green-600 text-white' } :
