@@ -42,7 +42,7 @@ export function generateCalendarPDF(data: PDFCalendarData): jsPDF {
   }
 
   // Fecha de generación
-  doc.setTextColor(100, 100, 100);
+  doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
   doc.text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, pageW - 10, 19, { align: 'right' });
 
