@@ -222,9 +222,9 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
              {swapMode && (
                <button onClick={() => { setFirstSwapTarget(null); onCancelSwap?.(); }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95">CANCELAR PERMUTA</button>
              )}
-             <span className={`text-[10px] font-black px-4 py-2 rounded-xl border ${canManageActiveCategory ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
-               {canManageActiveCategory ? 'GESTIÓN' : canSwapInActiveCategory ? 'PERMUTAS' : 'CONSULTA'}
-             </span>
+              <span className={`text-[10px] font-black px-4 py-2 rounded-xl border ${(canManageActiveCategory || isGuardiaCategory) ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                {(canManageActiveCategory || isGuardiaCategory) ? 'GESTIÓN' : 'CONSULTA'}
+              </span>
           </div>
         </div>
       )}
