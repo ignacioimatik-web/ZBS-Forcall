@@ -248,12 +248,12 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     }
     const data: PDFCalendarData = {
       title: `Calendario ${activeSub} Forcall`,
-      subtitle: `${new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
+      subtitle: `${currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
       month,
       year,
       entries,
     };
-    const filename = `Calendario_${activeSub}_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
+    const filename = `Calendario_${activeSub}_Forcall_${currentMonth.toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
     try {
       downloadCalendarPDF(data, filename);
       setDownloadMsg('PDF descargado correctamente');
