@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Meeting, MeetingType, Guardia, User, Libranza, Dobla, Vacacion } from '../types';
 import { getHolidayName } from '../utils';
 import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType, canManageVacaciones } from '../lib/guardiaPermissions';
