@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { CATEGORIES, getUsersByCategory, USERS } from '../lib/users';
+import { CATEGORIES, getUsersByCategory } from '../lib/users';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -14,6 +14,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedUserName, setSelectedUserName] = useState<string>('');
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
   const [pin, setPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,9 +25,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setStep('user');
   };
 
-  const handleUserSelect = (userId: string, userName: string) => {
+  const handleUserSelect = (userId: string, userName: string, userEmail: string) => {
     setSelectedUserId(userId);
     setSelectedUserName(userName);
+    setSelectedUserEmail(userEmail);
     setPin('');
     setError(null);
     setStep('pin');
@@ -47,13 +49,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setError(null);
     setIsLoading(true);
     try {
-      const selectedUser = USERS.find(u => u.id === selectedUserId);
-      if (!selectedUser) {
+      if (!selectedUserEmail) {
         setError('Usuario no encontrado');
         return;
       }
 
-      const result = await signIn(selectedUser.email, pin);
+      const result = await signIn(selectedUserEmail, pin);
       if (result.success) {
         onLoginSuccess();
       } else {
@@ -201,7 +202,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 categoryUsers.map((u) => (
                   <button
                     key={u.id}
-                    onClick={() => handleUserSelect(u.id, u.name)}
+                    onClick={() => handleUserSelect(u.id, u.name, u.email)}
                     className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-forcall-50 hover:border-forcall-300 font-semibold text-left transition-all group"
                   >
                     <div className="w-9 h-9 rounded-full bg-forcall-100 flex items-center justify-center text-forcall-700 font-black text-sm">

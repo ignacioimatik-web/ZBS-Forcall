@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Profile } from '../types';
-import { appRoleToUserRole, userRoleToAppRole } from '../types';
+import { appRoleToUserRole } from '../types';
 import { USERS } from '../lib/users';
 
 const STORAGE_KEY = 'zbs_forcall_user';
@@ -159,14 +159,13 @@ export function useAuth(): UseAuthResult {
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
     clearSupabaseSession();
-    // Forzar cierre de cualquier sesión previa (aunque el signOut anterior fallara por timeout)
     try {
       await Promise.race([
         supabase.auth.signOut(),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
       ]);
     } catch {
-      // Ignorar error — lo importante es limpiar la sesión local
+      // Ignorar error
     }
     clearSupabaseSession();
     const supabasePassword = transformPin(password);
@@ -184,47 +183,9 @@ export function useAuth(): UseAuthResult {
       );
 
       if (signInError) {
-        if (signInError.message === 'Invalid login credentials') {
-          const localUser = USERS.find(u => u.email === email);
-          
-          if (localUser && localUser.pin === password) {
-            const { error: signUpError } = await supabase.auth.signUp({
-              email,
-              password: supabasePassword,
-              options: {
-                data: {
-                  full_name: localUser.name,
-                  role: userRoleToAppRole(localUser.role, localUser.category === 'enfermeria')
-                }
-              }
-            });
-
-            if (signUpError) {
-              setError(signUpError.message);
-              return { success: false, error: signUpError.message };
-            }
-
-            const { data: signInData, error: secondSignInError } = await withTimeout(
-              supabase.auth.signInWithPassword({ email, password: supabasePassword }),
-              12000
-            );
-
-            if (secondSignInError) {
-              setError(secondSignInError.message);
-              return { success: false, error: secondSignInError.message };
-            }
-
-            if (signInData?.user) {
-              const appUser = await fetchProfile(signInData.user.id, signInData.user.email || '');
-              setUser(appUser);
-              setIsLoading(false);
-            }
-
-            return { success: true, message: 'Cuenta creada e iniciada sesión' };
-          }
-        }
-
-        setError(signInError.message);
+        setError(signInError.message === 'Invalid login credentials'
+          ? 'PIN incorrecto o usuario no registrado. Contacta al administrador.'
+          : signInError.message);
         return { success: false, error: signInError.message };
       }
 
