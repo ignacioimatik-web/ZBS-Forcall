@@ -192,7 +192,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
       date: selectedDate,
       personnelName,
       isChange: false,
-       modifiedBy: currentUser?.id,
+      modifiedBy: currentUser?.id,
       modifiedAt: new Date()
     };
     const personType = getPersonnelType ? getPersonnelType(personnelName) : 'medica';
