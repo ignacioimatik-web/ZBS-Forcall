@@ -31,12 +31,14 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         </div>
         <div className="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-3">
           <button
+            type="button"
             onClick={onConfirm}
             className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-100 transition-colors"
           >
             {confirmLabel}
           </button>
           <button
+            type="button"
             onClick={onCancel}
             className="px-4 py-2 bg-white text-gray-700 font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition-colors"
           >

@@ -58,6 +58,13 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [personnelName, setPersonnelName] = useState('');
   const [firstSwapTarget, setFirstSwapTarget] = useState<any | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const isGuardiaCategory = activeCategory === 'Medicina' || activeCategory === 'enfermeria';
   const isPlanningCategory = activeCategory === 'Libranzas' || activeCategory === 'Refuerzo';
@@ -181,7 +188,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     e.preventDefault();
     if (!selectedDate || !personnelName) return;
     const common = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID?.() || Math.random().toString(36).slice(2, 11),
       date: selectedDate,
       personnelName,
       isChange: false,
@@ -243,7 +250,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
           const isWeekend = date.getDay() === 0 || date.getDay() === 6;
           const isFestivo = !!holiday;
           
-          if (events.length === 0 && window.innerWidth < 768 && !canManageActiveCategory && !bulkMode) return null;
+          if (events.length === 0 && isMobile && !canManageActiveCategory && !bulkMode) return null;
           
           return (
             <div 

@@ -23,7 +23,6 @@ const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
   useEffect(() => {
     const interval = setInterval(() => setDots(prev => (prev.length >= 3 ? '.' : prev + '.')), 500);
     const timeout = setTimeout(() => {
-      console.warn('AppLoader timeout: forcing login screen');
       onTimeout();
     }, 5000);
     return () => { clearInterval(interval); clearTimeout(timeout); };
@@ -41,9 +40,6 @@ const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
 };
 
 const App: React.FC = () => {
-  // Referenciar LoginScreen explícitamente para evitar tree-shaking
-  const LoginScreenRef = LoginScreen;
-  console.log('LoginScreen loaded:', !!LoginScreenRef);
   
   const { user, isLoading: authLoading, signOut } = useAuth();
   const [forceShowLogin, setForceShowLogin] = useState(false);

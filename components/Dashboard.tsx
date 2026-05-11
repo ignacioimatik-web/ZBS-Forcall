@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Meeting, User, Guardia, Libranza, Dobla } from '../types';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
@@ -35,7 +35,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onAddMeeting,
   user 
 }) => {
-    const stats = [
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const stats = [
     { label: 'Med', count: guardias.filter(g => g.type === 'medica').length, icon: 'stethoscope', color: 'text-blue-500' },
     { label: 'Enf', count: guardias.filter(g => g.type === 'enfermeria').length, icon: 'vaccines', color: 'text-red-500' },
     { label: 'Lib', count: libranzas.length, icon: 'beach_access', color: 'text-green-500' },
@@ -83,12 +84,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
     const data: PDFCalendarData = {
       title: 'Calendario General Forcall',
-      subtitle: `${new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
-      month: new Date().getMonth(),
-      year: new Date().getFullYear(),
+      subtitle: `${calendarMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
+      month: calendarMonth.getMonth(),
+      year: calendarMonth.getFullYear(),
       entries,
     };
-    const filename = `Calendario_General_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
+    const filename = `Calendario_General_Forcall_${calendarMonth.toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
     downloadCalendarPDF(data, filename);
   };
 
@@ -155,6 +156,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           currentUser={user}
           hideHeader={false}
           isReadOnly={true}
+          currentMonth={calendarMonth}
+          onMonthChange={setCalendarMonth}
         />
       </div>
     </div>

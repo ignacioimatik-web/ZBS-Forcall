@@ -63,7 +63,9 @@ export function useLibranzas(): UseLibranzasResult {
           date: `${libranza.date.getFullYear()}-${String(libranza.date.getMonth() + 1).padStart(2, '0')}-${String(libranza.date.getDate()).padStart(2, '0')}`,
           personnel_name: libranza.personnelName,
           type: libranza.type,
-          is_change: libranza.isChange || false
+          is_change: libranza.isChange || false,
+          modified_by: libranza.modifiedBy || null,
+          modified_at: libranza.modifiedAt?.toISOString() || null
         })
         .select()
         .single();
@@ -101,7 +103,9 @@ export function useLibranzas(): UseLibranzasResult {
           date: `${libranza.date.getFullYear()}-${String(libranza.date.getMonth() + 1).padStart(2, '0')}-${String(libranza.date.getDate()).padStart(2, '0')}`,
           personnel_name: libranza.personnelName,
           type: libranza.type,
-          is_change: libranza.isChange || false
+          is_change: libranza.isChange || false,
+          modified_by: libranza.modifiedBy || null,
+          modified_at: libranza.modifiedAt?.toISOString() || null
         })
         .eq('id', libranza.id);
 

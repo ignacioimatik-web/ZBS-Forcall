@@ -124,6 +124,7 @@ export function generateCalendarPDF(data: PDFCalendarData): jsPDF {
               L: { label: 'L', color: [22, 163, 74] },
               R: { label: 'R', color: [234, 88, 12] },
               MT: { label: 'MT', color: [14, 165, 233] },
+              V: { label: 'V', color: [147, 51, 234] },
             };
             const info = kindMap[entry.kind || ''];
             const names = entry.personnel.join(', ');

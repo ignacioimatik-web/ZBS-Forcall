@@ -64,7 +64,9 @@ export function useDoblas(): UseDoblasResult {
           date: `${dobla.date.getFullYear()}-${String(dobla.date.getMonth() + 1).padStart(2, '0')}-${String(dobla.date.getDate()).padStart(2, '0')}`,
           personnel_name: dobla.personnelName,
           type: dobla.type,
-          is_change: dobla.isChange || false
+          is_change: dobla.isChange || false,
+          modified_by: dobla.modifiedBy || null,
+          modified_at: dobla.modifiedAt?.toISOString() || null
         })
         .select()
         .single();
@@ -102,7 +104,9 @@ export function useDoblas(): UseDoblasResult {
           date: `${dobla.date.getFullYear()}-${String(dobla.date.getMonth() + 1).padStart(2, '0')}-${String(dobla.date.getDate()).padStart(2, '0')}`,
           personnel_name: dobla.personnelName,
           type: dobla.type,
-          is_change: dobla.isChange || false
+          is_change: dobla.isChange || false,
+          modified_by: dobla.modifiedBy || null,
+          modified_at: dobla.modifiedAt?.toISOString() || null
         })
         .eq('id', dobla.id);
 

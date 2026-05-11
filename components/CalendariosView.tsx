@@ -258,7 +258,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
       downloadCalendarPDF(data, filename);
       setDownloadMsg('PDF descargado correctamente');
     } catch (e) {
-      console.error(e);
       setDownloadMsg('Error al generar PDF');
     } finally {
       setIsDownloading(false);

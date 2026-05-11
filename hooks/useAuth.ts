@@ -87,11 +87,8 @@ export function useAuth(): UseAuthResult {
     let timeoutId: any = null;
 
     const initAuth = async () => {
-      console.log('--- Auth Init Started ---');
-      
       timeoutId = setTimeout(() => {
         if (isMounted && isLoading) {
-          console.warn('Auth init timeout reached, forcing loading state to false');
           setIsLoading(false);
         }
       }, 5000);
@@ -100,32 +97,27 @@ export function useAuth(): UseAuthResult {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Session error:', sessionError);
           setIsLoading(false);
           return;
         }
 
         if (session?.user) {
-          console.log('Session found for user:', session.user.id);
           const appUser = await fetchProfile(session.user.id, session.user.email || '');
           if (isMounted) {
             if (appUser) {
               setUser(appUser);
             } else {
-              console.warn('Session exists but no profile found — clearing session');
               await supabase.auth.signOut();
               clearSupabaseSession();
             }
           }
         } else {
-          console.log('No active session found');
           clearSupabaseSession();
         }
       } catch (err) {
-        console.error('Critical error in initAuth:', err);
+        // Silently handle auth errors
       } finally {
         if (isMounted) {
-          console.log('Auth Init Finished');
           setIsLoading(false);
           if (timeoutId) clearTimeout(timeoutId);
         }
@@ -135,7 +127,6 @@ export function useAuth(): UseAuthResult {
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth State Change Event:', event);
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && session?.user) {
         const appUser = await fetchProfile(session.user.id, session.user.email || '');
         if (isMounted) {
@@ -181,7 +172,6 @@ export function useAuth(): UseAuthResult {
           const localUser = USERS.find(u => u.email === email);
           
           if (localUser && localUser.pin === password) {
-            console.log('Auto-registrando usuario en Supabase...');
             const { error: signUpError } = await supabase.auth.signUp({
               email,
               password: supabasePassword,
@@ -198,7 +188,6 @@ export function useAuth(): UseAuthResult {
               return { success: false, error: signUpError.message };
             }
 
-            console.log('Registro OK, iniciando sesión automáticamente...');
             const { data: signInData, error: secondSignInError } = await withTimeout(
               supabase.auth.signInWithPassword({ email, password: supabasePassword }),
               12000
@@ -262,7 +251,6 @@ export function useAuth(): UseAuthResult {
     let warningTimer: NodeJS.Timeout;
 
     const doSignOut = () => {
-      console.log('Sesión cerrada por inactividad (1 hora)');
       signOut();
     };
 
