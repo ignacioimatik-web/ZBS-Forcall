@@ -10,7 +10,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@google/genai": "^1.39.0",
     "@supabase/supabase-js": "^2.47.10",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
