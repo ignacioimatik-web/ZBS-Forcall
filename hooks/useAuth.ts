@@ -216,6 +216,7 @@ export function useAuth(): UseAuthResult {
       // Ignore timeout/errors — clear local state regardless
     }
     clearSupabaseSession();
+    window.location.reload();
   }, []);
 
   // Temporizador de inactividad (1 hora = 3600000 ms)
