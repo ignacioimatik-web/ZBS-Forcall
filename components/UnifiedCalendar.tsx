@@ -268,7 +268,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
             <div 
               key={i} 
               onClick={() => handleCellClick(date)} 
-              className={`flex md:flex-col gap-3 md:gap-0 p-4 rounded-3xl border transition-all relative group md:min-h-[180px]
+              className={`flex md:flex-col gap-3 md:gap-0 p-4 rounded-3xl border transition-all relative group md:min-h-[200px]
                 ${isToday ? 'bg-indigo-50 border-indigo-200 shadow-inner' : 
                   isFestivo ? 'bg-gradient-to-br from-white via-red-50 to-red-100/40 border-red-100 shadow-inner' : 
                   isWeekend ? 'bg-gradient-to-br from-white via-slate-50 to-slate-100/50 border-gray-100 shadow-sm' : 
@@ -281,7 +281,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                 <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
                 {isFestivo && <span className="hidden md:block w-3 h-3 bg-red-500 rounded-full shadow-sm animate-pulse" title={holiday}></span>}
               </div>
-              <div className="flex-1 space-y-1 md:space-y-1 max-h-[260px] overflow-y-auto scrollbar-thin">
+              <div className="flex-1 space-y-0.5 md:space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
                 {events.map((ev: CalendarEvent, idx) => {
                   const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
                   const badge: { label: string; style: string } | null =
@@ -291,9 +291,9 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                     ev._kind === 'guardia' && ev.type === 'enfermeria' ? { label: 'E', style: 'bg-red-600 text-white' } :
                     ev._kind === 'meeting' ? { label: 'MT', style: 'bg-sky-600 text-white' } : null;
                   return (
-                  <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-3 py-2 md:px-2 md:py-1.5 rounded-xl text-[13px] md:text-[10px] font-black border leading-tight transition-all relative flex items-center gap-1.5 shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
+                  <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-2.5 py-1.5 md:px-2 md:py-1 rounded-xl text-[13px] md:text-[10px] font-black border leading-tight transition-all relative flex items-start gap-1.5 shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
                     {badge && <span className={`text-[9px] md:text-[7px] font-black px-1.5 py-0.5 rounded-md leading-none shrink-0 ${badge.style}`}>{badge.label}</span>}
-                    <span className="whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0">{ev.personnelName || ev.title}</span>
+                    <span className="whitespace-normal flex-1 min-w-0 leading-snug">{ev.personnelName || ev.title}</span>
                   </div>
                   );
                 })}
