@@ -260,29 +260,23 @@ const App: React.FC = () => {
     switch (activeTab) {
       case 'Unificado':
         return (
-          <CalendariosView
+          <Dashboard
             meetings={meetings}
             guardias={guardias}
             libranzas={libranzas}
             doblas={doblas}
-            vacaciones={vacaciones}
-            manualHolidays={manualHolidays}
+            onNavigate={setActiveTab}
             onAddGuardia={handleUpsertGuardia}
             onDeleteGuardia={handleDeleteGuardia}
-            onAddLibranza={handleUpsertLibranza}
-            onDeleteLibranza={deleteLibranza}
-            onAddDobla={handleUpsertDobla}
-            onDeleteDobla={deleteDobla}
-            onAddVacacion={addVacacion}
-            onDeleteVacacion={handleDeleteVacacion}
             onAddMeeting={handleUpsertSession}
-            onSwapGuardias={handleSwapGuardias}
-            onUndoSwap={handleUndoSwap}
+            onAddLibranza={handleUpsertLibranza}
+            onAddDobla={handleUpsertDobla}
+            onDeleteLibranza={deleteLibranza}
+            onDeleteDobla={deleteDobla}
             user={user}
-            scope="guardias-only"
           />
         );
-      case 'Medicina':
+      case 'Guardias':
         return (
           <CalendariosView
             meetings={meetings}
@@ -303,31 +297,6 @@ const App: React.FC = () => {
             onSwapGuardias={handleSwapGuardias}
             onUndoSwap={handleUndoSwap}
             user={user}
-            scope="medica"
-          />
-        );
-      case 'Enfermeria':
-        return (
-          <CalendariosView
-            meetings={meetings}
-            guardias={guardias}
-            libranzas={libranzas}
-            doblas={doblas}
-            vacaciones={vacaciones}
-            manualHolidays={manualHolidays}
-            onAddGuardia={handleUpsertGuardia}
-            onDeleteGuardia={handleDeleteGuardia}
-            onAddLibranza={handleUpsertLibranza}
-            onDeleteLibranza={deleteLibranza}
-            onAddDobla={handleUpsertDobla}
-            onDeleteDobla={deleteDobla}
-            onAddVacacion={addVacacion}
-            onDeleteVacacion={handleDeleteVacacion}
-            onAddMeeting={handleUpsertSession}
-            onSwapGuardias={handleSwapGuardias}
-            onUndoSwap={handleUndoSwap}
-            user={user}
-            scope="enfermeria"
           />
         );
       case 'Dictado':

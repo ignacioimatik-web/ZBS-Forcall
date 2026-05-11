@@ -19,7 +19,6 @@ interface CalendariosViewProps {
   onSwapGuardias: (event1: Guardia & { _kind?: string }, event2: Guardia & { _kind?: string }) => Promise<boolean>;
   onUndoSwap?: (log: AuditLog) => Promise<boolean>;
   user: User | null;
-  scope?: 'full' | 'guardias-only' | 'medica' | 'enfermeria';
 }
 
 function safeFormatDate(value: any): string {
@@ -34,9 +33,8 @@ function safeDayLabel(value: any): string {
 }
 
 export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
-  const { guardias, libranzas, doblas, vacaciones, meetings, scope = 'full' } = props;
-  const defaultSub = scope === 'medica' ? 'Medicina' : scope === 'enfermeria' ? 'enfermeria' : 'Medicina';
-  const [activeSub, setActiveSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'>(defaultSub);
+  const { guardias, libranzas, doblas, vacaciones, meetings } = props;
+  const [activeSub, setActiveSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'>('Medicina');
   const [bulkPersonnel, setBulkPersonnel] = useState<string | null>(null);
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
   const { logs: auditLogs, addLog, deleteLog } = useAuditLogs();
@@ -51,42 +49,36 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
 
   const doctors = ["Elena Benages", "Delia Mestre", "Frank Castillo", "Fernando Sierra", "Jorge Ramón", "Ilie Popov", "Externo/a"];
   const nurses = ["Xelo García", "Yolanda Lainez", "Maite Beltrán", "Yolanda García", "Rosa Carbó", "Externo/a"];
-  const scopeDoctors = scope === 'enfermeria' ? [] : doctors;
-  const scopeNurses = scope === 'medica' ? [] : nurses;
   const planningPersonnel =
-    scope === 'full' ? (
-      canManagePlanningType(props.user, 'medica') && canManagePlanningType(props.user, 'enfermeria')
-        ? [...scopeDoctors, ...scopeNurses]
-        : canManagePlanningType(props.user, 'medica')
-          ? scopeDoctors
-          : canManagePlanningType(props.user, 'enfermeria')
-            ? scopeNurses
-            : []
-    ) : [...scopeDoctors, ...scopeNurses];
+    canManagePlanningType(props.user, 'medica') && canManagePlanningType(props.user, 'enfermeria')
+      ? [...doctors, ...nurses]
+      : canManagePlanningType(props.user, 'medica')
+        ? doctors
+        : canManagePlanningType(props.user, 'enfermeria')
+          ? nurses
+          : [];
   const isVacacionesCategory = activeSub === 'Vacaciones';
   const vacacionesPersonnel = isVacacionesCategory
-    ? scope === 'full'
-      ? canManageVacaciones(props.user, 'medica') && canManageVacaciones(props.user, 'enfermeria')
-        ? [...scopeDoctors, ...scopeNurses]
-        : canManageVacaciones(props.user, 'medica')
-          ? scopeDoctors
-          : canManageVacaciones(props.user, 'enfermeria')
-            ? scopeNurses
-            : []
-      : [...scopeDoctors, ...scopeNurses]
+    ? canManageVacaciones(props.user, 'medica') && canManageVacaciones(props.user, 'enfermeria')
+      ? [...doctors, ...nurses]
+      : canManageVacaciones(props.user, 'medica')
+        ? doctors
+        : canManageVacaciones(props.user, 'enfermeria')
+          ? nurses
+          : []
     : [];
   const currentPersonnel =
     activeSub === 'enfermeria'
-      ? scopeNurses
+      ? nurses
       : activeSub === 'Medicina'
-        ? scopeDoctors
+        ? doctors
         : activeSub === 'Refuerzo'
           ? planningPersonnel
           : activeSub === 'Libranzas'
             ? planningPersonnel
             : isVacacionesCategory
               ? vacacionesPersonnel
-              : [...scopeDoctors, ...scopeNurses];
+              : [...doctors, ...nurses];
   const isGuardiaCategory = activeSub === 'Medicina' || activeSub === 'enfermeria';
   const isPlanningCategory = activeSub === 'Libranzas' || activeSub === 'Refuerzo';
   const canManageActiveCategory = isGuardiaCategory
@@ -115,7 +107,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
 
   const handleSaveBulk = async () => {
     if (!bulkPersonnel || bulkDates.length === 0 || !canManageActiveCategory) return;
-    const isNurse = scopeNurses.includes(bulkPersonnel);
+    const isNurse = nurses.includes(bulkPersonnel);
     const personnelType = isNurse ? 'enfermeria' : 'medica';
     const results = await Promise.allSettled(bulkDates.map(async date => {
       const common = { id: Math.random().toString(36).substr(2, 9), date, personnelName: bulkPersonnel, isChange: false, modifiedBy: props.user?.id || null, modifiedAt: new Date() };
@@ -273,20 +265,13 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     }
   };
 
-  const allSubNav = [
+  const subNav = [
     { id: 'Medicina', label: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20' },
     { id: 'enfermeria', label: 'Enfermeria', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20' },
     { id: 'Libranzas', label: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20' },
     { id: 'Refuerzo', label: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20' },
     { id: 'Vacaciones', label: 'Vacaciones', icon: 'flight', activeClass: 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-purple-200 ring-purple-500/20' }
   ];
-  const subNav = scope === 'guardias-only'
-    ? allSubNav.filter(s => s.id === 'Medicina' || s.id === 'enfermeria')
-    : scope === 'medica'
-      ? allSubNav.filter(s => s.id !== 'enfermeria')
-      : scope === 'enfermeria'
-        ? allSubNav.filter(s => s.id !== 'Medicina')
-        : allSubNav;
 
   const permutaHistory = useMemo(() => auditLogs.filter(log => log.type === 'PERMUTA'), [auditLogs]);
 
@@ -445,7 +430,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             currentMonth={currentMonth}
             onMonthChange={setCurrentMonth}
             id="calendario-principal"
-            getPersonnelType={(name) => scopeNurses.includes(name) ? 'enfermeria' : 'medica'}
+            getPersonnelType={(name) => nurses.includes(name) ? 'enfermeria' : 'medica'}
           />
         </main>
       </div>
