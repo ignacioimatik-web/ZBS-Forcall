@@ -25,6 +25,7 @@ dist-ssr
 .vercel
 .env
 .env*.local
+.env.production
 
 # Test screenshots and temp files
 *.png
