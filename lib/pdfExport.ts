@@ -127,17 +127,16 @@ export function generateCalendarPDF(data: PDFCalendarData): jsPDF {
             };
             const info = kindMap[entry.kind || ''];
             const names = entry.personnel.join(', ');
-            const truncated = names.length > 12 ? names.substring(0, 11) + '…' : names;
             if (info) {
               doc.setTextColor(info.color[0], info.color[1], info.color[2]);
               doc.setFont('helvetica', 'bold');
               doc.text(info.label, x + 1.5, textY);
               doc.setFont('helvetica', 'normal');
               doc.setTextColor(dark[0], dark[1], dark[2]);
-              doc.text(truncated, x + 4.5, textY);
+              doc.text(names, x + 4.5, textY);
             } else {
               doc.setTextColor(dark[0], dark[1], dark[2]);
-              doc.text(truncated, x + 1.5, textY);
+              doc.text(names, x + 1.5, textY);
             }
             textY += 2.8;
           });
