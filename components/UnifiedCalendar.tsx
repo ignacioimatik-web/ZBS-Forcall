@@ -281,7 +281,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                   return (
                   <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-3 py-2 md:px-2 md:py-1.5 rounded-xl text-[13px] md:text-[10px] font-black border leading-tight transition-all relative flex items-center gap-1.5 shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
                     {badge && <span className={`text-[9px] md:text-[7px] font-black px-1.5 py-0.5 rounded-md leading-none shrink-0 ${badge.style}`}>{badge.label}</span>}
-                    <span className="whitespace-normal break-words flex-1">{ev.personnelName || ev.title}</span>
+                    <span className="whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0">{ev.personnelName || ev.title}</span>
                   </div>
                   );
                 })}
