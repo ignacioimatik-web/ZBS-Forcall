@@ -15,6 +15,12 @@ function clearSupabaseSession() {
     }
   }
   keysToRemove.forEach(key => localStorage.removeItem(key));
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (key && key.startsWith('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  }
 }
 
 interface UseAuthResult {
@@ -152,6 +158,16 @@ export function useAuth(): UseAuthResult {
 
   const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
+    clearSupabaseSession();
+    // Forzar cierre de cualquier sesión previa (aunque el signOut anterior fallara por timeout)
+    try {
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
+      ]);
+    } catch {
+      // Ignorar error — lo importante es limpiar la sesión local
+    }
     clearSupabaseSession();
     const supabasePassword = transformPin(password);
 
