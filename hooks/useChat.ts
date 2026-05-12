@@ -78,6 +78,15 @@ export function useChat(): UseChatResult {
     }
   }, []);
 
+  const addMessage = useCallback((channelId: string, row: any) => {
+    const cid = channelId as ChannelId;
+    if (!CHANNELS.includes(cid)) return;
+    setMessagesByChannel(prev => {
+      if (prev[cid].some(m => m.id === row.id)) return prev;
+      return { ...prev, [cid]: [...prev[cid], mapRow(row)] };
+    });
+  }, []);
+
   useEffect(() => {
     loadAllChannels();
 
@@ -88,14 +97,7 @@ export function useChat(): UseChatResult {
         schema: 'public',
         table: 'chat_messages',
       }, (payload) => {
-        const row = payload.new;
-        const channelId = row.channel_id as ChannelId;
-        if (CHANNELS.includes(channelId)) {
-          setMessagesByChannel(prev => ({
-            ...prev,
-            [channelId]: [...prev[channelId], mapRow(row)],
-          }));
-        }
+        addMessage(payload.new.channel_id, payload.new);
       })
       .on('postgres_changes', {
         event: 'DELETE',
@@ -116,7 +118,7 @@ export function useChat(): UseChatResult {
     return () => {
       subscription.unsubscribe();
     };
-  }, [loadAllChannels]);
+  }, [loadAllChannels, addMessage]);
 
   const sendMessage = useCallback(async (channelId: string, text: string) => {
     if (!text.trim() || text.length > 2000) return;
@@ -129,15 +131,8 @@ export function useChat(): UseChatResult {
       console.error('Error enviando mensaje:', error.message);
       return;
     }
-    if (data?.[0]) {
-      setMessagesByChannel(prev => {
-        const cid = channelId as ChannelId;
-        const exists = prev[cid].some(m => m.id === data[0].id);
-        if (exists) return prev;
-        return { ...prev, [cid]: [...prev[cid], mapRow(data[0])] };
-      });
-    }
-  }, []);
+    if (data?.[0]) addMessage(channelId, data[0]);
+  }, [addMessage]);
 
   const uploadFile = useCallback(async (channelId: string, file: File | Blob, folder: string, ext: string): Promise<string | null> => {
     if (!CHANNELS.includes(channelId as ChannelId)) return null;
@@ -167,15 +162,6 @@ export function useChat(): UseChatResult {
     } finally {
       setIsUploading(false);
     }
-  }, []);
-
-  const addMessage = useCallback((channelId: string, row: any) => {
-    const cid = channelId as ChannelId;
-    if (!CHANNELS.includes(cid)) return;
-    setMessagesByChannel(prev => {
-      if (prev[cid].some(m => m.id === row.id)) return prev;
-      return { ...prev, [cid]: [...prev[cid], mapRow(row)] };
-    });
   }, []);
 
   const sendImage = useCallback(async (channelId: string, file: File) => {
