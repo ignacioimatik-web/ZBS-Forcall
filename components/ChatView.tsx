@@ -29,7 +29,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
 
   const teamConv: Conversation = { type: 'channel', id: 'general', label: 'Chat de Equipo' };
   const dmConvs: Conversation[] = profiles
-    .filter(p => p.id !== currentUser?.id)
+    .filter(p => p.id !== currentUser?.id && !p.full_name?.toLowerCase().includes('externo'))
     .map(p => ({ type: 'dm' as const, userId: p.id, label: p.full_name || p.email }));
 
   const [activeConv, setActiveConv] = useState<Conversation>(teamConv);
