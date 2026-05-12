@@ -239,7 +239,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     const entries: PDFCalendarData['entries'] = [];
     const month = currentMonth.getMonth();
     const year = currentMonth.getFullYear();
-    const targetGuardias = userGroup !== 'both' ? guardias.filter(g => g.type === userGroup) : guardias;
+    const targetGuardias = userGroup !== 'both' ? guardias.filter(g => g.type === userTypeFilter) : guardias;
     if (activeSub === 'Medicina') {
       targetGuardias.filter(g => g.type === 'medica').forEach(g => {
         entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: 'M' });
@@ -292,9 +292,10 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
 
   const permutaHistory = useMemo(() => auditLogs.filter(log => log.type === 'PERMUTA'), [auditLogs]);
 
-  const filteredLibranzas = useMemo(() => userGroup !== 'both' ? libranzas.filter(l => l.type === userGroup) : libranzas, [libranzas, userGroup]);
-  const filteredDoblas = useMemo(() => userGroup !== 'both' ? doblas.filter(d => d.type === userGroup) : doblas, [doblas, userGroup]);
-  const filteredVacaciones = useMemo(() => userGroup !== 'both' ? vacaciones.filter(v => v.type === userGroup) : vacaciones, [vacaciones, userGroup]);
+  const userTypeFilter = userGroup === 'medico' ? 'medica' : userGroup;
+  const filteredLibranzas = useMemo(() => userGroup !== 'both' ? libranzas.filter(l => l.type === userTypeFilter) : libranzas, [libranzas, userGroup]);
+  const filteredDoblas = useMemo(() => userGroup !== 'both' ? doblas.filter(d => d.type === userTypeFilter) : doblas, [doblas, userGroup]);
+  const filteredVacaciones = useMemo(() => userGroup !== 'both' ? vacaciones.filter(v => v.type === userTypeFilter) : vacaciones, [vacaciones, userGroup]);
 
   return (
     <div className="flex flex-col gap-4 md:gap-8 animate-fade-in pb-16">
