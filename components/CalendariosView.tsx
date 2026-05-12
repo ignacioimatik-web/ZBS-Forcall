@@ -34,7 +34,21 @@ function safeDayLabel(value: any): string {
 
 export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const { guardias, libranzas, doblas, vacaciones, meetings } = props;
-  const [activeSub, setActiveSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'>('Medicina');
+
+  function getUserGroup(): 'medico' | 'enfermeria' | 'both' {
+    if (!props.user || props.user.role === 'Administrador') return 'both';
+    if (props.user.staffGroup === 'medico') return 'medico';
+    if (props.user.staffGroup === 'enfermeria') return 'enfermeria';
+    if (props.user.role === 'Medico' || props.user.role === 'Coordinador') return 'medico';
+    if (props.user.role === 'enfermera') return 'enfermeria';
+    return 'both';
+  }
+
+  const userGroup = getUserGroup();
+
+  const [activeSub, setActiveSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'>(
+    userGroup === 'enfermeria' ? 'enfermeria' : 'Medicina'
+  );
   const [bulkPersonnel, setBulkPersonnel] = useState<string | null>(null);
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
   const { logs: auditLogs, addLog, deleteLog } = useAuditLogs();
@@ -225,24 +239,25 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     const entries: PDFCalendarData['entries'] = [];
     const month = currentMonth.getMonth();
     const year = currentMonth.getFullYear();
+    const targetGuardias = userGroup !== 'both' ? guardias.filter(g => g.type === userGroup) : guardias;
     if (activeSub === 'Medicina') {
-      guardias.filter(g => g.type === 'medica').forEach(g => {
+      targetGuardias.filter(g => g.type === 'medica').forEach(g => {
         entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: 'M' });
       });
     } else if (activeSub === 'enfermeria') {
-      guardias.filter(g => g.type === 'enfermeria').forEach(g => {
+      targetGuardias.filter(g => g.type === 'enfermeria').forEach(g => {
         entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: 'E' });
       });
     } else if (activeSub === 'Libranzas') {
-      libranzas.forEach(l => {
+      filteredLibranzas.forEach(l => {
         entries.push({ date: l.date, personnel: [l.personnelName], type: l.type, kind: 'L' });
       });
     } else if (activeSub === 'Refuerzo') {
-      doblas.forEach(d => {
+      filteredDoblas.forEach(d => {
         entries.push({ date: d.date, personnel: [d.personnelName], type: d.type, kind: 'R' });
       });
     } else if (activeSub === 'Vacaciones') {
-      vacaciones.forEach(v => {
+      filteredVacaciones.forEach(v => {
         entries.push({ date: v.date, personnel: [v.personnelName], type: v.type, kind: 'V' });
       });
     }
@@ -264,15 +279,22 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     }
   };
 
-  const subNav = [
-    { id: 'Medicina', label: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20' },
-    { id: 'enfermeria', label: 'Enfermeria', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20' },
-    { id: 'Libranzas', label: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20' },
-    { id: 'Refuerzo', label: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20' },
-    { id: 'Vacaciones', label: 'Vacaciones', icon: 'flight', activeClass: 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-purple-200 ring-purple-500/20' }
+  const allNav = [
+    { id: 'Medicina', label: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20', group: 'medico' as const },
+    { id: 'enfermeria', label: 'Enfermeria', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20', group: 'enfermeria' as const },
+    { id: 'Libranzas', label: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20', group: null as const },
+    { id: 'Refuerzo', label: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20', group: null as const },
+    { id: 'Vacaciones', label: 'Vacaciones', icon: 'flight', activeClass: 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-purple-200 ring-purple-500/20', group: null as const }
   ];
+  const subNav = allNav.filter(item =>
+    userGroup === 'both' || item.group === null || item.group === userGroup
+  );
 
   const permutaHistory = useMemo(() => auditLogs.filter(log => log.type === 'PERMUTA'), [auditLogs]);
+
+  const filteredLibranzas = useMemo(() => userGroup !== 'both' ? libranzas.filter(l => l.type === userGroup) : libranzas, [libranzas, userGroup]);
+  const filteredDoblas = useMemo(() => userGroup !== 'both' ? doblas.filter(d => d.type === userGroup) : doblas, [doblas, userGroup]);
+  const filteredVacaciones = useMemo(() => userGroup !== 'both' ? vacaciones.filter(v => v.type === userGroup) : vacaciones, [vacaciones, userGroup]);
 
   return (
     <div className="flex flex-col gap-4 md:gap-8 animate-fade-in pb-16">
@@ -401,13 +423,20 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
 
         {/* CALENDARIO - DERECHA */}
         <main className="flex-1 lg:order-2">
+          {(activeSub === 'Libranzas' || activeSub === 'Refuerzo' || activeSub === 'Vacaciones') && userGroup !== 'both' && (
+            <div className="mb-4 px-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full">
+                Mostrando solo datos de {userGroup === 'medico' ? 'Medicina' : 'Enfermería'}
+              </span>
+            </div>
+          )}
           <UnifiedCalendar
             key={activeSub}
             meetings={meetings}
             guardias={guardias}
-            libranzas={libranzas}
-            doblas={doblas}
-            vacaciones={vacaciones}
+            libranzas={filteredLibranzas}
+            doblas={filteredDoblas}
+            vacaciones={filteredVacaciones}
             onAddGuardia={props.onAddGuardia}
             onDeleteGuardia={props.onDeleteGuardia}
             onAddLibranza={props.onAddLibranza}
