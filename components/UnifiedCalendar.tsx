@@ -262,14 +262,20 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
           const isWeekend = date.getDay() === 0 || date.getDay() === 6;
           const isFestivo = !!holiday;
           
-          if (events.length === 0 && isMobile && !canManageActiveCategory && !bulkMode) return null;
+          if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
+            if (isMobile) return null;
+            return (
+              <div key={i} className="flex md:flex-col items-center md:pt-4 md:pb-0">
+                <span className={`text-2xl font-black leading-none ${isToday ? 'text-indigo-600' : isFestivo ? 'text-red-600' : isWeekend ? 'text-slate-400' : 'text-gray-300'}`}>{date.getDate()}</span>
+              </div>
+            );
+          }
           
           return (
             <div 
               key={i} 
               onClick={() => handleCellClick(date)} 
-              className={`flex md:flex-col gap-3 md:gap-0 p-4 rounded-3xl border transition-all relative group
-                ${events.length > 0 || (events.length === 0 && canManageActiveCategory && !swapMode) ? 'md:min-h-[200px]' : 'self-start'}
+              className={`flex md:flex-col gap-3 md:gap-0 p-4 rounded-3xl border transition-all relative group md:min-h-[200px]
                 ${isToday ? 'bg-indigo-50 border-indigo-200 shadow-inner' : 
                   isFestivo ? 'bg-gradient-to-br from-white via-red-50 to-red-100/40 border-red-100 shadow-inner' : 
                   isWeekend ? 'bg-gradient-to-br from-white via-slate-50 to-slate-100/50 border-gray-100 shadow-sm' : 
@@ -282,7 +288,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                 <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
                 {isFestivo && <span className="hidden md:block w-3 h-3 bg-red-500 rounded-full shadow-sm animate-pulse" title={holiday}></span>}
               </div>
-              {events.length > 0 || (events.length === 0 && canManageActiveCategory && !swapMode) ? (
+              {events.length > 0 ? (
                 <div className="flex-1 space-y-0.5 md:space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
                   {events.map((ev: CalendarEvent, idx) => {
                     const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
@@ -299,10 +305,9 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                     </div>
                     );
                   })}
-                  {events.length === 0 && canManageActiveCategory && !swapMode && (
-                    <div className="hidden md:flex flex-1 items-center justify-center text-gray-100 italic text-[10px] font-bold uppercase tracking-[0.2em]">Libre</div>
-                  )}
                 </div>
+              ) : events.length === 0 && canManageActiveCategory && !swapMode ? (
+                <div className="flex-1 flex items-center justify-center text-gray-400 text-xs font-bold uppercase tracking-[0.2em]">Libre</div>
               ) : null}
             </div>
           );
