@@ -155,6 +155,7 @@ export interface ChatMessage {
   isUrgent?: boolean;
   imageUrl?: string;
   audioUrl?: string;
+  receiverId?: string;
 }
 
 export interface AuditLog {

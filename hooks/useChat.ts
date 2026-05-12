@@ -1,9 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { ChatMessage } from '../types';
-
-const CHANNELS = ['general'] as const;
-type ChannelId = typeof CHANNELS[number];
+import type { ChatMessage, Profile } from '../types';
 
 function uuidv4(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -16,11 +13,13 @@ function uuidv4(): string {
 }
 
 interface UseChatResult {
-  messagesByChannel: Record<ChannelId, ChatMessage[]>;
+  profiles: Profile[];
+  messagesByChannel: Record<string, ChatMessage[]>;
   isLoading: boolean;
-  sendMessage: (channelId: string, text: string) => Promise<void>;
-  sendImage: (channelId: string, file: File) => Promise<void>;
-  sendAudio: (channelId: string, blob: Blob) => Promise<void>;
+  sendMessage: (text: string) => Promise<void>;
+  sendPrivateMessage: (receiverId: string, text: string) => Promise<void>;
+  sendImage: (file: File, receiverId?: string) => Promise<void>;
+  sendAudio: (blob: Blob, receiverId?: string) => Promise<void>;
   deleteMessage: (msg: ChatMessage) => Promise<void>;
   isUploading: boolean;
 }
@@ -35,17 +34,63 @@ function mapRow(row: any): ChatMessage {
     timestamp: new Date(row.created_at),
     imageUrl: row.image_url || undefined,
     audioUrl: row.audio_url || undefined,
+    receiverId: row.receiver_id || undefined,
   };
 }
 
+const TEAM_KEY = 'general';
+
+function dmChannelKey(myId: string, otherId: string): string {
+  return [myId, otherId].sort().join('_');
+}
+
 export function useChat(): UseChatResult {
-  const [messagesByChannel, setMessagesByChannel] = useState<Record<ChannelId, ChatMessage[]>>(
-    () => Object.fromEntries(CHANNELS.map(c => [c, []])) as Record<ChannelId, ChatMessage[]>
-  );
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [messagesByChannel, setMessagesByChannel] = useState<Record<string, ChatMessage[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
 
-  const loadAllChannels = useCallback(async () => {
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setCurrentUserId(data.user.id);
+    });
+  }, []);
+
+  const loadProfiles = useCallback(async () => {
+    const { data } = await supabase.from('profiles').select('*').eq('is_active', true).order('full_name');
+    if (data) setProfiles(data);
+  }, []);
+
+  const addMessage = useCallback((channelKey: string, msg: ChatMessage) => {
+    setMessagesByChannel(prev => {
+      const list = prev[channelKey] || [];
+      if (list.some(m => m.id === msg.id)) return prev;
+      return { ...prev, [channelKey]: [...list, msg] };
+    });
+  }, []);
+
+  const removeMessage = useCallback((msgId: string) => {
+    setMessagesByChannel(prev => {
+      const next = { ...prev };
+      for (const key of Object.keys(next)) {
+        next[key] = next[key].filter(m => m.id !== msgId);
+      }
+      return next;
+    });
+  }, []);
+
+  const getChannelKey = useCallback((row: any): string | null => {
+    if (row.channel_id === 'general' && !row.receiver_id) return TEAM_KEY;
+    if (row.channel_id === 'dm' && row.receiver_id && currentUserId) {
+      const sender = row.sender_id || currentUserId;
+      return dmChannelKey(currentUserId, sender === currentUserId ? row.receiver_id : sender);
+    }
+    return null;
+  }, [currentUserId]);
+
+  const loadAllMessages = useCallback(async () => {
+    if (!currentUserId) return;
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -55,40 +100,37 @@ export function useChat(): UseChatResult {
         .limit(200);
 
       if (error) {
-        console.error('Error loading chat messages:', error);
+        console.error('Error loading messages:', error);
         return;
       }
 
-      const grouped = Object.fromEntries(
-        CHANNELS.map(c => [c, [] as ChatMessage[]])
-      ) as Record<ChannelId, ChatMessage[]>;
-
+      const grouped: Record<string, ChatMessage[]> = {};
       (data || []).forEach(row => {
-        const channelId = row.channel_id as ChannelId;
-        if (grouped[channelId]) {
-          grouped[channelId].push(mapRow(row));
+        const key = getChannelKey(row);
+        if (key) {
+          if (!grouped[key]) grouped[key] = [];
+          const msg = mapRow(row);
+          if (!grouped[key].some(m => m.id === msg.id)) grouped[key].push(msg);
         }
       });
-
       setMessagesByChannel(grouped);
     } catch (err) {
-      console.error('Unexpected error loading chat:', err);
+      console.error('Unexpected error loading messages:', err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  const addMessage = useCallback((channelId: string, row: any) => {
-    const cid = channelId as ChannelId;
-    if (!CHANNELS.includes(cid)) return;
-    setMessagesByChannel(prev => {
-      if (prev[cid].some(m => m.id === row.id)) return prev;
-      return { ...prev, [cid]: [...prev[cid], mapRow(row)] };
-    });
-  }, []);
+  }, [currentUserId, getChannelKey]);
 
   useEffect(() => {
-    loadAllChannels();
+    loadProfiles();
+  }, [loadProfiles]);
+
+  useEffect(() => {
+    if (currentUserId) loadAllMessages();
+  }, [currentUserId, loadAllMessages]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
 
     const subscription = supabase
       .channel('chat_messages_all')
@@ -97,48 +139,57 @@ export function useChat(): UseChatResult {
         schema: 'public',
         table: 'chat_messages',
       }, (payload) => {
-        addMessage(payload.new.channel_id, payload.new);
+        const key = getChannelKey(payload.new);
+        if (key) addMessage(key, mapRow(payload.new));
       })
       .on('postgres_changes', {
         event: 'DELETE',
         schema: 'public',
         table: 'chat_messages',
       }, (payload) => {
-        const deletedId = payload.old.id;
-        setMessagesByChannel(prev => {
-          const next = { ...prev };
-          for (const cid of CHANNELS) {
-            next[cid] = next[cid].filter(m => m.id !== deletedId);
-          }
-          return next;
-        });
+        removeMessage(payload.old.id);
       })
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [loadAllChannels, addMessage]);
+  }, [currentUserId, getChannelKey, addMessage, removeMessage]);
 
-  const sendMessage = useCallback(async (channelId: string, text: string) => {
+  const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || text.length > 2000) return;
-    if (!CHANNELS.includes(channelId as ChannelId)) return;
     const { data, error } = await supabase.from('chat_messages').insert({
-      channel_id: channelId,
+      channel_id: TEAM_KEY,
       text: text.trim(),
     }).select();
     if (error) {
       console.error('Error enviando mensaje:', error.message);
       return;
     }
-    if (data?.[0]) addMessage(channelId, data[0]);
+    if (data?.[0]) addMessage(TEAM_KEY, mapRow(data[0]));
   }, [addMessage]);
 
-  const uploadFile = useCallback(async (channelId: string, file: File | Blob, folder: string, ext: string): Promise<string | null> => {
-    if (!CHANNELS.includes(channelId as ChannelId)) return null;
+  const sendPrivateMessage = useCallback(async (receiverId: string, text: string) => {
+    if (!text.trim() || text.length > 2000 || !currentUserId) return;
+    const { data, error } = await supabase.from('chat_messages').insert({
+      channel_id: 'dm',
+      text: text.trim(),
+      receiver_id: receiverId,
+    }).select();
+    if (error) {
+      console.error('Error enviando mensaje privado:', error.message);
+      return;
+    }
+    if (data?.[0]) {
+      const key = getChannelKey(data[0]);
+      if (key) addMessage(key, mapRow(data[0]));
+    }
+  }, [currentUserId, getChannelKey, addMessage]);
+
+  const uploadFile = useCallback(async (file: File | Blob, ext: string): Promise<string | null> => {
     setIsUploading(true);
     try {
-      const fileName = `${channelId}/${uuidv4()}.${ext}`;
+      const fileName = `${uuidv4()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('chat_media')
         .upload(fileName, file, {
@@ -164,37 +215,51 @@ export function useChat(): UseChatResult {
     }
   }, []);
 
-  const sendImage = useCallback(async (channelId: string, file: File) => {
-    const url = await uploadFile(channelId, file, 'images', file.name.split('.').pop() || 'jpg');
+  const sendImage = useCallback(async (file: File, receiverId?: string) => {
+    if (receiverId && !currentUserId) return;
+    const url = await uploadFile(file, file.name.split('.').pop() || 'jpg');
     if (!url) return;
 
-    const { data, error } = await supabase.from('chat_messages').insert({
-      channel_id: channelId,
+    const insertData: any = {
+      channel_id: receiverId ? 'dm' : TEAM_KEY,
       text: '',
       image_url: url,
-    }).select();
+    };
+    if (receiverId) insertData.receiver_id = receiverId;
+
+    const { data, error } = await supabase.from('chat_messages').insert(insertData).select();
     if (error) {
       console.error('Error enviando imagen:', error.message);
       return;
     }
-    if (data?.[0]) addMessage(channelId, data[0]);
-  }, [uploadFile, addMessage]);
+    if (data?.[0]) {
+      const key = getChannelKey(data[0]);
+      if (key) addMessage(key, mapRow(data[0]));
+    }
+  }, [uploadFile, currentUserId, getChannelKey, addMessage]);
 
-  const sendAudio = useCallback(async (channelId: string, blob: Blob) => {
-    const url = await uploadFile(channelId, blob, 'audio', 'webm');
+  const sendAudio = useCallback(async (blob: Blob, receiverId?: string) => {
+    if (receiverId && !currentUserId) return;
+    const url = await uploadFile(blob, 'webm');
     if (!url) return;
 
-    const { data, error } = await supabase.from('chat_messages').insert({
-      channel_id: channelId,
+    const insertData: any = {
+      channel_id: receiverId ? 'dm' : TEAM_KEY,
       text: '',
       audio_url: url,
-    }).select();
+    };
+    if (receiverId) insertData.receiver_id = receiverId;
+
+    const { data, error } = await supabase.from('chat_messages').insert(insertData).select();
     if (error) {
       console.error('Error enviando audio:', error.message);
       return;
     }
-    if (data?.[0]) addMessage(channelId, data[0]);
-  }, [uploadFile, addMessage]);
+    if (data?.[0]) {
+      const key = getChannelKey(data[0]);
+      if (key) addMessage(key, mapRow(data[0]));
+    }
+  }, [uploadFile, currentUserId, getChannelKey, addMessage]);
 
   const deleteMessage = useCallback(async (msg: ChatMessage) => {
     try {
@@ -219,19 +284,18 @@ export function useChat(): UseChatResult {
         return;
       }
 
-      setMessagesByChannel(prev => ({
-        ...prev,
-        general: prev.general.filter(m => m.id !== msg.id),
-      }));
+      removeMessage(msg.id);
     } catch (err) {
       console.error('Error inesperado al eliminar mensaje:', err);
     }
-  }, []);
+  }, [removeMessage]);
 
   return {
+    profiles,
     messagesByChannel,
     isLoading,
     sendMessage,
+    sendPrivateMessage,
     sendImage,
     sendAudio,
     deleteMessage,

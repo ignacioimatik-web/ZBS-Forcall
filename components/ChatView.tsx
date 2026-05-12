@@ -6,8 +6,12 @@ interface ChatViewProps {
   currentUser: User | null;
 }
 
+type Conversation =
+  | { type: 'channel'; id: string; label: string }
+  | { type: 'dm'; userId: string; label: string };
+
 export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
-  const { messagesByChannel, sendMessage, sendImage, sendAudio, deleteMessage, isUploading } = useChat();
+  const { profiles, messagesByChannel, sendMessage, sendPrivateMessage, sendImage, sendAudio, deleteMessage, isUploading } = useChat();
   const [inputText, setInputText] = useState('');
   const [showAttach, setShowAttach] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
@@ -17,14 +21,24 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   const attachRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Audio recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const channelMessages = messagesByChannel.general || [];
+  const teamConv: Conversation = { type: 'channel', id: 'general', label: 'Chat de Equipo' };
+  const dmConvs: Conversation[] = profiles
+    .filter(p => p.id !== currentUser?.id)
+    .map(p => ({ type: 'dm' as const, userId: p.id, label: p.full_name || p.email }));
+
+  const [activeConv, setActiveConv] = useState<Conversation>(teamConv);
+
+  const channelKey = activeConv.type === 'channel'
+    ? 'general'
+    : [currentUser?.id || '', activeConv.userId].sort().join('_');
+
+  const conversationMessages = messagesByChannel[channelKey] || [];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -32,9 +46,8 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [channelMessages]);
+  }, [conversationMessages]);
 
-  // Close menus on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (attachRef.current && !attachRef.current.contains(e.target as Node)) {
@@ -50,23 +63,28 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputText.trim()) {
-      sendMessage('general', inputText);
-      setInputText('');
+    if (!inputText.trim()) return;
+    if (activeConv.type === 'channel') {
+      sendMessage(inputText);
+    } else {
+      sendPrivateMessage(activeConv.userId, inputText);
     }
+    setInputText('');
   };
 
-  // Photo picker
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      sendImage('general', file);
+      if (activeConv.type === 'dm') {
+        sendImage(file, activeConv.userId);
+      } else {
+        sendImage(file);
+      }
     }
     e.target.value = '';
     setShowAttach(false);
   };
 
-  // Audio recording
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -80,7 +98,11 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
 
       recorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        sendAudio('general', blob);
+        if (activeConv.type === 'dm') {
+          sendAudio(blob, activeConv.userId);
+        } else {
+          sendAudio(blob);
+        }
         stream.getTracks().forEach(t => t.stop());
       };
 
@@ -137,28 +159,91 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-white shadow-sm z-10">
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-blue-500">forum</span>
-          <h3 className="font-bold text-gray-800 text-lg">Chat de Equipo</h3>
+    <div className="flex flex-col md:flex-row h-[calc(100vh-100px)] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
+      {/* Sidebar */}
+      <div className="w-full md:w-1/4 bg-earth-50 border-r border-gray-200 flex flex-col overflow-y-auto">
+        {/* Team channel */}
+        <div className="p-3 border-b border-gray-200 bg-earth-50">
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Canales</h2>
         </div>
-        <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
-          {channelMessages.length} mensajes
-        </span>
+        <button
+          onClick={() => setActiveConv(teamConv)}
+          className={`w-full flex items-center gap-3 p-3 transition-all ${
+            activeConv.type === 'channel' && activeConv.id === teamConv.id
+              ? 'bg-white shadow-sm ring-1 ring-gray-200'
+              : 'hover:bg-earth-100/50'
+          }`}
+        >
+          <div className="p-2 rounded-full bg-blue-100 text-blue-700">
+            <span className="material-symbols-outlined text-sm">forum</span>
+          </div>
+          <span className={`font-medium text-sm ${activeConv.type === 'channel' && activeConv.id === teamConv.id ? 'text-gray-900' : 'text-gray-600'}`}>
+            {teamConv.label}
+          </span>
+        </button>
+
+        {/* Direct messages */}
+        <div className="p-3 border-b border-t border-gray-200 bg-earth-50 mt-2">
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mensajes Directos</h2>
+        </div>
+        <div className="flex-1">
+          {dmConvs.map(conv => (
+            <button
+              key={conv.userId}
+              onClick={() => setActiveConv(conv)}
+              className={`w-full flex items-center gap-3 p-3 transition-all ${
+                activeConv.type === 'dm' && activeConv.userId === conv.userId
+                  ? 'bg-white shadow-sm ring-1 ring-gray-200'
+                  : 'hover:bg-earth-100/50'
+              }`}
+            >
+              <div className="w-8 h-8 rounded-full bg-forcall-100 text-forcall-700 flex items-center justify-center text-sm font-bold shrink-0">
+                {conv.label.charAt(0).toUpperCase()}
+              </div>
+              <div className="text-left min-w-0">
+                <span className={`block font-medium text-sm truncate ${activeConv.type === 'dm' && activeConv.userId === conv.userId ? 'text-gray-900' : 'text-gray-600'}`}>
+                  {conv.label}
+                </span>
+              </div>
+            </button>
+          ))}
+          {dmConvs.length === 0 && (
+            <p className="text-xs text-gray-400 text-center py-4">No hay otros usuarios</p>
+          )}
+        </div>
       </div>
+
+      {/* Chat Area */}
+      <div className="flex-1 flex flex-col bg-white">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-white shadow-sm z-10">
+          <div className="flex items-center gap-3">
+            {activeConv.type === 'channel' ? (
+              <span className="material-symbols-outlined text-blue-500">forum</span>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-forcall-100 text-forcall-700 flex items-center justify-center text-sm font-bold">
+                {activeConv.label.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <h3 className="font-bold text-gray-800 text-lg">{activeConv.label}</h3>
+          </div>
+          <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
+            {conversationMessages.length} mensajes
+          </span>
+        </div>
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/30">
-          {channelMessages.length === 0 ? (
+          {conversationMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
-              <span className="material-symbols-outlined text-5xl mb-3">forum</span>
-              <p className="font-medium">No hay mensajes en este canal.</p>
+              <span className="material-symbols-outlined text-5xl mb-3">
+                {activeConv.type === 'channel' ? 'forum' : 'chat'}
+              </span>
+              <p className="font-medium">No hay mensajes aquí.</p>
               <p className="text-sm">¡Sé el primero en escribir!</p>
             </div>
           ) : (
-            channelMessages.map((msg) => {
+            conversationMessages.map((msg) => {
               const isOwn = msg.senderId === currentUser?.id;
               return (
                 <div key={msg.id} className={`flex items-end gap-1 group ${isOwn ? 'justify-end' : 'justify-start'}`}>
@@ -200,6 +285,11 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
                       {isOwn && <span className="material-symbols-outlined text-[10px]">done_all</span>}
                     </div>
                   </div>
+                  {!isOwn && activeConv.type === 'dm' && (
+                    <div className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-[10px] font-bold shrink-0">
+                      {msg.senderName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                 </div>
               );
             })
@@ -266,7 +356,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder="Mensaje en #Chat de Equipo..."
+                  placeholder={activeConv.type === 'channel' ? 'Mensaje en #Chat de Equipo...' : `Mensaje para ${activeConv.label}...`}
                   className={`w-full border border-gray-300 rounded-full pl-5 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow shadow-sm ${
                     isUploading ? 'opacity-50' : 'focus:ring-forcall-500'
                   }`}
@@ -287,6 +377,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
             </form>
           )}
         </div>
+      </div>
 
       {/* Image expansion modal */}
       {expandedImage && (

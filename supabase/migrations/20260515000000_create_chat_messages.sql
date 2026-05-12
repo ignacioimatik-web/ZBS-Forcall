@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 -- Añadir columnas si tabla ya existía sin ellas
 ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS image_url text;
 ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS audio_url text;
+ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS receiver_id uuid REFERENCES profiles(id) ON DELETE SET NULL;
 ALTER TABLE chat_messages ALTER COLUMN text SET DEFAULT '';
 
 -- Quitar NOT NULL de text para permitir mensajes solo con media
@@ -27,16 +28,27 @@ ALTER TABLE chat_messages DROP CONSTRAINT IF EXISTS chat_has_content;
 ALTER TABLE chat_messages ADD CONSTRAINT chat_has_content
   CHECK (char_length(COALESCE(text, '')) > 0 OR image_url IS NOT NULL OR audio_url IS NOT NULL);
 
+-- Actualizar constraint de channel_id: solo general y dm
+ALTER TABLE chat_messages DROP CONSTRAINT IF EXISTS chat_messages_channel_id_check;
+ALTER TABLE chat_messages ADD CONSTRAINT chat_messages_channel_id_check
+  CHECK (channel_id IN ('general', 'dm'));
+
 CREATE INDEX IF NOT EXISTS idx_chat_messages_channel ON chat_messages(channel_id);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_created ON chat_messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_receiver ON chat_messages(receiver_id);
 
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 
--- Todos los autenticados pueden leer todos los mensajes
+-- RLS SELECT: team (receiver_id IS NULL) visible a todos; DMs solo para participantes
 DROP POLICY IF EXISTS "Everyone can read chat messages" ON chat_messages;
-CREATE POLICY "Everyone can read chat messages"
+DROP POLICY IF EXISTS "Users can read visible messages" ON chat_messages;
+CREATE POLICY "Users can read visible messages"
   ON chat_messages FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (
+    (receiver_id IS NULL AND auth.role() = 'authenticated')
+    OR
+    (receiver_id IS NOT NULL AND (sender_id = auth.uid()::uuid OR receiver_id = auth.uid()::uuid))
+  );
 
 -- Trigger: forzar sender_id = auth.uid() y sender_name desde profiles
 CREATE OR REPLACE FUNCTION set_chat_sender_info()
