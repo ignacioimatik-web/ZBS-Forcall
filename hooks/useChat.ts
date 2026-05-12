@@ -90,11 +90,13 @@ export function useChat(): UseChatResult {
   const sendMessage = useCallback(async (channelId: string, text: string) => {
     if (!text.trim() || text.length > 2000) return;
     if (!CHANNELS.includes(channelId as ChannelId)) return;
-
-    await supabase.from('chat_messages').insert({
+    const { error } = await supabase.from('chat_messages').insert({
       channel_id: channelId,
       text: text.trim(),
     });
+    if (error) {
+      console.error('Error enviando mensaje:', error.message);
+    }
   }, []);
 
   return {
