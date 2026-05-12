@@ -20,6 +20,8 @@ ALTER TABLE chat_messages ALTER COLUMN text SET DEFAULT '';
 
 -- Quitar NOT NULL de text para permitir mensajes solo con media
 ALTER TABLE chat_messages ALTER COLUMN text DROP NOT NULL;
+-- Quitar el CHECK original de la columna text (char_length > 0) creado inline en CREATE TABLE
+ALTER TABLE chat_messages DROP CONSTRAINT IF EXISTS chat_messages_text_check;
 -- Restricción: al menos texto o media
 ALTER TABLE chat_messages DROP CONSTRAINT IF EXISTS chat_has_content;
 ALTER TABLE chat_messages ADD CONSTRAINT chat_has_content
