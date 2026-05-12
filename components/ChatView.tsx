@@ -33,6 +33,27 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
     .map(p => ({ type: 'dm' as const, userId: p.id, label: p.full_name || p.email }));
 
   const [activeConv, setActiveConv] = useState<Conversation>(teamConv);
+  const mountTime = useRef(Date.now());
+  const lastRead = useRef<Record<string, number>>({});
+
+  function markRead(conv: Conversation) {
+    const key = conv.type === 'channel'
+      ? 'general'
+      : [currentUser?.id || '', conv.userId].sort().join('_');
+    lastRead.current[key] = Date.now();
+  }
+
+  function getUnreadCount(channelKey: string): number {
+    const since = lastRead.current[channelKey] || mountTime.current;
+    return (messagesByChannel[channelKey] || []).filter(m => m.timestamp.getTime() > since).length;
+  }
+
+  function handleSetActiveConv(conv: Conversation) {
+    markRead(conv);
+    setActiveConv(conv);
+  }
+
+  useEffect(() => { markRead(teamConv); }, []);
 
   const channelKey = activeConv.type === 'channel'
     ? 'general'
@@ -167,7 +188,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Canales</h2>
         </div>
         <button
-          onClick={() => setActiveConv(teamConv)}
+          onClick={() => handleSetActiveConv(teamConv)}
           className={`w-full flex items-center gap-3 p-3 transition-all ${
             activeConv.type === 'channel' && activeConv.id === teamConv.id
               ? 'bg-white shadow-sm ring-1 ring-gray-200'
@@ -187,26 +208,36 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mensajes Directos</h2>
         </div>
         <div className="flex-1">
-          {dmConvs.map(conv => (
-            <button
-              key={conv.userId}
-              onClick={() => setActiveConv(conv)}
-              className={`w-full flex items-center gap-3 p-3 transition-all ${
-                activeConv.type === 'dm' && activeConv.userId === conv.userId
-                  ? 'bg-white shadow-sm ring-1 ring-gray-200'
-                  : 'hover:bg-earth-100/50'
-              }`}
-            >
-              <div className="w-8 h-8 rounded-full bg-forcall-100 text-forcall-700 flex items-center justify-center text-sm font-bold shrink-0">
-                {conv.label.charAt(0).toUpperCase()}
-              </div>
-              <div className="text-left min-w-0">
-                <span className={`block font-medium text-sm truncate ${activeConv.type === 'dm' && activeConv.userId === conv.userId ? 'text-gray-900' : 'text-gray-600'}`}>
-                  {conv.label}
-                </span>
-              </div>
-            </button>
-          ))}
+          {dmConvs.map(conv => {
+            const isActiveDm = activeConv.type === 'dm' && activeConv.userId === conv.userId;
+            const dmKey = [currentUser?.id || '', conv.userId].sort().join('_');
+            const unread = isActiveDm ? 0 : getUnreadCount(dmKey);
+            return (
+              <button
+                key={conv.userId}
+                onClick={() => handleSetActiveConv(conv)}
+                className={`w-full flex items-center gap-3 p-3 transition-all ${
+                  isActiveDm
+                    ? 'bg-white shadow-sm ring-1 ring-gray-200'
+                    : 'hover:bg-earth-100/50'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-forcall-100 text-forcall-700 flex items-center justify-center text-sm font-bold shrink-0">
+                  {conv.label.charAt(0).toUpperCase()}
+                </div>
+                <div className="text-left min-w-0 flex-1">
+                  <span className={`block font-medium text-sm truncate ${isActiveDm ? 'text-gray-900' : 'text-gray-600'}`}>
+                    {conv.label}
+                  </span>
+                </div>
+                {unread > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1.5 shadow-sm">
+                    {unread > 99 ? '99+' : unread}
+                  </span>
+                )}
+              </button>
+            );
+          })}
           {dmConvs.length === 0 && (
             <p className="text-xs text-gray-400 text-center py-4">No hay otros usuarios</p>
           )}
