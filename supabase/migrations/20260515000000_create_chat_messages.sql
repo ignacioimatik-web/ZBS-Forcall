@@ -70,7 +70,7 @@ $$;
 DROP POLICY IF EXISTS "Users can insert chat messages" ON chat_messages;
 CREATE POLICY "Users can insert chat messages"
   ON chat_messages FOR INSERT
-  WITH CHECK (sender_id = auth.uid()::text);
+  WITH CHECK (sender_id = auth.uid()::uuid);
 
 -- ============================================================================
 -- Storage bucket para imágenes y audio del chat
@@ -96,7 +96,7 @@ CREATE POLICY "Authenticated users can upload chat media"
 DROP POLICY IF EXISTS "Users can delete own messages" ON chat_messages;
 CREATE POLICY "Users can delete own messages"
   ON chat_messages FOR DELETE
-  USING (sender_id = auth.uid()::text);
+  USING (sender_id = auth.uid()::uuid);
 
 -- RLS storage: autenticados pueden leer
 DROP POLICY IF EXISTS "Authenticated users can view chat media" ON storage.objects;
