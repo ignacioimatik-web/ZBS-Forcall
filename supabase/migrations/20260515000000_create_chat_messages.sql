@@ -110,4 +110,4 @@ DROP POLICY IF EXISTS "Users can delete own chat media" ON storage.objects;
 CREATE POLICY "Users can delete own chat media"
   ON storage.objects FOR DELETE
   TO authenticated
-  USING (bucket_id = 'chat_media' AND owner_id = auth.uid());
+  USING (bucket_id = 'chat_media' AND owner_id = auth.uid()::uuid);
