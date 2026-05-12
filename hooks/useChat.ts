@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { ChatMessage } from '../types';
 
-const CHANNELS = ['general', 'medicina', 'enfermeria', 'sesiones'] as const;
+const CHANNELS = ['general'] as const;
 type ChannelId = typeof CHANNELS[number];
 
 interface UseChatResult {
