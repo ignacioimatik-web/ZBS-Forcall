@@ -1,16 +1,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChatMessage, User } from '../types';
+import { User } from '../types';
+import { useChat } from '../hooks/useChat';
 
-// Define the missing ChatViewProps interface
 interface ChatViewProps {
   currentUser: User | null;
-  messages: ChatMessage[];
-  onSendMessage: (channelId: string, text: string) => void;
 }
 
-export const ChatView: React.FC<ChatViewProps> = ({ currentUser, messages, onSendMessage }) => {
-  // Define channels mapping to Meeting Types
+export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
+  const { messagesByChannel, sendMessage } = useChat();
   const channels = [
     { id: 'general', name: 'Equipo General', icon: 'groups', color: 'bg-blue-100 text-blue-700' },
     { id: 'medicina', name: 'Facultativos', icon: 'stethoscope', color: 'bg-green-100 text-green-700' },
@@ -23,7 +21,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser, messages, onSen
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeChannel = channels.find(c => c.id === activeChannelId) || channels[0];
-  const channelMessages = messages.filter(m => m.channelId === activeChannelId);
+  const channelMessages = messagesByChannel[activeChannelId as keyof typeof messagesByChannel] || [];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,7 +34,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser, messages, onSen
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputText.trim()) {
-      onSendMessage(activeChannelId, inputText);
+      sendMessage(activeChannelId, inputText);
       setInputText('');
     }
   };

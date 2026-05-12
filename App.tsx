@@ -5,6 +5,7 @@ import { CalendariosView } from './components/CalendariosView';
 import { NotificationToast } from './components/NotificationToast';
 import { LoginScreen } from './components/LoginScreen';
 import { AlertasView } from './components/AlertasView';
+import { ChatView } from './components/ChatView';
 import { Footer } from './components/Footer';
 import { TranscriptionTool } from './components/TranscriptionTool';
 import { ManualHoliday, Vacacion, Meeting, Guardia, Libranza, Dobla, AuditLog } from './types';
@@ -294,6 +295,8 @@ const App: React.FC = () => {
             user={user}
           />
         );
+      case 'Chat':
+        return <ChatView currentUser={user} />;
       case 'Dictado':
         return <TranscriptionTool />;
       case 'Alertas':
