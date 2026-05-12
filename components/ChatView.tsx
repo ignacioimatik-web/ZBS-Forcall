@@ -258,7 +258,6 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
             </form>
           )}
         </div>
-      </div>
 
       {/* Image expansion modal */}
       {expandedImage && (
