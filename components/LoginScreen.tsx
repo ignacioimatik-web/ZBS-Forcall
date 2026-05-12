@@ -298,8 +298,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         </div>
       </div>
 
-      <div className="relative z-10 mt-6 text-center text-white/60 text-xs">
+      <div className="relative z-10 mt-6 text-center text-white/60 text-xs space-y-2">
         <p>© 2026 ZBS Forcall — Gestión Sanitaria V1.4</p>
+        <button
+          onClick={() => {
+            document.cookie.split(';').forEach(c => {
+              document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=; path=/; max-age=0');
+            });
+            localStorage.clear();
+            sessionStorage.clear();
+            if ('caches' in window) {
+              caches.keys().then(names => names.forEach(n => caches.delete(n)));
+            }
+            window.location.reload();
+          }}
+          className="text-white/40 hover:text-white/80 underline underline-offset-2 transition-colors"
+        >
+          ¿Problemas de acceso? Limpiar datos del sitio
+        </button>
       </div>
     </div>
   );
