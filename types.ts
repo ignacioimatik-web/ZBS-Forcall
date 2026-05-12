@@ -153,6 +153,8 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
   isUrgent?: boolean;
+  imageUrl?: string;
+  audioUrl?: string;
 }
 
 export interface AuditLog {

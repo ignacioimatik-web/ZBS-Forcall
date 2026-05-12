@@ -7,9 +7,23 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   channel_id text NOT NULL CHECK (channel_id IN ('general', 'medicina', 'enfermeria', 'sesiones')),
   sender_id uuid REFERENCES profiles(id) ON DELETE SET NULL,
   sender_name text NOT NULL,
-  text text NOT NULL CHECK (char_length(text) > 0 AND char_length(text) <= 2000),
+  text text NOT NULL DEFAULT '',
+  image_url text,
+  audio_url text,
   created_at timestamptz DEFAULT now()
 );
+
+-- Añadir columnas si tabla ya existía sin ellas
+ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS image_url text;
+ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS audio_url text;
+ALTER TABLE chat_messages ALTER COLUMN text SET DEFAULT '';
+
+-- Quitar NOT NULL de text para permitir mensajes solo con media
+ALTER TABLE chat_messages ALTER COLUMN text DROP NOT NULL;
+-- Restricción: al menos texto o media
+ALTER TABLE chat_messages DROP CONSTRAINT IF EXISTS chat_has_content;
+ALTER TABLE chat_messages ADD CONSTRAINT chat_has_content
+  CHECK (char_length(COALESCE(text, '')) > 0 OR image_url IS NOT NULL OR audio_url IS NOT NULL);
 
 CREATE INDEX IF NOT EXISTS idx_chat_messages_channel ON chat_messages(channel_id);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_created ON chat_messages(created_at);
@@ -55,3 +69,30 @@ DROP POLICY IF EXISTS "Users can insert chat messages" ON chat_messages;
 CREATE POLICY "Users can insert chat messages"
   ON chat_messages FOR INSERT
   WITH CHECK (sender_id = auth.uid());
+
+-- ============================================================================
+-- Storage bucket para imágenes y audio del chat
+-- ============================================================================
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'chat_media',
+  'chat_media',
+  true,
+  10485760, -- 10 MB
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'audio/webm', 'audio/ogg', 'audio/mp4']
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- RLS storage: autenticados pueden subir
+DROP POLICY IF EXISTS "Authenticated users can upload chat media" ON storage.objects;
+CREATE POLICY "Authenticated users can upload chat media"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'chat_media');
+
+-- RLS storage: autenticados pueden leer
+DROP POLICY IF EXISTS "Authenticated users can view chat media" ON storage.objects;
+CREATE POLICY "Authenticated users can view chat media"
+  ON storage.objects FOR SELECT
+  TO authenticated
+  USING (bucket_id = 'chat_media');
