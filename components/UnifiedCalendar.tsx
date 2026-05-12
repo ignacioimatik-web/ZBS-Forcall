@@ -268,7 +268,8 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
             <div 
               key={i} 
               onClick={() => handleCellClick(date)} 
-              className={`flex md:flex-col gap-3 md:gap-0 p-4 rounded-3xl border transition-all relative group md:min-h-[200px]
+              className={`flex md:flex-col gap-3 md:gap-0 p-4 rounded-3xl border transition-all relative group
+                ${events.length > 0 || (events.length === 0 && canManageActiveCategory && !swapMode) ? 'md:min-h-[200px]' : 'self-start'}
                 ${isToday ? 'bg-indigo-50 border-indigo-200 shadow-inner' : 
                   isFestivo ? 'bg-gradient-to-br from-white via-red-50 to-red-100/40 border-red-100 shadow-inner' : 
                   isWeekend ? 'bg-gradient-to-br from-white via-slate-50 to-slate-100/50 border-gray-100 shadow-sm' : 
