@@ -97,6 +97,20 @@ export function useChat(): UseChatResult {
           }));
         }
       })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'chat_messages',
+      }, (payload) => {
+        const deletedId = payload.old.id;
+        setMessagesByChannel(prev => {
+          const next = { ...prev };
+          for (const cid of CHANNELS) {
+            next[cid] = next[cid].filter(m => m.id !== deletedId);
+          }
+          return next;
+        });
+      })
       .subscribe();
 
     return () => {
