@@ -281,26 +281,28 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                 <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
                 {isFestivo && <span className="hidden md:block w-3 h-3 bg-red-500 rounded-full shadow-sm animate-pulse" title={holiday}></span>}
               </div>
-              <div className="flex-1 space-y-0.5 md:space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
-                {events.map((ev: CalendarEvent, idx) => {
-                  const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
-                  const badge: { label: string; style: string } | null =
-                    ev._kind === 'libranza' ? { label: 'L', style: 'bg-green-600 text-white' } :
-                    ev._kind === 'dobla' ? { label: 'R', style: 'bg-orange-600 text-white' } :
-                    ev._kind === 'guardia' && ev.type === 'medica' ? { label: 'M', style: 'bg-blue-600 text-white' } :
-                    ev._kind === 'guardia' && ev.type === 'enfermeria' ? { label: 'E', style: 'bg-red-600 text-white' } :
-                    ev._kind === 'meeting' ? { label: 'MT', style: 'bg-sky-600 text-white' } : null;
-                  return (
-                  <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-2.5 py-1.5 md:px-2 md:py-1 rounded-xl text-[13px] md:text-[10px] font-black border leading-tight transition-all relative flex items-start gap-1.5 shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
-                    {badge && <span className={`text-[9px] md:text-[7px] font-black px-1.5 py-0.5 rounded-md leading-none shrink-0 ${badge.style}`}>{badge.label}</span>}
-                    <span className="whitespace-normal flex-1 min-w-0 leading-snug">{ev.personnelName || ev.title}</span>
-                  </div>
-                  );
-                })}
-                {events.length === 0 && canManageActiveCategory && !swapMode && (
-                  <div className="hidden md:flex flex-1 items-center justify-center text-gray-100 italic text-[10px] font-bold uppercase tracking-[0.2em]">Libre</div>
-                )}
-              </div>
+              {events.length > 0 || (events.length === 0 && canManageActiveCategory && !swapMode) ? (
+                <div className="flex-1 space-y-0.5 md:space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
+                  {events.map((ev: CalendarEvent, idx) => {
+                    const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
+                    const badge: { label: string; style: string } | null =
+                      ev._kind === 'libranza' ? { label: 'L', style: 'bg-green-600 text-white' } :
+                      ev._kind === 'dobla' ? { label: 'R', style: 'bg-orange-600 text-white' } :
+                      ev._kind === 'guardia' && ev.type === 'medica' ? { label: 'M', style: 'bg-blue-600 text-white' } :
+                      ev._kind === 'guardia' && ev.type === 'enfermeria' ? { label: 'E', style: 'bg-red-600 text-white' } :
+                      ev._kind === 'meeting' ? { label: 'MT', style: 'bg-sky-600 text-white' } : null;
+                    return (
+                    <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-2.5 py-1.5 md:px-2 md:py-1 rounded-xl text-[13px] md:text-[10px] font-black border leading-tight transition-all relative flex items-start gap-1.5 shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
+                      {badge && <span className={`text-[9px] md:text-[7px] font-black px-1.5 py-0.5 rounded-md leading-none shrink-0 ${badge.style}`}>{badge.label}</span>}
+                      <span className="whitespace-normal flex-1 min-w-0 leading-snug">{ev.personnelName || ev.title}</span>
+                    </div>
+                    );
+                  })}
+                  {events.length === 0 && canManageActiveCategory && !swapMode && (
+                    <div className="hidden md:flex flex-1 items-center justify-center text-gray-100 italic text-[10px] font-bold uppercase tracking-[0.2em]">Libre</div>
+                  )}
+                </div>
+              ) : null}
             </div>
           );
         })}
