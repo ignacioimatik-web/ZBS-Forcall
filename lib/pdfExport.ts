@@ -154,7 +154,7 @@ export function generateCalendarPDF(data: PDFCalendarData): jsPDF {
   doc.setTextColor(100, 100, 100);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
-  doc.text('© 2026 ZBS Forcall — Gestión Sanitaria V1.4', 10, pageH - 7);
+  doc.text('© 2026 ZBS Forcall — Gestión Sanitaria V1.4.1', 10, pageH - 7);
   doc.text(`Página 1 de 1`, pageW - 10, pageH - 7, { align: 'right' });
 
   return doc;
