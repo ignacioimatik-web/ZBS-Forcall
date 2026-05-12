@@ -5,6 +5,16 @@ import type { ChatMessage } from '../types';
 const CHANNELS = ['general'] as const;
 type ChannelId = typeof CHANNELS[number];
 
+function uuidv4(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
 interface UseChatResult {
   messagesByChannel: Record<ChannelId, ChatMessage[]>;
   isLoading: boolean;
@@ -96,12 +106,21 @@ export function useChat(): UseChatResult {
   const sendMessage = useCallback(async (channelId: string, text: string) => {
     if (!text.trim() || text.length > 2000) return;
     if (!CHANNELS.includes(channelId as ChannelId)) return;
-    const { error } = await supabase.from('chat_messages').insert({
+    const { data, error } = await supabase.from('chat_messages').insert({
       channel_id: channelId,
       text: text.trim(),
-    });
+    }).select();
     if (error) {
       console.error('Error enviando mensaje:', error.message);
+      return;
+    }
+    if (data?.[0]) {
+      setMessagesByChannel(prev => {
+        const cid = channelId as ChannelId;
+        const exists = prev[cid].some(m => m.id === data[0].id);
+        if (exists) return prev;
+        return { ...prev, [cid]: [...prev[cid], mapRow(data[0])] };
+      });
     }
   }, []);
 
@@ -109,7 +128,7 @@ export function useChat(): UseChatResult {
     if (!CHANNELS.includes(channelId as ChannelId)) return null;
     setIsUploading(true);
     try {
-      const fileName = `${channelId}/${crypto.randomUUID()}.${ext}`;
+      const fileName = `${channelId}/${uuidv4()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('chat_media')
         .upload(fileName, file, {
@@ -135,33 +154,46 @@ export function useChat(): UseChatResult {
     }
   }, []);
 
+  const addMessage = useCallback((channelId: string, row: any) => {
+    const cid = channelId as ChannelId;
+    if (!CHANNELS.includes(cid)) return;
+    setMessagesByChannel(prev => {
+      if (prev[cid].some(m => m.id === row.id)) return prev;
+      return { ...prev, [cid]: [...prev[cid], mapRow(row)] };
+    });
+  }, []);
+
   const sendImage = useCallback(async (channelId: string, file: File) => {
     const url = await uploadFile(channelId, file, 'images', file.name.split('.').pop() || 'jpg');
     if (!url) return;
 
-    const { error } = await supabase.from('chat_messages').insert({
+    const { data, error } = await supabase.from('chat_messages').insert({
       channel_id: channelId,
       text: '',
       image_url: url,
-    });
+    }).select();
     if (error) {
       console.error('Error enviando imagen:', error.message);
+      return;
     }
-  }, [uploadFile]);
+    if (data?.[0]) addMessage(channelId, data[0]);
+  }, [uploadFile, addMessage]);
 
   const sendAudio = useCallback(async (channelId: string, blob: Blob) => {
     const url = await uploadFile(channelId, blob, 'audio', 'webm');
     if (!url) return;
 
-    const { error } = await supabase.from('chat_messages').insert({
+    const { data, error } = await supabase.from('chat_messages').insert({
       channel_id: channelId,
       text: '',
       audio_url: url,
-    });
+    }).select();
     if (error) {
       console.error('Error enviando audio:', error.message);
+      return;
     }
-  }, [uploadFile]);
+    if (data?.[0]) addMessage(channelId, data[0]);
+  }, [uploadFile, addMessage]);
 
   return {
     messagesByChannel,
