@@ -41,7 +41,14 @@ CREATE TRIGGER set_chat_sender_info BEFORE INSERT ON chat_messages
   FOR EACH ROW EXECUTE FUNCTION set_chat_sender_info();
 
 -- Habilitar Realtime para la tabla (necesario para que las suscripciones en vivo funcionen)
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS chat_messages;
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE chat_messages;
+EXCEPTION
+  WHEN SQLSTATE '42710' THEN
+    NULL;
+END;
+$$;
 
 -- RLS: solo insert si sender_id = auth.uid() (el trigger lo garantiza)
 DROP POLICY IF EXISTS "Users can insert chat messages" ON chat_messages;
