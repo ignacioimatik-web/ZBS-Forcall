@@ -92,9 +92,22 @@ CREATE POLICY "Authenticated users can upload chat media"
   TO authenticated
   WITH CHECK (bucket_id = 'chat_media');
 
+-- RLS: solo el sender puede borrar sus mensajes
+DROP POLICY IF EXISTS "Users can delete own messages" ON chat_messages;
+CREATE POLICY "Users can delete own messages"
+  ON chat_messages FOR DELETE
+  USING (sender_id = auth.uid());
+
 -- RLS storage: autenticados pueden leer
 DROP POLICY IF EXISTS "Authenticated users can view chat media" ON storage.objects;
 CREATE POLICY "Authenticated users can view chat media"
   ON storage.objects FOR SELECT
   TO authenticated
   USING (bucket_id = 'chat_media');
+
+-- RLS storage: el owner puede borrar sus archivos
+DROP POLICY IF EXISTS "Users can delete own chat media" ON storage.objects;
+CREATE POLICY "Users can delete own chat media"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'chat_media' AND owner_id = auth.uid());

@@ -21,6 +21,7 @@ interface UseChatResult {
   sendMessage: (channelId: string, text: string) => Promise<void>;
   sendImage: (channelId: string, file: File) => Promise<void>;
   sendAudio: (channelId: string, blob: Blob) => Promise<void>;
+  deleteMessage: (msg: ChatMessage) => Promise<void>;
   isUploading: boolean;
 }
 
@@ -195,12 +196,45 @@ export function useChat(): UseChatResult {
     if (data?.[0]) addMessage(channelId, data[0]);
   }, [uploadFile, addMessage]);
 
+  const deleteMessage = useCallback(async (msg: ChatMessage) => {
+    try {
+      const prefix = '/object/public/chat_media/';
+      const extractPath = (url: string) => {
+        const idx = url.indexOf(prefix);
+        return idx !== -1 ? url.substring(idx + prefix.length) : null;
+      };
+
+      if (msg.imageUrl) {
+        const path = extractPath(msg.imageUrl);
+        if (path) await supabase.storage.from('chat_media').remove([path]);
+      }
+      if (msg.audioUrl) {
+        const path = extractPath(msg.audioUrl);
+        if (path) await supabase.storage.from('chat_media').remove([path]);
+      }
+
+      const { error } = await supabase.from('chat_messages').delete().eq('id', msg.id);
+      if (error) {
+        console.error('Error eliminando mensaje:', error.message);
+        return;
+      }
+
+      setMessagesByChannel(prev => ({
+        ...prev,
+        general: prev.general.filter(m => m.id !== msg.id),
+      }));
+    } catch (err) {
+      console.error('Error inesperado al eliminar mensaje:', err);
+    }
+  }, []);
+
   return {
     messagesByChannel,
     isLoading,
     sendMessage,
     sendImage,
     sendAudio,
+    deleteMessage,
     isUploading,
   };
 }

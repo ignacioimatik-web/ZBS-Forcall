@@ -7,13 +7,15 @@ interface ChatViewProps {
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
-  const { messagesByChannel, sendMessage, sendImage, sendAudio, isUploading } = useChat();
+  const { messagesByChannel, sendMessage, sendImage, sendAudio, deleteMessage, isUploading } = useChat();
   const [inputText, setInputText] = useState('');
   const [showAttach, setShowAttach] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [menuMsgId, setMenuMsgId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Audio recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -32,11 +34,14 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
     scrollToBottom();
   }, [channelMessages]);
 
-  // Close attach menu on outside click
+  // Close menus on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (attachRef.current && !attachRef.current.contains(e.target as Node)) {
         setShowAttach(false);
+      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuMsgId(null);
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -156,7 +161,31 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
             channelMessages.map((msg) => {
               const isOwn = msg.senderId === currentUser?.id;
               return (
-                <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                <div key={msg.id} className={`flex items-end gap-1 group ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                  {isOwn && (
+                    <div className="relative opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => setMenuMsgId(menuMsgId === msg.id ? null : msg.id)}
+                        className="p-1 rounded-full hover:bg-gray-200 text-gray-400"
+                      >
+                        <span className="material-symbols-outlined text-lg">more_vert</span>
+                      </button>
+                      {menuMsgId === msg.id && (
+                        <div ref={menuRef} className="absolute bottom-full right-0 mb-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[120px] z-50">
+                          <button
+                            onClick={() => {
+                              deleteMessage(msg);
+                              setMenuMsgId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            <span className="material-symbols-outlined text-base">delete</span>
+                            Eliminar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3 shadow-sm relative group ${
                     isOwn
                       ? 'bg-gradient-to-r from-forcall-600 to-forcall-700 text-white rounded-br-none'
