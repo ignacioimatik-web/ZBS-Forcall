@@ -11,7 +11,7 @@ type Conversation =
   | { type: 'dm'; userId: string; label: string };
 
 export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
-  const { profiles, messagesByChannel, sendMessage, sendPrivateMessage, sendImage, sendAudio, deleteMessage, isUploading } = useChat();
+  const { profiles, messagesByChannel, sendMessage, sendPrivateMessage, sendImage, sendAudio, deleteMessage, isUploading } = useChat(currentUser?.id);
   const [inputText, setInputText] = useState('');
   const [showAttach, setShowAttach] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
