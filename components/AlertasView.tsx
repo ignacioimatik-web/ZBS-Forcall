@@ -55,9 +55,9 @@ function wmoToForecastCondition(code: number): ForecastDay['condition'] {
   return 'Rain';
 }
 
-interface AemetWarning {
+interface VostPost {
   title: string;
-  description: string;
+  content: string;
   pubDate: string;
   link: string;
 }
@@ -128,10 +128,8 @@ export const AlertasView: React.FC = () => {
   const [currentWeather, setCurrentWeather] = useState<WeatherPoint[]>([]);
   const [forecast, setForecast] = useState<ForecastDay[]>([]);
 
-  const [aemetWarnings, setAemetWarnings] = useState<AemetWarning[]>([]);
-  const [aemetLoading, setAemetLoading] = useState(true);
-
-  const [twitterLoaded, setTwitterLoaded] = useState(false);
+  const [vostPosts, setVostPosts] = useState<VostPost[]>([]);
+  const [vostLoading, setVostLoading] = useState(true);
 
   const [categories, setCategories] = useState<PhoneCategory[]>([
     {
@@ -185,16 +183,7 @@ export const AlertasView: React.FC = () => {
     }
     fetchWeather();
     fetchCivilProtectionStatus();
-    fetchAemetWarnings();
-    if (!document.querySelector('script[src*="platform.twitter.com/widgets.js"]')) {
-      const script = document.createElement('script');
-      script.src = 'https://platform.twitter.com/widgets.js';
-      script.async = true;
-      script.onload = () => setTwitterLoaded(true);
-      document.body.appendChild(script);
-    } else {
-      setTwitterLoaded(true);
-    }
+    fetchVostPosts();
   }, []);
 
   const fetchWeather = async () => {
@@ -239,17 +228,17 @@ export const AlertasView: React.FC = () => {
     }
   };
 
-  const fetchAemetWarnings = async () => {
-    setAemetLoading(true);
+  const fetchVostPosts = async () => {
+    setVostLoading(true);
     try {
-      const res = await fetch(`/api/aemet-rss?t=${Date.now()}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`AEMET respondió ${res.status}`);
+      const res = await fetch(`/api/vost-rss?t=${Date.now()}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`VOST respondió ${res.status}`);
       const data = await res.json();
-      setAemetWarnings(data.warnings || []);
+      setVostPosts(data.posts || []);
     } catch (err) {
-      console.error('Error fetching AEMET warnings:', err);
+      console.error('Error fetching VOST posts:', err);
     } finally {
-      setAemetLoading(false);
+      setVostLoading(false);
     }
   };
 
@@ -484,56 +473,39 @@ export const AlertasView: React.FC = () => {
 
           <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Avisos AEMET</p>
-              <h3 className="text-lg font-black text-gray-900 mt-1">Comunitat Valenciana</h3>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Red social</p>
+              <h3 className="text-lg font-black text-gray-900 mt-1">@VOSTcvalenciana</h3>
             </div>
-            <div className="p-4 space-y-2 max-h-[400px] overflow-y-auto no-scrollbar">
-              {aemetLoading ? (
+            <div className="p-4 space-y-3">
+              {vostLoading ? (
                 <div className="flex items-center gap-2 py-4 text-gray-400">
                   <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Cargando avisos...</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Cargando posts...</span>
                 </div>
-              ) : aemetWarnings.length === 0 ? (
+              ) : vostPosts.length === 0 ? (
                 <div className="py-4 text-[10px] font-bold text-gray-500 text-center">
-                  No hay avisos de AEMET ahora mismo.
+                  No hay posts disponibles ahora mismo.
                 </div>
               ) : (
-                aemetWarnings.map((w, i) => (
+                vostPosts.slice(0, 2).map((post, i) => (
                   <a
                     key={i}
-                    href={w.link}
+                    href={post.link}
                     target="_blank"
                     rel="noreferrer"
-                    className="block rounded-2xl border border-gray-200 p-3 hover:bg-gray-50 transition-all"
+                    className="block rounded-2xl border border-gray-200 p-4 hover:bg-gray-50 transition-all"
                   >
-                    <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-wider">{w.title}</h4>
-                    <p className="text-[9px] text-gray-600 mt-1 leading-relaxed">{w.description}</p>
-                    <p className="text-[8px] text-gray-400 mt-1">{new Date(w.pubDate).toLocaleDateString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="text-[10px] text-gray-700 leading-relaxed whitespace-pre-line">{post.content}</p>
+                    <p className="text-[8px] text-gray-400 mt-2">
+                      {new Date(post.pubDate).toLocaleDateString('es', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
                   </a>
                 ))
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Red social</p>
-              <h3 className="text-lg font-black text-gray-900 mt-1">@GVA112</h3>
-            </div>
-            <div className="p-4">
-              {twitterLoaded ? (
-                <a
-                  className="twitter-timeline"
-                  data-height="400"
-                  href="https://twitter.com/GVA112?ref_src=twsrc%5Etfw"
-                >
-                  Tweets de @GVA112
-                </a>
-              ) : (
-                <div className="flex items-center gap-2 py-4 text-gray-400">
-                  <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Cargando timeline...</span>
-                </div>
               )}
             </div>
           </div>
