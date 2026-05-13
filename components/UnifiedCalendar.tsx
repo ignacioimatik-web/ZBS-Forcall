@@ -63,7 +63,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   onSwapEvents, currentUser, activeCategory = 'Todo',
   availablePersonnel = [], bulkMode = false, selectedBulkDates = [], onToggleBulkDate,
   swapMode = false, onCancelSwap, hideHeader = false, hideMonthNav = false, id = "calendar-container", isReadOnly = false,
-  currentMonth: externalMonth, onMonthChange, getPersonnelType, noteDates = [], onCellNoteClick
+  currentMonth: externalMonth, onMonthChange, getPersonnelType, noteDates = [], onCellNoteClick, onSelectDay
 }) => {
   const { t } = useT();
   const [internalMonth, setInternalMonth] = useState(new Date());
