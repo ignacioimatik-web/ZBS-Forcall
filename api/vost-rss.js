@@ -1,4 +1,4 @@
-const RSS_URL = 'https://rsshub.app/twitter/user/VOSTcvalenciana';
+const RSS_URL = 'https://nitter.net/VOSTcvalenciana/rss';
 
 const decodeHtml = (value = '') =>
   value
@@ -16,12 +16,14 @@ const cleanText = (value = '') =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const stripHtml = (value = '') =>
+const cleanContent = (value = '') =>
   decodeHtml(value)
+    .replace(/<!\[CDATA\[/g, '')
+    .replace(/\]\]>/g, '')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
-    .replace(/\n\s*\n/g, '\n')
-    .replace(/^\n+|\n+$/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 
 export default async function handler(req, res) {
@@ -57,7 +59,7 @@ export default async function handler(req, res) {
       const guidMatch = content.match(/<guid[^>]*>([\s\S]*?)<\/guid>/);
 
       const title = titleMatch ? cleanText(titleMatch[1]) : '';
-      const description = descMatch ? cleanText(descMatch[1]) : '';
+      const description = descMatch ? cleanContent(descMatch[1]) : '';
       const pubDate = pubDateMatch ? cleanText(pubDateMatch[1]) : '';
       const link = linkMatch ? cleanText(linkMatch[1]) : '';
       const guid = guidMatch ? cleanText(guidMatch[1]) : '';
