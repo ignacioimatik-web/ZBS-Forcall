@@ -6,6 +6,7 @@ import { generateICS, downloadICS } from '../lib/calendarExport';
 import { NotificationToast } from './NotificationToast';
 import { canManageGuardiaCategory, canManagePlanningType, canManageVacaciones } from '../lib/guardiaPermissions';
 import { useAuditLogs } from '../hooks/useAuditLogs';
+import { useT } from '../lib/i18n';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { VERSION_STRING } from '../lib/version';
@@ -34,6 +35,7 @@ function safeDayLabel(value: any): string {
 }
 
 export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
+  const { t } = useT();
   const { guardias, libranzas, doblas, vacaciones, meetings } = props;
 
   function getUserGroup(): 'medico' | 'enfermeria' | 'both' {
@@ -111,7 +113,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     addLog({ 
       type: 'VALIDACION', 
       user: 'Sistema', 
-      description: `Inicio de sesión de gestión`, 
+      description: t('calendarios.sessionStart'), 
       category: activeSub 
     });
   }, [addLog]);
@@ -134,8 +136,8 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     }));
     const failed = results.filter(r => r.status === 'rejected').length;
     addLog({ type: 'CAMBIO', user: props.user?.name || 'Usuario', description: failed === 0
-      ? `Asignación masiva exitosa: ${bulkPersonnel} (${bulkDates.length} turnos) en ${activeSub}.`
-      : `Asignación masiva con errores: ${bulkPersonnel} (${failed}/${bulkDates.length} fallos) en ${activeSub}.`,
+      ? `${t('calendarios.bulkSuccess')}: ${bulkPersonnel} (${bulkDates.length} ${t('calendarios.bulkSuccess')}) en ${activeSub}.`
+      : `${t('calendarios.bulkError')}: ${bulkPersonnel} (${failed}/${bulkDates.length} ${t('calendarios.bulkError')}) en ${activeSub}.`,
       category: activeSub });
     setBulkDates([]); setBulkPersonnel(null);
   };
@@ -150,7 +152,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     const newLog = { 
       type: 'PERMUTA' as const, 
       user: props.user?.name || 'Usuario', 
-      description: `Intercambio confirmado entre ${p1} y ${p2}.`, 
+      description: `${t('calendarios.swapConfirmed')} ${p1} y ${p2}.`, 
       category: activeSub, 
       details: { from: p1, to: p2, date1: ev1.date, date2: ev2.date } 
     };
@@ -272,20 +274,20 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     const filename = `Calendario_${activeSub}_Forcall_${currentMonth.toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
     try {
       downloadCalendarPDF(data, filename);
-      setDownloadMsg('PDF descargado correctamente');
+      setDownloadMsg(t('calendarios.pdfDownloaded'));
     } catch (e) {
-      setDownloadMsg('Error al generar PDF');
+      setDownloadMsg(t('calendarios.pdfError'));
     } finally {
       setIsDownloading(false);
     }
   };
 
   const allNav = [
-    { id: 'Medicina', label: 'Medicina', icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20', group: 'medico' as const },
-    { id: 'enfermeria', label: 'Enfermeria', icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20', group: 'enfermeria' as const },
-    { id: 'Libranzas', label: 'Libranzas', icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20', group: null as const },
-    { id: 'Refuerzo', label: 'Refuerzo', icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20', group: null as const },
-    { id: 'Vacaciones', label: 'Vacaciones', icon: 'flight', activeClass: 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-purple-200 ring-purple-500/20', group: null as const }
+    { id: 'Medicina', label: t('calendarios.medicina'), icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20', group: 'medico' as const },
+    { id: 'enfermeria', label: t('calendarios.enfermeria'), icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20', group: 'enfermeria' as const },
+    { id: 'Libranzas', label: t('calendarios.libranzas'), icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20', group: null as const },
+    { id: 'Refuerzo', label: t('calendarios.refuerzo'), icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20', group: null as const },
+    { id: 'Vacaciones', label: t('calendarios.vacaciones'), icon: 'flight', activeClass: 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-purple-200 ring-purple-500/20', group: null as const }
   ];
   const subNav = allNav.filter(item =>
     userGroup === 'both' || item.group === null || item.group === userGroup
@@ -369,29 +371,29 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             >
                <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">picture_as_pdf</span>
                <div className="text-left">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">Descargar Calendario</span>
-                  <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">{activeSub} - {currentMonth.toLocaleDateString('es-ES', { month: 'long' })}</span>
-               </div>
-            </button>
-           </div>
-           
-           {/* BOTÓN PERSONALIZADO - SOLO MIS GUARDIAS */}
-           <div className="bg-emerald-50/50 rounded-[2rem] p-4 border-2 border-emerald-100">
-             <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-2">
-               <span className="material-symbols-outlined text-[14px]">person</span>
-               Solo mis guardias
-             </p>
-             <button 
-               onClick={handleDownloadUserCalendar} 
-               className="w-full p-5 rounded-[1.5rem] bg-emerald-600 text-white shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3 group hover:bg-emerald-700"
-             >
-                <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">calendar_today</span>
-                <div className="text-left">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">Descargar Mi Calendario</span>
-                  <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">Formato .ics (Apple/Google)</span>
+                   <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">{t('calendarios.downloadCalendar')}</span>
+                   <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">{activeSub} - {currentMonth.toLocaleDateString('es-ES', { month: 'long' })}</span>
                 </div>
              </button>
-           </div>
+            </div>
+            
+            {/* BOTÓN PERSONALIZADO - SOLO MIS GUARDIAS */}
+            <div className="bg-emerald-50/50 rounded-[2rem] p-4 border-2 border-emerald-100">
+              <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[14px]">person</span>
+                {t('calendarios.onlyMyShifts')}
+              </p>
+              <button 
+                onClick={handleDownloadUserCalendar} 
+                className="w-full p-5 rounded-[1.5rem] bg-emerald-600 text-white shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3 group hover:bg-emerald-700"
+              >
+                 <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">calendar_today</span>
+                 <div className="text-left">
+                   <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">{t('calendarios.downloadMyCalendar')}</span>
+                   <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">Formato .ics (Apple/Google)</span>
+                 </div>
+              </button>
+            </div>
 
           {props.user?.role !== 'Administrador' && (
             <button 
@@ -400,8 +402,8 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             >
               <span className="material-symbols-outlined text-3xl">{swapMode ? 'sync_alt' : 'swap_calls'}</span>
               <div className="text-left">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">{swapMode ? 'PERMUTA ACTIVA' : 'PEDIR PERMUTA'}</span>
-                <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">Toca 2 nombres para cruzar</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">{swapMode ? t('calendarios.swapActive') : t('calendarios.askSwap')}</span>
+                <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">{t('calendarios.tapTwoNames')}</span>
               </div>
             </button>
           )}
@@ -409,7 +411,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm space-y-4">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 flex items-center gap-2">
               <span className="material-symbols-outlined text-[14px]">person_search</span>
-              Gestión: {activeSub}
+              {t('calendarios.management')} {activeSub}
             </h4>
             <select 
               value={bulkPersonnel || ''} 
@@ -417,35 +419,35 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
               onChange={(e) => { setBulkPersonnel(e.target.value); setBulkDates([]); }} 
               className="w-full px-6 py-5 bg-gray-50 border border-gray-100 rounded-[1.5rem] font-black text-xs uppercase focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-100"
             >
-              <option value="">-- SELECCIONAR PROFESIONAL --</option>
+              <option value="">{t('calendarios.selectProfessional')}</option>
               {currentPersonnel.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
             {!canManageActiveCategory && isGuardiaCategory && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                Solo la coordinación de la categoría puede añadir o quitar guardias. El resto del equipo solo puede hacer permutas.
+                {t('calendarios.coordOnlyGuardias')}
               </div>
             )}
             {!canManageActiveCategory && isPlanningCategory && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                En libranzas y refuerzo solo Elena Benages puede gestionar Medicina y Xelo García puede gestionar Enfermeria.
+                {t('calendarios.elenaXeloPlanning')}
               </div>
             )}
             {!canManageActiveCategory && isVacacionesCategory && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                Solo Elena Benages puede gestionar vacaciones de Medicina y Xelo García de Enfermeria.
+                {t('calendarios.elenaXeloVacaciones')}
               </div>
             )}
             {bulkPersonnel && (
               <div className="space-y-4 animate-slide-in-up">
                 <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                  {bulkDates.length === 0 ? `Toca días en el calendario para ${bulkPersonnel}` : `${bulkDates.length} días seleccionados para asignar`}
+                  {bulkDates.length === 0 ? `${t('calendarios.tapDays')} ${bulkPersonnel}` : `${bulkDates.length} ${t('calendarios.daysSelected')}`}
                 </div>
                 {bulkDates.length > 0 && (
                   <button 
                     onClick={handleSaveBulk} 
                     className="w-full py-5 bg-gray-900 text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest shadow-2xl active:scale-95 hover:bg-black transition-colors"
                   >
-                    CONFIRMAR ASIGNACIÓN
+                    {t('calendarios.confirmAssignment')}
                   </button>
                 )}
               </div>
@@ -458,7 +460,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           {(activeSub === 'Libranzas' || activeSub === 'Refuerzo' || activeSub === 'Vacaciones') && userGroup !== 'both' && (
             <div className="mb-4 px-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full">
-                Mostrando solo datos de {userGroup === 'medico' ? 'Medicina' : 'Enfermería'}
+                {t('calendarios.showingOnly')} {userGroup === 'medico' ? t('calendarios.medicina') : t('calendarios.enfermeria')}
               </span>
             </div>
           )}
@@ -505,16 +507,16 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                 <span className="material-symbols-outlined">sticky_note_2</span>
               </div>
               <div>
-                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Notas de {activeSub === 'Libranzas' ? 'Libranzas' : 'Refuerzo'}</h3>
+                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{t('calendarios.notesOf')} {activeSub === 'Libranzas' ? t('calendarios.libranzas') : t('calendarios.refuerzo')}</h3>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
-                  {canWriteNotes ? 'Puedes crear y editar notas' : 'Solo lectura — Xelo García y Elena Benages pueden editar'}
+                  {canWriteNotes ? t('calendarios.canWriteNotes') : t('calendarios.readOnlyNote')}
                 </p>
               </div>
             </div>
           </div>
           <div className="p-4 space-y-2">
             {noteDates.length === 0 ? (
-              <div className="text-center py-8 opacity-30 text-[10px] font-black uppercase tracking-widest">Sin notas este mes</div>
+              <div className="text-center py-8 opacity-30 text-[10px] font-black uppercase tracking-widest">{t('calendarios.noNotesThisMonth')}</div>
             ) : (
               noteDates.sort().map(key => {
                 const date = new Date(key);
@@ -566,7 +568,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 animate-slide-in-up" onClick={e => e.stopPropagation()}>
             <h3 className="text-xl font-black text-gray-900 mb-2 flex items-center gap-3">
               <span className={`p-2 rounded-xl text-white ${canWriteNotes ? 'bg-amber-500' : 'bg-gray-400'} material-symbols-outlined`}>sticky_note_2</span>
-              Nota del día
+              {t('calendarios.noteOfDay')}
             </h3>
             <p className="text-sm font-bold text-gray-500 mb-5">
               {noteModalDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -575,22 +577,22 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
               <textarea
                 value={noteText}
                 onChange={e => setNoteText(e.target.value)}
-                placeholder="Escribe una nota para este día..."
+                placeholder={t('calendarios.writeNote')}
                 rows={4}
                 className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none placeholder:text-gray-300"
               />
             ) : (
               <div className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-sm text-gray-700 min-h-[80px]">
-                {noteText || 'No hay nota para este día.'}
+                {noteText || t('calendarios.noNoteForDay')}
               </div>
             )}
             <div className="flex gap-3 mt-5">
               <button onClick={() => setNoteModalDate(null)} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-colors">
-                {canWriteNotes ? 'Cancelar' : 'Cerrar'}
+                {canWriteNotes ? t('common.cancel') : t('common.close')}
               </button>
               {canWriteNotes && (
                 <button onClick={() => { if (noteModalDate) saveNote(noteModalDate, noteText); setNoteModalDate(null); }} className="flex-1 py-4 bg-amber-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-600 transition-all shadow-xl active:scale-95">
-                  Guardar nota
+                  {t('calendarios.saveNote')}
                 </button>
               )}
             </div>
@@ -603,19 +605,19 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
         <div className="p-6 md:p-8 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
            <div className="flex items-center gap-4">
              <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg"><span className="material-symbols-outlined">history</span></div>
-             <div><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Historial de Permutas</h3><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Control ZBS Forcall</p></div>
+             <div><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{t('calendarios.swapHistory')}</h3><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Control ZBS Forcall</p></div>
            </div>
-           <button onClick={handleDownloadRegistry} className="px-6 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 no-print shadow-lg active:scale-95"><span className="material-symbols-outlined text-sm">picture_as_pdf</span> Descargar (PDF)</button>
+           <button onClick={handleDownloadRegistry} className="px-6 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 no-print shadow-lg active:scale-95"><span className="material-symbols-outlined text-sm">picture_as_pdf</span> {t('calendarios.downloadPdf')}</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50">
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">Fecha</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">Categoría</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">Intercambio</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">Días</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right">Autorizado</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.date')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.category')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.exchange')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.days')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right">{t('calendarios.authorized')}</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right"></th>
               </tr>
             </thead>
@@ -636,13 +638,13 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                       {canManageActiveCategory && props.onUndoSwap && (
                         <button
                           onClick={async () => {
-                            if (!confirm('¿Deshacer esta permuta? Se intercambiarán los profesionales de nuevo.')) return;
+                            if (!confirm(t('calendarios.undoSwap'))) return;
                             const ok = await props.onUndoSwap!(log);
                             if (ok) deleteLog(log.id);
                           }}
                           className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition-all active:scale-95"
                         >
-                          Deshacer
+                          {t('calendarios.undo')}
                         </button>
                       )}
                     </td>
@@ -650,7 +652,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                   );
                 }))
               : (
-                <tr><td colSpan={6} className="px-6 py-12 text-center opacity-30 text-[10px] font-black uppercase tracking-widest">Sin registros</td></tr>
+                <tr><td colSpan={6} className="px-6 py-12 text-center opacity-30 text-[10px] font-black uppercase tracking-widest">{t('common.registros')}</td></tr>
               )}
             </tbody>
           </table>

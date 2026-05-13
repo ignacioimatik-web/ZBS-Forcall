@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { CATEGORIES, getUsersByCategory } from '../lib/users';
 import { VERSION_STRING } from '../lib/version';
+import { useT } from '../lib/i18n';
+import type { Lang } from '../lib/i18n/types';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -10,6 +12,7 @@ interface LoginScreenProps {
 type Step = 'category' | 'user' | 'pin';
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+  const { t, lang, setLang } = useT();
   const { signIn, error: authError } = useAuth();
   const [step, setStep] = useState<Step>('category');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -52,7 +55,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
     try {
       if (!selectedUserEmail) {
-        setError('Usuario no encontrado');
+        setError(t('login.userNotFound'));
         return;
       }
 
@@ -61,7 +64,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         setExitWave(true);
         setTimeout(() => onLoginSuccess(), 600);
       } else {
-        setError(result.error || 'PIN incorrecto');
+        setError(result.error || t('login.wrongPin'));
         setPin('');
       }
     } finally {
@@ -113,7 +116,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <div className="inline-flex items-center justify-center p-4 bg-white/20 backdrop-blur rounded-full mb-4">
               <span className="material-symbols-outlined text-5xl">landscape</span>
             </div>
-            <p className="text-lg font-black uppercase tracking-widest">Bienvenido</p>
+              <p className="text-lg font-black uppercase tracking-widest">{t('login.bienvenido')}</p>
             <p className="text-2xl font-black mt-1">{selectedUserName}</p>
           </div>
         </div>
@@ -125,10 +128,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <span className="material-symbols-outlined text-4xl text-earth-800">landscape</span>
         </div>
         <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-md">
-          Zona Básica de Salud
+          {t('login.title')}
         </h1>
         <p className="text-white/90 mt-2 font-bold uppercase tracking-widest text-xs drop-shadow-sm">
-          Gestión Equipo Forcall
+          {t('login.subtitle')}
         </p>
       </div>
 
@@ -147,14 +150,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             )}
             <div>
               <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">
-                {step === 'category' && 'Acceso'}
+                {step === 'category' && t('login.access')}
                 {step === 'user' && selectedCategory}
                 {step === 'pin' && selectedUserName}
               </p>
               <h2 className="text-lg font-black text-gray-800 leading-tight">
-                {step === 'category' && 'Selecciona tu grupo'}
-                {step === 'user' && 'Selecciona tu nombre'}
-                {step === 'pin' && 'Introduce tu PIN'}
+                {step === 'category' && t('login.selectGroup')}
+                {step === 'user' && t('login.selectName')}
+                {step === 'pin' && t('login.enterPin')}
               </h2>
             </div>
           </div>
@@ -212,7 +215,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               {categoryUsers.length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
                   <span className="material-symbols-outlined text-4xl block mb-2">person_off</span>
-                  <p className="text-sm">Sin usuarios en esta categoría</p>
+                  <p className="text-sm">{t('login.noUsers')}</p>
                 </div>
               ) : (
                 categoryUsers.map((u) => (
@@ -303,10 +306,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    Verificando...
+                    {t('login.verifying')}
                   </span>
                 ) : (
-                  'Entrar'
+                  t('login.enter')
                 )}
               </button>
             </div>
@@ -315,6 +318,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       </div>
 
       <div className="relative z-10 mt-6 text-center text-white/60 text-xs space-y-2 animate-fade-in">
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <button
+            onClick={() => setLang('es')}
+            className={`px-3 py-1 rounded-lg font-bold uppercase tracking-wider transition-all ${lang === 'es' ? 'bg-white/20 text-white' : 'text-white/40 hover:text-white/70'}`}
+          >
+            ES
+          </button>
+          <span className="text-white/20">|</span>
+          <button
+            onClick={() => setLang('ca')}
+            className={`px-3 py-1 rounded-lg font-bold uppercase tracking-wider transition-all ${lang === 'ca' ? 'bg-white/20 text-white' : 'text-white/40 hover:text-white/70'}`}
+          >
+            CA
+          </button>
+        </div>
         <p>© 2026 ZBS Forcall — {VERSION_STRING}</p>
         <button
           onClick={() => {
@@ -330,7 +348,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           }}
           className="text-white/40 hover:text-white/80 underline underline-offset-2 transition-colors"
         >
-          ¿Problemas de acceso? Limpiar datos del sitio
+          {t('login.clearData')}
         </button>
       </div>
     </div>

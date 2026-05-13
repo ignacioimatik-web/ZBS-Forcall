@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Meeting, User, Guardia, Libranza, Dobla, Vacacion } from '../types';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
+import { useT } from '../lib/i18n';
 
 interface DashboardProps {
   meetings: Meeting[];
@@ -37,13 +38,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onAddMeeting,
   user 
 }) => {
+  const { t } = useT();
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const stats = [
-    { label: 'Med', count: guardias.filter(g => g.type === 'medica').length, icon: 'stethoscope', color: 'text-blue-500' },
-    { label: 'Enf', count: guardias.filter(g => g.type === 'enfermeria').length, icon: 'vaccines', color: 'text-red-500' },
-    { label: 'Lib', count: libranzas.length, icon: 'beach_access', color: 'text-green-500' },
-    { label: 'Vac', count: vacaciones.length, icon: 'flight', color: 'text-purple-400' },
-    { label: 'Ref', count: doblas.length, icon: 'dynamic_feed', color: 'text-orange-500' }
+    { label: t('dashboard.med'), count: guardias.filter(g => g.type === 'medica').length, icon: 'stethoscope', color: 'text-blue-500' },
+    { label: t('dashboard.enf'), count: guardias.filter(g => g.type === 'enfermeria').length, icon: 'vaccines', color: 'text-red-500' },
+    { label: t('dashboard.lib'), count: libranzas.length, icon: 'beach_access', color: 'text-green-500' },
+    { label: t('dashboard.vac'), count: vacaciones.length, icon: 'flight', color: 'text-purple-400' },
+    { label: t('dashboard.ref'), count: doblas.length, icon: 'dynamic_feed', color: 'text-orange-500' }
   ];
 
   const handleDownloadActiveCalendar = () => {
@@ -97,18 +99,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const getGreeting = () => {
-    if (!user) return 'Bienvenido/a';
+    if (!user) return t('dashboard.bienvenido');
     const { name, role } = user;
-    if (name.toLowerCase().includes('invitado')) return `Bienvenido/a, ${name}`;
-    if (name.includes('Dra')) return `Bienvenida, ${name}`;
-    if (name.includes('Dr')) return `Bienvenido, ${name}`;
+    if (name.toLowerCase().includes('invitado')) return `${t('dashboard.bienvenido')}, ${name}`;
+    if (name.includes('Dra')) return `${t('dashboard.bienvenida')}, ${name}`;
+    if (name.includes('Dr')) return `${t('dashboard.bienvenidoM')}, ${name}`;
     const femaleNames = ['Elena', 'Delia', 'Xelo', 'Rosa', 'Maite', 'Silvia', 'Pilar'];
-    if (femaleNames.some(fn => name.includes(fn))) return `Bienvenida, ${name}`;
+    if (femaleNames.some(fn => name.includes(fn))) return `${t('dashboard.bienvenida')}, ${name}`;
     const maleNames = ['Fernando', 'Jorge', 'Frank', 'Ilie', 'Joan', 'Vicente', 'Carlos'];
-    if (maleNames.some(mn => name.includes(mn))) return `Bienvenido, ${name}`;
-    if (role === 'enfermera') return `Bienvenida, ${name}`;
-    if (role === 'Administrador') return `Bienvenido, ${name}`;
-    return `Hola, ${name}`;
+    if (maleNames.some(mn => name.includes(mn))) return `${t('dashboard.bienvenidoM')}, ${name}`;
+    if (role === 'enfermera') return `${t('dashboard.bienvenida')}, ${name}`;
+    if (role === 'Administrador') return `${t('dashboard.bienvenidoM')}, ${name}`;
+    return `${t('dashboard.hola')}, ${name}`;
   };
 
   return (
@@ -117,7 +119,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">
             <h2 className="text-2xl md:text-3xl font-black tracking-tight">{getGreeting()}</h2>
-            <p className="opacity-70 text-xs md:text-sm font-medium mt-1">Gestión Centralizada ZBS Forcall</p>
+            <p className="opacity-70 text-xs md:text-sm font-medium mt-1">{t('dashboard.title')}</p>
           </div>
           <div className="flex items-center gap-2 md:gap-4 bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/10 overflow-x-auto max-w-full no-scrollbar">
             {stats.map((stat, idx) => (
@@ -135,12 +137,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       <div className="flex flex-col gap-6 -mx-4 md:mx-0">
         <div className="flex justify-between items-center px-4 md:px-0 no-print">
-           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Cuadrante Consolidado</h3>
+           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('dashboard.consolidated')}</h3>
            <button 
             onClick={handleDownloadActiveCalendar}
             className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg active:scale-95"
            >
-             <span className="material-symbols-outlined text-sm">picture_as_pdf</span> Descargar Calendario
+             <span className="material-symbols-outlined text-sm">picture_as_pdf</span> {t('dashboard.downloadCalendar')}
            </button>
         </div>
         <UnifiedCalendar 

@@ -17,8 +17,10 @@ import { useVacaciones } from './hooks/useVacaciones';
 import { useMeetings } from './hooks/useMeetings';
 import { useReminders } from './hooks/useReminders';
 import { canManageGuardiaType, canManagePlanningType, canManageVacaciones, getGuardiaPermissionMessage } from './lib/guardiaPermissions';
+import { useT } from './lib/i18n';
 
 const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
+  const { t } = useT();
   const [dots, setDots] = useState('.');
   useEffect(() => {
     const interval = setInterval(() => setDots(prev => (prev.length >= 3 ? '.' : prev + '.')), 500);
@@ -32,15 +34,15 @@ const AppLoader: React.FC<{ onTimeout: () => void }> = ({ onTimeout }) => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-forcall-600"></div>
-        <p className="mt-4 text-gray-600">Cargando{dots}</p>
-        <p className="mt-2 text-xs text-gray-400">Si tarda más de 5s, se mostrará el login</p>
+        <p className="mt-4 text-gray-600">{t('app.loading')}{dots}</p>
+        <p className="mt-2 text-xs text-gray-400">{t('app.slowLogin')}</p>
       </div>
     </div>
   );
 };
 
 const App: React.FC = () => {
-  
+  const { t } = useT();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const [forceShowLogin, setForceShowLogin] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
@@ -130,28 +132,27 @@ const App: React.FC = () => {
 
   const handleSwapGuardias = useCallback(async (event1: Guardia & { _kind?: string }, event2: Guardia & { _kind?: string }) => {
     if (!user) {
-      setNotification('Debes iniciar sesión para hacer una permuta.');
+      setNotification(t('app.mustLoginSwap'));
       return false;
     }
     if (event1?._kind !== 'guardia' || event2?._kind !== 'guardia') {
-      setNotification('Solo se permiten permutas de guardias.');
+      setNotification(t('app.onlyGuardiaSwap'));
       return false;
     }
     if (event1.type !== event2.type) {
-      setNotification('No se puede permutar una guardia de medicina con una de enfermería.');
+      setNotification(t('app.cannotCrossSwap'));
       return false;
     }
-    // Restricciones por rol
     if (user.role === 'Administrador') {
-      setNotification('Los administradores no pueden realizar permutas.');
+      setNotification(t('app.adminNoSwap'));
       return false;
     }
     if (user.role === 'Medico' && event1.type !== 'medica') {
-      setNotification('Solo puedes permutar guardias de medicina.');
+      setNotification(t('app.onlyMedicinaSwap'));
       return false;
     }
     if (user.role === 'enfermera' && event1.type !== 'enfermeria') {
-      setNotification('Solo puedes permutar guardias de enfermería.');
+      setNotification(t('app.onlyEnfermeriaSwap'));
       return false;
     }
     // Intercambiar personnelName mediante actualización en sitio
@@ -182,7 +183,7 @@ const App: React.FC = () => {
     if (success1 && success2) {
       return true;
     } else {
-      setNotification('Error al realizar la permuta. Inténtalo de nuevo.');
+      setNotification(t('app.swapError'));
       return false;
     }
   }, [user, updateGuardia]);
@@ -203,7 +204,7 @@ const App: React.FC = () => {
     );
 
     if (!guardiaA || !guardiaB) {
-      setNotification('No se encontraron las guardias para deshacer la permuta.');
+      setNotification(t('app.undoNotFound'));
       return false;
     }
 
@@ -214,42 +215,42 @@ const App: React.FC = () => {
     const ok2 = await updateGuardia(updateB);
 
     if (ok1 && ok2) {
-      setNotification('Permuta deshecha correctamente.');
+      setNotification(t('app.swapUndone'));
       return true;
     }
-    setNotification('Error al deshacer la permuta.');
+    setNotification(t('app.undoError'));
     return false;
   }, [user, guardias, updateGuardia]);
 
   const handleUpsertLibranza = useCallback(async (libranza: Libranza) => {
     if (!canManagePlanningType(user, libranza.type)) {
-      setNotification('No tienes permiso para añadir libranzas de este tipo.');
+      setNotification(t('app.noPermissionLibranza'));
       return;
     }
     const existing = libranzas.find(l => l.id === libranza.id);
     const ok = existing ? await updateLibranza(libranza) : await addLibranza(libranza);
-    if (!ok) setNotification('Error al guardar la libranza. Comprueba que tu perfil tenga el rol correcto en Supabase.');
+    if (!ok) setNotification(t('app.libranzaSaveError'));
   }, [user, libranzas, addLibranza, updateLibranza]);
 
   const handleDeleteVacacion = useCallback(async (id: string) => {
     const existing = vacaciones.find(v => v.id === id);
     if (!existing) return;
     if (!canManageVacaciones(user, existing.type)) {
-      setNotification('No tienes permiso para quitar esta vacación.');
+      setNotification(t('app.noPermissionVacacion'));
       return;
     }
     const ok = await deleteVacacion(id);
-    if (!ok) setNotification('Error al quitar la vacación.');
+    if (!ok) setNotification(t('app.vacacionDeleteError'));
   }, [user, vacaciones, deleteVacacion]);
 
   const handleUpsertDobla = useCallback(async (dobla: Dobla) => {
     if (!canManagePlanningType(user, dobla.type)) {
-      setNotification('No tienes permiso para gestionar refuerzos de este tipo.');
+      setNotification(t('app.noPermissionDobla'));
       return;
     }
     const existing = doblas.find(d => d.id === dobla.id);
     const ok = existing ? await updateDobla(dobla) : await addDobla(dobla);
-    if (!ok) setNotification('Error al guardar el refuerzo. Comprueba tu rol en Supabase.');
+    if (!ok) setNotification(t('app.doblaSaveError'));
   }, [user, doblas, addDobla, updateDobla]);
 
   const renderContent = () => {

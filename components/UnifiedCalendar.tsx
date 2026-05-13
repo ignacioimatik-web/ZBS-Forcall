@@ -4,6 +4,7 @@ import { Meeting, MeetingType, Guardia, User, Libranza, Dobla, Vacacion } from '
 import { getHolidayName } from '../utils';
 import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType, canManageVacaciones } from '../lib/guardiaPermissions';
 import { ConfirmationModal } from './ConfirmationModal';
+import { useT } from '../lib/i18n';
 
 declare var html2pdf: any;
 
@@ -61,6 +62,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   swapMode = false, onCancelSwap, hideHeader = false, id = "calendar-container", isReadOnly = false,
   currentMonth: externalMonth, onMonthChange, getPersonnelType, noteDates = [], onCellNoteClick
 }) => {
+  const { t } = useT();
   const [internalMonth, setInternalMonth] = useState(new Date());
   const currentMonth = externalMonth ?? internalMonth;
   const setCurrentMonth = (m: Date) => {
@@ -241,21 +243,21 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{currentMonth.getFullYear()}</span>
             </div>
             <button onClick={() => changeMonth(1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_right</span></button>
-            <button onClick={() => setCurrentMonth(new Date())} className="ml-2 px-3 py-1.5 bg-gray-50 text-gray-400 text-[9px] font-black uppercase tracking-widest border border-gray-100 rounded-lg hover:bg-gray-100">Hoy</button>
+            <button onClick={() => setCurrentMonth(new Date())} className="ml-2 px-3 py-1.5 bg-gray-50 text-gray-400 text-[9px] font-black uppercase tracking-widest border border-gray-100 rounded-lg hover:bg-gray-100">{t('common.hoy')}</button>
           </div>
           <div className="flex items-center gap-2">
              {swapMode && (
-               <button onClick={() => { setFirstSwapTarget(null); onCancelSwap?.(); }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95">CANCELAR PERMUTA</button>
+                <button onClick={() => { setFirstSwapTarget(null); onCancelSwap?.(); }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95">{t('unifiedCalendar.cancelSwap')}</button>
              )}
               <span className={`text-[10px] font-black px-4 py-2 rounded-xl border ${(canManageActiveCategory || isGuardiaCategory) ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
-                {(canManageActiveCategory || isGuardiaCategory) ? 'GESTIÓN' : 'CONSULTA'}
+                {(canManageActiveCategory || isGuardiaCategory) ? t('common.gestion') : t('common.consulta')}
               </span>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-3">
-        {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => (
+        {[t('unifiedCalendar.mon'), t('unifiedCalendar.tue'), t('unifiedCalendar.wed'), t('unifiedCalendar.thu'), t('unifiedCalendar.fri'), t('unifiedCalendar.sat'), t('unifiedCalendar.sun')].map(d => (
           <div key={d} className="hidden md:block text-center text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] p-2">{d}</div>
         ))}
         {Array.from({ length: startingEmptyCells }).map((_, i) => (
@@ -341,7 +343,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                   })}
                 </div>
               ) : events.length === 0 && canManageActiveCategory && !swapMode ? (
-                <div className="flex-1 flex items-center justify-center text-gray-400 text-xs font-bold uppercase tracking-[0.2em]">Libre</div>
+                <div className="flex-1 flex items-center justify-center text-gray-400 text-xs font-bold uppercase tracking-[0.2em]">{t('common.libre')}</div>
               ) : null}
             </div>
           );
@@ -353,7 +355,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
           <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 animate-slide-in-up">
             <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
               <span className={`p-2 rounded-xl text-white ${canManageActiveCategory ? 'bg-emerald-600' : 'bg-orange-600'} material-symbols-outlined`}>{canManageActiveCategory ? 'add_circle' : 'swap_horiz'}</span>
-              {canManageActiveCategory ? 'Asignar' : 'Pedir Cambio'}
+              {canManageActiveCategory ? t('unifiedCalendar.assign') : t('unifiedCalendar.askChange')}
             </h3>
             <form onSubmit={handleAddEntry} className="space-y-4">
               <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100 text-center">
@@ -361,12 +363,12 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                 <p className="font-black text-gray-800 text-lg uppercase tracking-tight">{selectedDate?.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
               </div>
               <select required value={personnelName} onChange={(e) => setPersonnelName(e.target.value)} className="w-full px-6 py-4 bg-gray-100 border-none rounded-2xl font-black text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500">
-                <option value="" disabled>Seleccionar profesional...</option>
+                <option value="" disabled>{t('unifiedCalendar.selectProfessional')}</option>
                 {availablePersonnel.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-colors">Cerrar</button>
-                <button type="submit" className={`flex-1 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 ${canManageActiveCategory ? 'bg-emerald-600' : 'bg-orange-600'}`}>Confirmar</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-colors">{t('unifiedCalendar.close')}</button>
+                <button type="submit" className={`flex-1 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 ${canManageActiveCategory ? 'bg-emerald-600' : 'bg-orange-600'}`}>{t('unifiedCalendar.confirm')}</button>
               </div>
             </form>
           </div>
@@ -374,9 +376,9 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
       )}
       <ConfirmationModal
         isOpen={!!deleteTarget}
-        title="Quitar del calendario"
-        message={deleteTarget ? `¿Quitar a ${deleteTarget.personnelName || deleteTarget.title} del día ${new Date(deleteTarget.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}?` : ''}
-        confirmLabel="Quitar"
+        title={t('unifiedCalendar.removeFromCalendar')}
+        message={deleteTarget ? `${t('unifiedCalendar.remove')} ${deleteTarget.personnelName || deleteTarget.title}?` : ''}
+        confirmLabel={t('unifiedCalendar.remove')}
         onConfirm={() => {
           if (!deleteTarget) return;
           if (deleteTarget._kind === 'libranza') onDeleteLibranza(deleteTarget.id);

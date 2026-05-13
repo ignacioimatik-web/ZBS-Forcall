@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { VERSION_STRING } from '../lib/version';
+import { useT } from '../lib/i18n';
 
 interface HeaderProps {
   activeTab: string;
@@ -8,7 +9,24 @@ interface HeaderProps {
   onLogout: () => void;
 }
 
+const tabLabels: Record<string, string> = {
+  Unificado: 'header.unificado',
+  Guardias: 'header.guardias',
+  Chat: 'header.chat',
+  Dictado: 'header.dictado',
+  Alertas: 'header.alertas',
+};
+
+const tabIcons: Record<string, string> = {
+  Unificado: 'dashboard',
+  Guardias: 'calendar_month',
+  Chat: 'forum',
+  Dictado: 'mic',
+  Alertas: 'campaign',
+};
+
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogout }) => {
+  const { t } = useT();
   const tabs = ['Unificado', 'Guardias', 'Chat', 'Dictado', 'Alertas'];
 
   return (
@@ -18,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-3xl text-earth-100">landscape</span>
             <div>
-              <h1 className="font-bold text-xl tracking-tight">Zona Básica Salud</h1>
+              <h1 className="font-bold text-xl tracking-tight">{t('header.appName')}</h1>
               <p className="text-xs text-forcall-100 opacity-80">{VERSION_STRING}</p>
             </div>
           </div>
@@ -35,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
                       : 'text-forcall-100 hover:bg-white/5'
                   }`}
                 >
-                  {tab}
+                  {t(tabLabels[tab])}
                 </button>
               ))}
             </nav>
@@ -43,10 +61,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
             <button 
               onClick={onLogout}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-red-200 hover:text-white hover:bg-red-900/40 border border-transparent hover:border-red-500/30 transition-all shadow-sm"
-              title="Cerrar sesión"
+              title={t('header.logout')}
             >
               <span className="material-symbols-outlined text-lg md:text-[20px]">logout</span>
-              <span className="hidden md:inline">Salir</span>
+              <span className="hidden md:inline">{t('header.exit')}</span>
             </button>
           </div>
         </div>
@@ -60,14 +78,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
               onClick={() => setActiveTab(tab)}
               className={`flex flex-col items-center p-1 min-w-[70px] ${activeTab === tab ? 'text-white' : 'text-forcall-300'}`}
             >
-               <span className="material-symbols-outlined text-lg">
-                   {tab === 'Unificado' ? 'dashboard' : 
-                    tab === 'Guardias' ? 'calendar_month' : 
-                    tab === 'Chat' ? 'forum' : 
-                     tab === 'Dictado' ? 'mic' : 
-                     tab === 'Alertas' ? 'campaign' : 'route'}
-               </span>
-               <span className="whitespace-nowrap text-[10px] uppercase font-black tracking-tighter">{tab}</span>
+               <span className="material-symbols-outlined text-lg">{tabIcons[tab]}</span>
+               <span className="whitespace-nowrap text-[10px] uppercase font-black tracking-tighter">{t(tabLabels[tab])}</span>
             </button>
          ))}
       </div>
