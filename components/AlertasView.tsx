@@ -320,11 +320,6 @@ export const AlertasView: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="rounded-[1.75rem] border border-gray-200 bg-stone-50 p-5">
-                        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-3">Resumen operativo</p>
-                        <p className="text-sm text-gray-700 leading-relaxed font-medium">{civilProtectionUpdate.summary}</p>
-                      </div>
-
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {civilProtectionUpdate.briefs.length > 0 ? civilProtectionUpdate.briefs.map((brief, index) => (
                           <a
