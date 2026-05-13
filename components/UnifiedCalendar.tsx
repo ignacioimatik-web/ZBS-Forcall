@@ -46,6 +46,7 @@ interface UnifiedCalendarProps {
   onCancelSwap?: () => void;
   getPersonnelType?: (name: string) => 'medica' | 'enfermeria';
   hideHeader?: boolean;
+  hideMonthNav?: boolean;
   id?: string;
   currentMonth?: Date;
   onMonthChange?: (month: Date) => void;
@@ -234,17 +235,19 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     <div id={id} className="w-full space-y-4 bg-gray-50/10 p-1 rounded-3xl">
       {!hideHeader && (
         <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-3 md:p-4 rounded-3xl shadow-sm border border-gray-100 no-print sticky top-0 z-40 gap-3">
-          <div className="flex items-center gap-1 sm:gap-2">
-            <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_left</span></button>
-            <div className="flex flex-col items-center min-w-[120px] sm:min-w-[180px]">
-              <h2 className="text-sm md:text-lg font-black text-gray-800 uppercase tracking-tighter text-center leading-none">
-                {currentMonth.toLocaleDateString('es-ES', { month: 'long' })}
-              </h2>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{currentMonth.getFullYear()}</span>
+          {!hideMonthNav && (
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_left</span></button>
+              <div className="flex flex-col items-center min-w-[120px] sm:min-w-[180px]">
+                <h2 className="text-sm md:text-lg font-black text-gray-800 uppercase tracking-tighter text-center leading-none">
+                  {currentMonth.toLocaleDateString('es-ES', { month: 'long' })}
+                </h2>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{currentMonth.getFullYear()}</span>
+              </div>
+              <button onClick={() => changeMonth(1)} aria-label="Mes siguiente" className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_right</span></button>
+              <button onClick={() => setCurrentMonth(new Date())} aria-label="Ir al mes actual" className="ml-2 px-3 py-1.5 bg-gray-50 text-gray-400 text-[9px] font-black uppercase tracking-widest border border-gray-100 rounded-lg hover:bg-gray-100">{t('common.hoy')}</button>
             </div>
-            <button onClick={() => changeMonth(1)} aria-label="Mes siguiente" className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_right</span></button>
-            <button onClick={() => setCurrentMonth(new Date())} aria-label="Ir al mes actual" className="ml-2 px-3 py-1.5 bg-gray-50 text-gray-400 text-[9px] font-black uppercase tracking-widest border border-gray-100 rounded-lg hover:bg-gray-100">{t('common.hoy')}</button>
-          </div>
+          )}
           <div className="flex items-center gap-2">
              {swapMode && (
                 <button onClick={() => { setFirstSwapTarget(null); onCancelSwap?.(); }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95">{t('unifiedCalendar.cancelSwap')}</button>
