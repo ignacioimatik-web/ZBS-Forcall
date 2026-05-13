@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Meeting, User, Guardia, Libranza, Dobla, Vacacion } from '../types';
 import { UnifiedCalendar } from './UnifiedCalendar';
+import { CalendarListView } from './CalendarListView';
 import { PageHeader } from './PageHeader';
 import { CalendarToolbar } from './CalendarToolbar';
 import { StatusSummary } from './StatusSummary';
@@ -84,13 +85,13 @@ function computeStatusMetrics(
   return { totalDays, coveredDays: coveredSet.size, gaps, conflicts };
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ 
-  meetings, 
-  guardias, 
+export const Dashboard: React.FC<DashboardProps> = ({
+  meetings,
+  guardias,
   libranzas,
   doblas,
   vacaciones = [],
-  onNavigate, 
+  onNavigate,
   onAddGuardia,
   onDeleteGuardia,
   onAddLibranza,
@@ -98,12 +99,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onAddDobla,
   onDeleteDobla,
   onAddMeeting,
-  user 
+  user,
 }) => {
   const { t } = useT();
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'month' | 'list'>('month');
 
   const metrics = [
     { count: guardias.filter(g => g.type === 'medica').length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
@@ -176,6 +178,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   }, []);
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="animate-fade-in pb-12">
       <PageHeader
@@ -200,48 +206,71 @@ export const Dashboard: React.FC<DashboardProps> = ({
           onToday={() => setCalendarMonth(new Date())}
           onDownloadPDF={handleDownloadActiveCalendar}
           downloadLabel={t('dashboard.downloadCalendar')}
+          viewMode={viewMode}
+          onViewModeChange={(mode) => {
+            setViewMode(mode);
+            // Reset selection when switching views
+            setSelectedDate(null);
+          }}
+          onPrint={handlePrint}
         />
 
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-          <div className="flex-1 min-w-0 -mx-4 md:mx-0">
-            <UnifiedCalendar 
-              id="dashboard-calendar"
-              meetings={meetings} 
-              guardias={guardias} 
-              libranzas={libranzas}
-              doblas={doblas}
-              onAddGuardia={onAddGuardia} 
-              onDeleteGuardia={onDeleteGuardia}
-              onAddLibranza={onAddLibranza}
-              onDeleteLibranza={onDeleteLibranza}
-              onAddDobla={onAddDobla}
-              onDeleteDobla={onDeleteDobla}
-              onAddMeeting={onAddMeeting}
-              currentUser={user}
-              hideHeader={false}
-              hideMonthNav={true}
-              isReadOnly={true}
-              currentMonth={calendarMonth}
-              onMonthChange={setCalendarMonth}
-              onSelectDay={handleSelectDay}
-              onProfessionalChange={setSelectedProfessional}
-            />
-          </div>
+        <div className="print-day-only">
+          {viewMode === 'month' ? (
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+              <div className="flex-1 min-w-0 -mx-4 md:mx-0">
+                <UnifiedCalendar
+                  id="dashboard-calendar"
+                  meetings={meetings}
+                  guardias={guardias}
+                  libranzas={libranzas}
+                  doblas={doblas}
+                  onAddGuardia={onAddGuardia}
+                  onDeleteGuardia={onDeleteGuardia}
+                  onAddLibranza={onAddLibranza}
+                  onDeleteLibranza={onDeleteLibranza}
+                  onAddDobla={onAddDobla}
+                  onDeleteDobla={onDeleteDobla}
+                  onAddMeeting={onAddMeeting}
+                  currentUser={user}
+                  hideHeader={false}
+                  hideMonthNav={true}
+                  isReadOnly={true}
+                  currentMonth={calendarMonth}
+                  onMonthChange={setCalendarMonth}
+                  onSelectDay={handleSelectDay}
+                  onProfessionalChange={setSelectedProfessional}
+                />
+              </div>
 
-          <div className="w-full lg:w-[340px] xl:w-[360px] flex-shrink-0">
-            <DayDetailPanel
-              selectedDate={selectedDate}
+              <div className="w-full lg:w-[340px] xl:w-[360px] flex-shrink-0">
+                <DayDetailPanel
+                  selectedDate={selectedDate}
+                  guardias={guardias}
+                  libranzas={libranzas}
+                  doblas={doblas}
+                  vacaciones={vacaciones}
+                  meetings={meetings}
+                  onClose={() => setSelectedDate(null)}
+                  user={user}
+                  selectedProfessional={selectedProfessional}
+                  onClearProfessionalFilter={() => setSelectedProfessional('all')}
+                />
+              </div>
+            </div>
+          ) : (
+            <CalendarListView
+              currentMonth={calendarMonth}
               guardias={guardias}
               libranzas={libranzas}
               doblas={doblas}
               vacaciones={vacaciones}
               meetings={meetings}
-              onClose={() => setSelectedDate(null)}
-              user={user}
+              selectedDate={selectedDate}
               selectedProfessional={selectedProfessional}
-              onClearProfessionalFilter={() => setSelectedProfessional('all')}
+              onSelectDay={handleSelectDay}
             />
-          </div>
+          )}
         </div>
       </div>
     </div>

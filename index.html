@@ -108,64 +108,80 @@
       .animate-stagger > *:nth-child(14) { animation-delay: 0.78s; }
       .animate-stagger > *:nth-child(15) { animation-delay: 0.84s; }
 
-      @media print {
-        .no-print, 
-        header, 
-        nav, 
-        button, 
-        .fixed, 
-        .absolute,
-        input,
-        select,
-        textarea,
-        [role="dialog"] { 
-          display: none !important; 
-        }
+@media print {
+         .no-print,
+         header,
+         nav,
+         button,
+         .fixed,
+         .absolute,
+         input,
+         select,
+         textarea,
+         [role="dialog"],
+         .print-hide {
+           display: none !important;
+         }
 
-        .print-only { 
-          display: block !important; 
-        }
+         .print-only {
+           display: block !important;
+         }
 
-        body { 
-          background-color: white !important; 
-          color: black !important; 
-          margin: 0 !important; 
-          padding: 0 !important;
-          width: 100% !important;
-        }
+         body {
+           background-color: white !important;
+           color: black !important;
+           margin: 0 !important;
+           padding: 0 !important;
+           width: 100% !important;
+         }
 
-        /* Forzar que el calendario ocupe una sola hoja */
-        #calendar-container {
-          width: 100% !important;
-          max-height: 190mm !important; /* Ajuste para A4 Landscape */
-          padding: 0 !important;
-          margin: 0 !important;
-          overflow: hidden !important;
-          page-break-inside: avoid !important;
-        }
+         /* Forzar que el calendario ocupe una sola hoja */
+         #calendar-container {
+           width: 100% !important;
+           max-height: 190mm !important; /* Ajuste para A4 Landscape */
+           padding: 0 !important;
+           margin: 0 !important;
+           overflow: hidden !important;
+           page-break-inside: avoid !important;
+         }
 
-        /* Reducción de tamaños para impresión */
-        .grid-cols-7 {
-          gap: 2px !important;
-        }
+         /* Reducción de tamaños para impresión */
+         .grid-cols-7 {
+           gap: 2px !important;
+         }
 
-        .min-h-\[140px\], .md\:min-h-\[160px\] {
-          min-height: 80px !important; /* Reducir altura para que quepan 6 filas */
-        }
+         .min-h-\[140px\], .md\:min-h-\[160px\] {
+           min-height: 80px !important; /* Reducir altura para que quepan 6 filas */
+         }
 
-        .text-lg { font-size: 1rem !important; }
-        .text-\[9px\] { font-size: 8px !important; }
+         .text-lg { font-size: 1rem !important; }
+         .text-\[9px\] { font-size: 8px !important; }
 
-        * {
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
+         /* Mejoras para tabla de lista al imprimir */
+         table {
+           width: 100% !important;
+           font-size: 9px !important;
+         }
+         th, td {
+           padding: 4px 6px !important;
+           border-color: #ccc !important;
+         }
+         th {
+           background-color: #eee !important;
+           -webkit-print-color-adjust: exact;
+           print-color-adjust: exact;
+         }
 
-        @page {
-          size: A4 landscape;
-          margin: 5mm;
-        }
-      }
+         * {
+           -webkit-print-color-adjust: exact !important;
+           print-color-adjust: exact !important;
+         }
+
+         @page {
+           size: A4 landscape;
+           margin: 5mm;
+         }
+       }
     </style>
 </head>
   <body>
