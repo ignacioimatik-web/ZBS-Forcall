@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Meeting, User, Guardia, Libranza, Dobla } from '../types';
+import { Meeting, User, Guardia, Libranza, Dobla, Vacacion } from '../types';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 
@@ -9,6 +9,7 @@ interface DashboardProps {
   guardias: Guardia[];
   libranzas: Libranza[];
   doblas: Dobla[];
+  vacaciones: Vacacion[];
   onNavigate: (tab: string) => void;
   onAddGuardia: (guardia: Guardia) => void;
   onDeleteGuardia: (id: string) => void;
@@ -25,6 +26,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   guardias, 
   libranzas,
   doblas,
+  vacaciones = [],
   onNavigate, 
   onAddGuardia,
   onDeleteGuardia,
@@ -40,6 +42,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     { label: 'Med', count: guardias.filter(g => g.type === 'medica').length, icon: 'stethoscope', color: 'text-blue-500' },
     { label: 'Enf', count: guardias.filter(g => g.type === 'enfermeria').length, icon: 'vaccines', color: 'text-red-500' },
     { label: 'Lib', count: libranzas.length, icon: 'beach_access', color: 'text-green-500' },
+    { label: 'Vac', count: vacaciones.length, icon: 'flight', color: 'text-purple-400' },
     { label: 'Ref', count: doblas.length, icon: 'dynamic_feed', color: 'text-orange-500' }
   ];
 

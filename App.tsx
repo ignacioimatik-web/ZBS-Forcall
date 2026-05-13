@@ -261,6 +261,7 @@ const App: React.FC = () => {
             guardias={guardias}
             libranzas={libranzas}
             doblas={doblas}
+            vacaciones={vacaciones}
             onNavigate={setActiveTab}
             onAddGuardia={handleUpsertGuardia}
             onDeleteGuardia={handleDeleteGuardia}
