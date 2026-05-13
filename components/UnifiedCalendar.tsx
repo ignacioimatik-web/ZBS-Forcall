@@ -59,20 +59,8 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   onSwapEvents, currentUser, activeCategory = 'Todo',
   availablePersonnel = [], bulkMode = false, selectedBulkDates = [], onToggleBulkDate,
   swapMode = false, onCancelSwap, hideHeader = false, id = "calendar-container", isReadOnly = false,
-  currentMonth: externalMonth, onMonthChange, getPersonnelType, noteDates = []
-}) => {
-  const [internalMonth, setInternalMonth] = useState(new Date());
-  const currentMonth = externalMonth ?? internalMonth;
-  const setCurrentMonth = (m: Date) => {
-    onMonthChange?.(m);
-    if (!externalMonth) setInternalMonth(m);
-  };
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [personnelName, setPersonnelName] = useState('');
-  const [firstSwapTarget, setFirstSwapTarget] = useState<CalendarEvent | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  currentMonth: externalMonth, onMonthChange, getPersonnelType, noteDates = [], onCellNoteClick
+
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
