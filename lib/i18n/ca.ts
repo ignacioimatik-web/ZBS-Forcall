@@ -87,7 +87,7 @@ const ca: Dict = {
     noteOfDay: 'Nota del dia',
     writeNote: 'Escriu una nota per a este dia...',
     noNoteForDay: 'No hi ha nota per a este dia.',
-    swapHistory: 'Historial de Permutes',
+    swapHistory: 'Canvis de Guàrdia',
     downloadPdf: 'Descarregar (PDF)',
     undo: 'Desfer',
     undoSwap: 'Desfer esta permuta? Es intercanviaran els professionals de nou.',

@@ -87,7 +87,7 @@ const es: Dict = {
     noteOfDay: 'Nota del día',
     writeNote: 'Escribe una nota para este día...',
     noNoteForDay: 'No hay nota para este día.',
-    swapHistory: 'Historial de Permutas',
+    swapHistory: 'Cambios de Guardia',
     downloadPdf: 'Descargar (PDF)',
     undo: 'Deshacer',
     undoSwap: '¿Deshacer esta permuta? Se intercambiarán los profesionales de nuevo.',
