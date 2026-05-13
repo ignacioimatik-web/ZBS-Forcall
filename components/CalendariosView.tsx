@@ -293,6 +293,33 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
 
   const permutaHistory = useMemo(() => auditLogs.filter(log => log.type === 'PERMUTA'), [auditLogs]);
 
+  const canWriteNotes = props.user?.name === 'Xelo García' || props.user?.name === 'Elena Benages';
+  const [notes, setNotes] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem('zbs_planning_notes') || '{}'); }
+    catch { return {}; }
+  });
+  const [noteModalDate, setNoteModalDate] = useState<Date | null>(null);
+  const [noteText, setNoteText] = useState('');
+
+  const saveNote = (date: Date, text: string) => {
+    const key = date.toDateString();
+    const updated = { ...notes };
+    if (text.trim()) {
+      updated[key] = text.trim();
+    } else {
+      delete updated[key];
+    }
+    setNotes(updated);
+    localStorage.setItem('zbs_planning_notes', JSON.stringify(updated));
+  };
+
+  const noteDates = useMemo(() =>
+    isPlanningCategory ? Object.keys(notes).filter(k => {
+      const d = new Date(k);
+      return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
+    }) : [],
+  [notes, isPlanningCategory, currentMonth]);
+
   const userTypeFilter = userGroup === 'medico' ? 'medica' : userGroup;
   const filteredLibranzas = useMemo(() => userGroup !== 'both' ? libranzas.filter(l => l.type === userTypeFilter) : libranzas, [libranzas, userGroup]);
   const filteredDoblas = useMemo(() => userGroup !== 'both' ? doblas.filter(d => d.type === userTypeFilter) : doblas, [doblas, userGroup]);
@@ -461,9 +488,74 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             onMonthChange={setCurrentMonth}
             id="calendario-principal"
             getPersonnelType={(name) => nurses.includes(name) ? 'enfermeria' : 'medica'}
+            noteDates={noteDates}
           />
         </main>
       </div>
+
+      {isPlanningCategory && (
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden no-print">
+          <div className="p-6 md:p-8 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 text-white rounded-2xl shadow-lg ${canWriteNotes ? 'bg-amber-500' : 'bg-gray-400'}`}>
+                <span className="material-symbols-outlined">sticky_note_2</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Notas de {activeSub === 'Libranzas' ? 'Libranzas' : 'Refuerzo'}</h3>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
+                  {canWriteNotes ? 'Puedes crear y editar notas' : 'Solo lectura — Xelo García y Elena Benages pueden editar'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 space-y-2">
+            {noteDates.length === 0 ? (
+              <div className="text-center py-8 opacity-30 text-[10px] font-black uppercase tracking-widest">Sin notas este mes</div>
+            ) : (
+              noteDates.sort().map(key => {
+                const date = new Date(key);
+                return (
+                  <div key={key} className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div className="min-w-[80px]">
+                      <p className="text-[10px] font-black text-gray-500 uppercase">{date.toLocaleDateString('es-ES', { weekday: 'short' })}</p>
+                      <p className="text-lg font-black text-gray-800">{date.getDate()}</p>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {canWriteNotes ? (
+                        <textarea
+                          value={notes[key] || ''}
+                          onChange={e => {
+                            const updated = { ...notes, [key]: e.target.value };
+                            setNotes(updated);
+                            localStorage.setItem('zbs_planning_notes', JSON.stringify(updated));
+                          }}
+                          rows={2}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl font-bold text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+                        />
+                      ) : (
+                        <p className="text-sm font-bold text-gray-700 whitespace-pre-wrap">{notes[key]}</p>
+                      )}
+                    </div>
+                    {canWriteNotes && (
+                      <button
+                        onClick={() => {
+                          const updated = { ...notes };
+                          delete updated[key];
+                          setNotes(updated);
+                          localStorage.setItem('zbs_planning_notes', JSON.stringify(updated));
+                        }}
+                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <span className="material-symbols-outlined text-lg">close</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Registro de Permutas */}
       <div id="registro-permutas-container" className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mt-8">
