@@ -55,6 +55,22 @@ function wmoToForecastCondition(code: number): ForecastDay['condition'] {
   return 'Rain';
 }
 
+interface OpenMeteoAlert {
+  title: string;
+  description: string;
+  severity: string;
+  event: string;
+  start: string;
+  end: string;
+}
+
+interface AemetWarning {
+  title: string;
+  description: string;
+  pubDate: string;
+  link: string;
+}
+
 interface CivilProtectionBrief {
   title: string;
   summary: string;
@@ -121,6 +137,14 @@ export const AlertasView: React.FC = () => {
   const [currentWeather, setCurrentWeather] = useState<WeatherPoint[]>([]);
   const [forecast, setForecast] = useState<ForecastDay[]>([]);
 
+  const [openMeteoAlerts, setOpenMeteoAlerts] = useState<OpenMeteoAlert[]>([]);
+  const [openMeteoAlertsLoading, setOpenMeteoAlertsLoading] = useState(true);
+
+  const [aemetWarnings, setAemetWarnings] = useState<AemetWarning[]>([]);
+  const [aemetLoading, setAemetLoading] = useState(true);
+
+  const [twitterLoaded, setTwitterLoaded] = useState(false);
+
   const [categories, setCategories] = useState<PhoneCategory[]>([
     {
       title: "Emergencias y Sanitarios",
@@ -173,6 +197,17 @@ export const AlertasView: React.FC = () => {
     }
     fetchWeather();
     fetchCivilProtectionStatus();
+    fetchOpenMeteoAlerts();
+    fetchAemetWarnings();
+    if (!document.querySelector('script[src*="platform.twitter.com/widgets.js"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://platform.twitter.com/widgets.js';
+      script.async = true;
+      script.onload = () => setTwitterLoaded(true);
+      document.body.appendChild(script);
+    } else {
+      setTwitterLoaded(true);
+    }
   }, []);
 
   const fetchWeather = async () => {
@@ -214,6 +249,36 @@ export const AlertasView: React.FC = () => {
       setWeatherError('No se ha podido obtener los datos meteorológicos.');
     } finally {
       setWeatherLoading(false);
+    }
+  };
+
+  const fetchOpenMeteoAlerts = async () => {
+    setOpenMeteoAlertsLoading(true);
+    try {
+      const res = await fetch(
+        'https://alert-api.open-meteo.com/v1/alert?latitude=40.646&longitude=-0.200&days=5',
+      );
+      if (!res.ok) throw new Error(`Open-Meteo Alert API respondió ${res.status}`);
+      const data = await res.json();
+      setOpenMeteoAlerts(data.alerts || []);
+    } catch (err) {
+      console.error('Error fetching Open-Meteo alerts:', err);
+    } finally {
+      setOpenMeteoAlertsLoading(false);
+    }
+  };
+
+  const fetchAemetWarnings = async () => {
+    setAemetLoading(true);
+    try {
+      const res = await fetch(`/api/aemet-rss?t=${Date.now()}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`AEMET respondió ${res.status}`);
+      const data = await res.json();
+      setAemetWarnings(data.warnings || []);
+    } catch (err) {
+      console.error('Error fetching AEMET warnings:', err);
+    } finally {
+      setAemetLoading(false);
     }
   };
 
@@ -391,6 +456,55 @@ export const AlertasView: React.FC = () => {
               )}
             </div>
           </div>
+
+          <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Alertas meteorológicas</p>
+              <h3 className="text-lg font-black text-gray-900 mt-1">Open-Meteo Alert API</h3>
+            </div>
+            <div className="p-4 space-y-2">
+              {openMeteoAlertsLoading ? (
+                <div className="flex items-center gap-2 py-4 text-gray-400">
+                  <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Cargando alertas...</span>
+                </div>
+              ) : openMeteoAlerts.length === 0 ? (
+                <div className="py-4 text-[10px] font-bold text-gray-500 text-center">
+                  No hay alertas meteorológicas activas en la zona.
+                </div>
+              ) : (
+                openMeteoAlerts.map((alert, i) => {
+                  const sevColor =
+                    alert.severity === 'extreme' || alert.severity === 'severe'
+                      ? 'border-l-red-500 bg-red-50'
+                      : alert.severity === 'warning'
+                        ? 'border-l-amber-500 bg-amber-50'
+                        : 'border-l-blue-500 bg-blue-50';
+                  const sevLabel =
+                    alert.severity === 'extreme' || alert.severity === 'severe'
+                      ? 'Rojo'
+                      : alert.severity === 'warning'
+                        ? 'Amarillo'
+                        : 'Verde';
+                  return (
+                    <div key={i} className={`rounded-2xl border border-gray-200 p-4 border-l-4 ${sevColor}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-wider">{alert.event}</h4>
+                        <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded-full bg-white/80">{sevLabel}</span>
+                      </div>
+                      <p className="text-[10px] font-bold text-gray-700 mt-1">{alert.title}</p>
+                      <p className="text-[9px] text-gray-500 mt-1 leading-relaxed">{alert.description}</p>
+                      <p className="text-[8px] text-gray-400 mt-2">
+                        {new Date(alert.start).toLocaleDateString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        {' → '}
+                        {new Date(alert.end).toLocaleDateString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </section>
 
         <aside className="2xl:col-span-4 space-y-6">
@@ -443,6 +557,62 @@ export const AlertasView: React.FC = () => {
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Avisos AEMET</p>
+              <h3 className="text-lg font-black text-gray-900 mt-1">Comunitat Valenciana</h3>
+            </div>
+            <div className="p-4 space-y-2 max-h-[400px] overflow-y-auto no-scrollbar">
+              {aemetLoading ? (
+                <div className="flex items-center gap-2 py-4 text-gray-400">
+                  <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Cargando avisos...</span>
+                </div>
+              ) : aemetWarnings.length === 0 ? (
+                <div className="py-4 text-[10px] font-bold text-gray-500 text-center">
+                  No hay avisos de AEMET ahora mismo.
+                </div>
+              ) : (
+                aemetWarnings.map((w, i) => (
+                  <a
+                    key={i}
+                    href={w.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block rounded-2xl border border-gray-200 p-3 hover:bg-gray-50 transition-all"
+                  >
+                    <h4 className="text-[10px] font-black text-gray-900 uppercase tracking-wider">{w.title}</h4>
+                    <p className="text-[9px] text-gray-600 mt-1 leading-relaxed">{w.description}</p>
+                    <p className="text-[8px] text-gray-400 mt-1">{new Date(w.pubDate).toLocaleDateString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                  </a>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Red social</p>
+              <h3 className="text-lg font-black text-gray-900 mt-1">@GVA112</h3>
+            </div>
+            <div className="p-4">
+              {twitterLoaded ? (
+                <a
+                  className="twitter-timeline"
+                  data-height="400"
+                  href="https://twitter.com/GVA112?ref_src=twsrc%5Etfw"
+                >
+                  Tweets de @GVA112
+                </a>
+              ) : (
+                <div className="flex items-center gap-2 py-4 text-gray-400">
+                  <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Cargando timeline...</span>
+                </div>
+              )}
             </div>
           </div>
         </aside>
