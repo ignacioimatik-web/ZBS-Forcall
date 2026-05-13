@@ -313,12 +313,15 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     localStorage.setItem('zbs_planning_notes', JSON.stringify(updated));
   };
 
-  const noteDates = useMemo(() =>
-    isPlanningCategory ? Object.keys(notes).filter(k => {
+  const noteDates = useMemo(() => {
+    if (!isPlanningCategory) return [];
+    const month = currentMonth.getMonth();
+    const year = currentMonth.getFullYear();
+    return Object.keys(notes).filter(k => {
       const d = new Date(k);
-      return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
-    }) : [],
-  [notes, isPlanningCategory, currentMonth]);
+      return d.getMonth() === month && d.getFullYear() === year;
+    });
+  }, [notes, isPlanningCategory, currentMonth]);
 
   const userTypeFilter = userGroup === 'medico' ? 'medica' : userGroup;
   const filteredLibranzas = useMemo(() => userGroup !== 'both' ? libranzas.filter(l => l.type === userTypeFilter) : libranzas, [libranzas, userGroup]);
