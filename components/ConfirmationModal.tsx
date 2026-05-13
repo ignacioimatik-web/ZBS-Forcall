@@ -22,12 +22,12 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="confirmation-modal-title">
       <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all animate-slide-in-up">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4 text-red-600">
             <span className="material-symbols-outlined text-3xl">warning</span>
-            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+            <h3 id="confirmation-modal-title" className="text-lg font-bold text-gray-900">{title}</h3>
           </div>
           <p className="text-gray-600 leading-relaxed">{message}</p>
         </div>

@@ -42,10 +42,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
           </div>
           
           <div className="flex items-center gap-3 md:gap-6">
-            <nav className="hidden md:flex space-x-1">
+            <nav className="hidden md:flex space-x-1" role="tablist" aria-label="Navegación principal">
               {tabs.map((tab) => (
                 <button
                   key={tab}
+                  role="tab"
+                  aria-selected={activeTab === tab}
                   onClick={() => setActiveTab(tab)}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
                     activeTab === tab
@@ -71,10 +73,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
       </div>
       
       {/* Mobile Tab Bar */}
-      <div className="md:hidden flex justify-around bg-forcall-900/90 backdrop-blur py-2 text-xs border-t border-forcall-800 overflow-x-auto no-scrollbar">
+      <div className="md:hidden flex justify-around bg-forcall-900/90 backdrop-blur py-2 text-xs border-t border-forcall-800 overflow-x-auto no-scrollbar" role="tablist" aria-label="Navegación principal">
          {tabs.map((tab) => (
             <button
               key={tab}
+              role="tab"
+              aria-selected={activeTab === tab}
               onClick={() => setActiveTab(tab)}
               className={`flex flex-col items-center p-1 min-w-[70px] ${activeTab === tab ? 'text-white' : 'text-forcall-300'}`}
             >

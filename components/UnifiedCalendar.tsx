@@ -235,15 +235,15 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
       {!hideHeader && (
         <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-3 md:p-4 rounded-3xl shadow-sm border border-gray-100 no-print sticky top-0 z-40 gap-3">
           <div className="flex items-center gap-1 sm:gap-2">
-            <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_left</span></button>
+            <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_left</span></button>
             <div className="flex flex-col items-center min-w-[120px] sm:min-w-[180px]">
               <h2 className="text-sm md:text-lg font-black text-gray-800 uppercase tracking-tighter text-center leading-none">
                 {currentMonth.toLocaleDateString('es-ES', { month: 'long' })}
               </h2>
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{currentMonth.getFullYear()}</span>
             </div>
-            <button onClick={() => changeMonth(1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_right</span></button>
-            <button onClick={() => setCurrentMonth(new Date())} className="ml-2 px-3 py-1.5 bg-gray-50 text-gray-400 text-[9px] font-black uppercase tracking-widest border border-gray-100 rounded-lg hover:bg-gray-100">{t('common.hoy')}</button>
+            <button onClick={() => changeMonth(1)} aria-label="Mes siguiente" className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_right</span></button>
+            <button onClick={() => setCurrentMonth(new Date())} aria-label="Ir al mes actual" className="ml-2 px-3 py-1.5 bg-gray-50 text-gray-400 text-[9px] font-black uppercase tracking-widest border border-gray-100 rounded-lg hover:bg-gray-100">{t('common.hoy')}</button>
           </div>
           <div className="flex items-center gap-2">
              {swapMode && (
@@ -283,7 +283,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                     <button
                       onClick={(e) => { e.stopPropagation(); onCellNoteClick(date); }}
                       className={`p-0.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${noteDates.includes(date.toDateString()) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
-                      title="Nota"
+                      aria-label={noteDates.includes(date.toDateString()) ? 'Editar nota' : 'Añadir nota'}
                     >
                       <span className="material-symbols-outlined text-base">{noteDates.includes(date.toDateString()) ? 'edit_note' : 'note_add'}</span>
                     </button>
@@ -315,7 +315,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                     <button
                       onClick={(e) => { e.stopPropagation(); onCellNoteClick(date); }}
                       className={`p-0.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${noteDates.includes(date.toDateString()) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
-                      title="Nota"
+                      aria-label={noteDates.includes(date.toDateString()) ? 'Editar nota' : 'Añadir nota'}
                     >
                       <span className="material-symbols-outlined text-base">{noteDates.includes(date.toDateString()) ? 'edit_note' : 'note_add'}</span>
                     </button>
@@ -335,10 +335,10 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                       ev._kind === 'guardia' && ev.type === 'enfermeria' ? { label: 'E', style: 'bg-red-600 text-white' } :
                       ev._kind === 'meeting' ? { label: 'MT', style: 'bg-sky-600 text-white' } : null;
                     return (
-                    <div key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`px-2.5 py-1.5 md:px-2 md:py-1 rounded-xl text-[13px] md:text-[10px] font-black border leading-tight transition-all relative flex items-start gap-1.5 shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`}>
+                    <button key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`w-full text-left px-2.5 py-1.5 md:px-2 md:py-1 rounded-xl text-[13px] md:text-[10px] font-black border leading-tight transition-all relative flex items-start gap-1.5 shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`} aria-label={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`}>
                       {badge && <span className={`text-[9px] md:text-[7px] font-black px-1.5 py-0.5 rounded-md leading-none shrink-0 ${badge.style}`}>{badge.label}</span>}
                       <span className="whitespace-normal flex-1 min-w-0 leading-snug">{ev.personnelName || ev.title}</span>
-                    </div>
+                    </button>
                     );
                   })}
                 </div>

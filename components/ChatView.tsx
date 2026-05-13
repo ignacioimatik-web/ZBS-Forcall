@@ -266,7 +266,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/30">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/30" role="log" aria-live="polite" aria-atomic="false">
           {conversationMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
               <span className="material-symbols-outlined text-5xl mb-3">
@@ -282,12 +282,13 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
                 <div key={msg.id} className={`flex items-end gap-1 group ${isOwn ? 'justify-end' : 'justify-start'}`}>
                   {isOwn && (
                     <div className="relative opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => setMenuMsgId(menuMsgId === msg.id ? null : msg.id)}
-                        className="p-1 rounded-full hover:bg-gray-200 text-gray-400"
-                      >
-                        <span className="material-symbols-outlined text-lg">more_vert</span>
-                      </button>
+                    <button
+                      onClick={() => setMenuMsgId(menuMsgId === msg.id ? null : msg.id)}
+                      className="p-1 rounded-full hover:bg-gray-200 text-gray-400"
+                      aria-label="Opciones de mensaje"
+                    >
+                      <span className="material-symbols-outlined text-lg">more_vert</span>
+                    </button>
                       {menuMsgId === msg.id && (
                         <div ref={menuRef} className="absolute bottom-full right-0 mb-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[120px] z-50">
                           <button
@@ -340,6 +341,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
               <button
                 onClick={stopRecording}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
+                aria-label="Detener grabación"
               >
                 <span className="material-symbols-outlined text-lg">stop</span>
               </button>
@@ -352,6 +354,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
                   onClick={() => setShowAttach(!showAttach)}
                   disabled={isUploading}
                   className="p-2.5 rounded-full text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-40"
+                  aria-label="Añadir archivo"
                 >
                   <span className="material-symbols-outlined text-xl">add_circle</span>
                 </button>
@@ -400,6 +403,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
                 type="submit"
                 disabled={!inputText.trim() || isUploading}
                 className="bg-forcall-600 text-white p-3 rounded-full hover:bg-forcall-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95 shadow-md flex items-center justify-center"
+                aria-label="Enviar mensaje"
               >
                 {isUploading ? (
                   <span className="material-symbols-outlined animate-spin">progress_activity</span>
