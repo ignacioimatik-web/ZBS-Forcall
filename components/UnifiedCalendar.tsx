@@ -60,7 +60,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   onAddVacacion, onDeleteVacacion,
   onSwapEvents, currentUser, activeCategory = 'Todo',
   availablePersonnel = [], bulkMode = false, selectedBulkDates = [], onToggleBulkDate,
-  swapMode = false, onCancelSwap, hideHeader = false, id = "calendar-container", isReadOnly = false,
+  swapMode = false, onCancelSwap, hideHeader = false, hideMonthNav = false, id = "calendar-container", isReadOnly = false,
   currentMonth: externalMonth, onMonthChange, getPersonnelType, noteDates = [], onCellNoteClick
 }) => {
   const { t } = useT();
