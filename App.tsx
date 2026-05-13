@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
+import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { CalendariosView } from './components/CalendariosView';
 import { NotificationToast } from './components/NotificationToast';
@@ -323,18 +324,21 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in">
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} />
-      {isDataLoading && (
-        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">
-          <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
-        </div>
-      )}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-8rem)]">
-        <div key={activeTab} className="animate-wave-in animate-stagger">
-          {renderContent()}
-        </div>
-      </main>
-      <Footer />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="md:pl-60 min-h-screen flex flex-col">
+        <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} userName={user?.name} />
+        {isDataLoading && (
+          <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">
+            <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
+          </div>
+        )}
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div key={activeTab} className="animate-wave-in animate-stagger">
+            {renderContent()}
+          </div>
+        </main>
+        <Footer />
+      </div>
       {notification && <NotificationToast message={notification} onClose={() => setNotification(null)} />}
     </div>
   );
