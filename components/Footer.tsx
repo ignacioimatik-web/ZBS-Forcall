@@ -72,8 +72,14 @@ function ensureSpace(ctx: Ctx, needed: number, title: string, docName: string): 
   return ctx;
 }
 
+function approxLines(text: string): number {
+  const explicit = (text.match(/\n/g) || []).length;
+  return explicit + Math.ceil(text.length / 80);
+}
+
 function section(ctx: Ctx, num: string, heading: string, bodyText: string, title: string, docName: string): Ctx {
-  let c = ensureSpace(ctx, 16, title, docName);
+  const sectionNeeded = 16 + approxLines(bodyText) * 4.2 + 3.5;
+  let c = ensureSpace(ctx, Math.min(sectionNeeded, 80), title, docName);
 
   // Accent bar
   c.doc.setFillColor(...RED);
