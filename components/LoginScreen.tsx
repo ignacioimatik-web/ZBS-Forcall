@@ -19,6 +19,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [pin, setPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exitWave, setExitWave] = useState(false);
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -57,7 +58,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
       const result = await signIn(selectedUserEmail, pin);
       if (result.success) {
-        onLoginSuccess();
+        setExitWave(true);
+        setTimeout(() => onLoginSuccess(), 600);
       } else {
         setError(result.error || 'PIN incorrecto');
         setPin('');
@@ -104,8 +106,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       />
       <div className="absolute inset-0 z-0 bg-black/35" />
 
+      {/* Exit wave overlay */}
+      {exitWave && (
+        <div className="absolute inset-0 z-50 animate-wave-in flex items-center justify-center bg-forcall-600">
+          <div className="text-center text-white animate-stagger">
+            <div className="inline-flex items-center justify-center p-4 bg-white/20 backdrop-blur rounded-full mb-4">
+              <span className="material-symbols-outlined text-5xl">landscape</span>
+            </div>
+            <p className="text-lg font-black uppercase tracking-widest">Bienvenido</p>
+            <p className="text-2xl font-black mt-1">{selectedUserName}</p>
+          </div>
+        </div>
+      )}
+
       {/* Logo */}
-      <div className="relative z-10 mb-8 text-center">
+      <div className="relative z-10 mb-8 text-center animate-fade-in">
         <div className="inline-flex items-center justify-center p-4 bg-white/90 backdrop-blur border border-white/20 rounded-full mb-4 shadow-xl">
           <span className="material-symbols-outlined text-4xl text-earth-800">landscape</span>
         </div>
@@ -166,7 +181,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         <div className="px-6 py-5">
           {/* Step 1: Category */}
           {step === 'category' && (
-            <div className="space-y-3">
+            <div key="category" className="animate-wave-in animate-stagger space-y-3">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.id}
@@ -193,7 +208,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
           {/* Step 2: User selection */}
           {step === 'user' && (
-            <div className="space-y-2">
+            <div key="user" className="animate-wave-in animate-stagger space-y-2">
               {categoryUsers.length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
                   <span className="material-symbols-outlined text-4xl block mb-2">person_off</span>
@@ -221,7 +236,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
           {/* Step 3: PIN entry */}
           {step === 'pin' && (
-            <div>
+            <div key="pin" className="animate-wave-in animate-stagger">
               {/* PIN display */}
               <div className="flex justify-center gap-3 mb-6">
                 {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -299,7 +314,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         </div>
       </div>
 
-      <div className="relative z-10 mt-6 text-center text-white/60 text-xs space-y-2">
+      <div className="relative z-10 mt-6 text-center text-white/60 text-xs space-y-2 animate-fade-in">
         <p>© 2026 ZBS Forcall — {VERSION_STRING}</p>
         <button
           onClick={() => {

@@ -304,7 +304,7 @@ const App: React.FC = () => {
       case 'Alertas':
         return <AlertasView />;
       case 'Dietas':
-        return <DietasView />;
+        return <DietasView currentUser={user} />;
       default:
         return null;
     }

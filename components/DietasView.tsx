@@ -1,16 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import type { User } from '../types';
 
 interface Town {
   id: string;
   name: string;
   lat: number;
   lng: number;
-}
-
-interface Visit {
-  id: string;
-  townId: string;
-  patient: string;
 }
 
 interface RouteLeg {
@@ -23,9 +18,20 @@ interface RouteLeg {
 }
 
 interface DayData {
-  visits: Visit[];
-  startTownId: string;
-  endTownId: string;
+  townId: string;
+  patient: string;
+}
+
+interface DietaEntry {
+  date: string;
+  townId: string;
+  townName: string;
+  patient: string;
+  savedBy: string;
+  savedById: string;
+  totalKm: number;
+  computableKm: number;
+  timestamp: string;
 }
 
 const TOWNS: Town[] = [
@@ -51,10 +57,6 @@ function todayStr(): string {
 function formatDateDisplay(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00');
   return d.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-}
-
-function generateId(): string {
-  return Math.random().toString(36).slice(2, 9);
 }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -96,71 +98,73 @@ function deleteDayData(dateStr: string) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dates));
 }
 
-export const DietasView: React.FC = () => {
+const REGISTRY_KEY = 'zbs_dietas_registry';
+
+function loadRegistry(): DietaEntry[] {
+  try {
+    const raw = localStorage.getItem(REGISTRY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveRegistryEntry(entry: DietaEntry) {
+  const registry = loadRegistry();
+  const idx = registry.findIndex(e => e.date === entry.date);
+  if (idx >= 0) {
+    registry[idx] = entry;
+  } else {
+    registry.unshift(entry);
+  }
+  localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry.slice(0, 365)));
+}
+
+function removeRegistryEntry(dateStr: string) {
+  const registry = loadRegistry().filter(e => e.date !== dateStr);
+  localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry));
+}
+
+export const DietasView: React.FC<{ currentUser: User | null }> = ({ currentUser }) => {
   const [date, setDate] = useState(todayStr());
-  const [startTownId, setStartTownId] = useState('forcall');
-  const [endTownId, setEndTownId] = useState('forcall');
-  const [visits, setVisits] = useState<Visit[]>([]);
-  const [newTownId, setNewTownId] = useState(TOWNS[1]?.id || '');
-  const [newPatient, setNewPatient] = useState('');
+  const [townId, setTownId] = useState(TOWNS[1]?.id || '');
+  const [patient, setPatient] = useState('');
   const [legs, setLegs] = useState<RouteLeg[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedDates, setSavedDates] = useState<string[]>([]);
+  const [registry, setRegistry] = useState<DietaEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     setSavedDates(loadSavedDates());
+    setRegistry(loadRegistry());
     const data = loadDayData(date);
     if (data) {
-      setStartTownId(data.startTownId);
-      setEndTownId(data.endTownId);
-      setVisits(data.visits);
+      setTownId(data.townId);
+      setPatient(data.patient);
       setLegs([]);
     } else {
-      setStartTownId('forcall');
-      setEndTownId('forcall');
-      setVisits([]);
+      setTownId(TOWNS[1]?.id || '');
+      setPatient('');
       setLegs([]);
     }
   }, [date]);
-
-  const addVisit = () => {
-    if (!newTownId) return;
-    setVisits(prev => [...prev, { id: generateId(), townId: newTownId, patient: newPatient }]);
-    setNewPatient('');
-    setLegs([]);
-  };
-
-  const removeVisit = (id: string) => {
-    setVisits(prev => prev.filter(v => v.id !== id));
-    setLegs([]);
-  };
 
   const toggleComputable = (index: number) => {
     setLegs(prev => prev.map((leg, i) => i === index ? { ...leg, computable: !leg.computable } : leg));
   };
 
   const calculateRoute = useCallback(async () => {
-    if (visits.length === 0) {
-      setError('Añade al menos una visita antes de calcular.');
-      return;
-    }
+    const town = getTown(townId);
+    if (!town) { setError('Selecciona un pueblo.'); return; }
 
     setLoading(true);
     setError(null);
 
-    const startTown = getTown(startTownId);
-    const endTown = getTown(endTownId);
-    if (!startTown || !endTown) { setError('Configura inicio y fin de jornada.'); setLoading(false); return; }
-
+    const forcall = getTown('forcall')!;
     const points = [
-      { id: startTownId, name: startTown.name, ...startTown },
-      ...visits.map(v => {
-        const t = getTown(v.townId);
-        return t ? { id: v.townId, name: t.name, ...t } : null;
-      }).filter(Boolean) as { id: string; name: string; lat: number; lng: number }[],
-      { id: endTownId, name: endTown.name, ...endTown },
+      { id: 'forcall', name: forcall.name, ...forcall },
+      { id: townId, name: town.name, ...town },
+      { id: 'forcall', name: forcall.name, ...forcall },
     ];
 
     try {
@@ -176,42 +180,48 @@ export const DietasView: React.FC = () => {
         fromName: points[i].name,
         toName: points[i + 1].name,
         distanceKm: Math.round((leg.distance / 1000) * 10) / 10,
-        computable: i < points.length - 2,
+        computable: true,
       }));
 
       setLegs(routeLegs);
     } catch {
-      const routeLegs: RouteLeg[] = [];
-      for (let i = 0; i < points.length - 1; i++) {
-        const d = haversineKm(points[i].lat, points[i].lng, points[i + 1].lat, points[i + 1].lng);
-        routeLegs.push({
-          fromId: points[i].id,
-          toId: points[i + 1].id,
-          fromName: points[i].name,
-          toName: points[i + 1].name,
-          distanceKm: Math.round(d * 1.3 * 10) / 10,
-          computable: i < points.length - 2,
-        });
-      }
-      setLegs(routeLegs);
-      setError('No se pudo calcular la ruta real. Distancias estimadas (línea recta × 1.3).');
+      const d1 = haversineKm(forcall.lat, forcall.lng, town.lat, town.lng);
+      setLegs([
+        { fromId: 'forcall', toId: townId, fromName: 'Forcall', toName: town.name, distanceKm: Math.round(d1 * 1.3 * 10) / 10, computable: true },
+        { fromId: townId, toId: 'forcall', fromName: town.name, toName: 'Forcall', distanceKm: Math.round(d1 * 1.3 * 10) / 10, computable: true },
+      ]);
+      setError('No se pudo calcular la ruta real. Distancia estimada (línea recta × 1.3).');
     } finally {
       setLoading(false);
     }
-  }, [startTownId, endTownId, visits]);
+  }, [townId]);
 
   const saveSession = () => {
-    saveDayData(date, { startTownId, endTownId, visits });
+    const town = getTown(townId);
+    saveDayData(date, { townId, patient });
+    saveRegistryEntry({
+      date,
+      townId,
+      townName: town?.name || townId,
+      patient,
+      savedBy: currentUser?.name || 'Usuario',
+      savedById: currentUser?.id || '',
+      totalKm: Math.round(totalKm * 10) / 10,
+      computableKm: Math.round(totalComputable * 10) / 10,
+      timestamp: new Date().toISOString(),
+    });
     setSavedDates(loadSavedDates());
+    setRegistry(loadRegistry());
   };
 
   const deleteSession = () => {
     deleteDayData(date);
-    setStartTownId('forcall');
-    setEndTownId('forcall');
-    setVisits([]);
+    removeRegistryEntry(date);
+    setTownId(TOWNS[1]?.id || '');
+    setPatient('');
     setLegs([]);
     setSavedDates(loadSavedDates());
+    setRegistry(loadRegistry());
   };
 
   const totalComputable = legs.filter(l => l.computable).reduce((sum, l) => sum + l.distanceKm, 0);
@@ -280,96 +290,64 @@ export const DietasView: React.FC = () => {
                 <span className="material-symbols-outlined text-emerald-500 text-lg">flag</span>
                 Inicio jornada
               </p>
-              <select
-                value={startTownId}
-                onChange={e => { setStartTownId(e.target.value); setLegs([]); }}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              >
-                {TOWNS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
+              <div className="w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm font-black text-gray-500 flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-600 text-lg">home</span>
+                Forcall
+              </div>
             </div>
             <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-5">
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-3 flex items-center gap-2">
                 <span className="material-symbols-outlined text-red-500 text-lg">flag</span>
                 Fin jornada
               </p>
-              <select
-                value={endTownId}
-                onChange={e => { setEndTownId(e.target.value); setLegs([]); }}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              >
-                {TOWNS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
+              <div className="w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm font-black text-gray-500 flex items-center gap-2">
+                <span className="material-symbols-outlined text-red-500 text-lg">home</span>
+                Forcall
+              </div>
             </div>
           </div>
 
           <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Itinerario</p>
-              <h3 className="text-lg font-black text-gray-900 mt-1">Visitas a domicilio</h3>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Itinerario único</p>
+              <h3 className="text-lg font-black text-gray-900 mt-1">Selecciona el destino</h3>
             </div>
             <div className="p-5 space-y-4">
+              <div className="flex items-center gap-3 px-4 py-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                <span className="material-symbols-outlined text-emerald-600">home</span>
+                <span className="text-sm font-black text-emerald-800">Forcall</span>
+                <span className="material-symbols-outlined text-emerald-300">arrow_forward</span>
+                <span className="material-symbols-outlined text-emerald-600">location_on</span>
+                <span className="text-sm font-black text-emerald-800 flex-1">{getTown(townId)?.name || '—'}</span>
+                <span className="material-symbols-outlined text-emerald-300">arrow_forward</span>
+                <span className="material-symbols-outlined text-emerald-600">home</span>
+                <span className="text-sm font-black text-emerald-800">Forcall</span>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <select
-                  value={newTownId}
-                  onChange={e => setNewTownId(e.target.value)}
+                  value={townId}
+                  onChange={e => { setTownId(e.target.value); setLegs([]); }}
                   className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                 >
-                  {TOWNS.filter(t => !visits.some(v => v.townId === t.id)).map(t => (
+                  {TOWNS.filter(t => t.id !== 'forcall').map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                  {TOWNS.filter(t => visits.some(v => v.townId === t.id)).map(t => (
-                    <option key={t.id} value={t.id} disabled>{t.name} (ya añadido)</option>
                   ))}
                 </select>
                 <input
                   type="text"
-                  value={newPatient}
-                  onChange={e => setNewPatient(e.target.value)}
+                  value={patient}
+                  onChange={e => setPatient(e.target.value)}
                   placeholder="Paciente (opcional)"
                   className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 placeholder:text-gray-300"
                 />
-                <button
-                  onClick={addVisit}
-                  disabled={!newTownId}
-                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-lg">add</span>
-                  Añadir
-                </button>
               </div>
-
-              {visits.length === 0 ? (
-                <div className="text-center py-8 text-gray-400">
-                  <span className="material-symbols-outlined text-4xl mb-2">pin_drop</span>
-                  <p className="text-[10px] font-black uppercase tracking-widest">Añade las visitas del día</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {visits.map((v, i) => {
-                    const town = getTown(v.townId);
-                    return (
-                      <div key={v.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black flex items-center justify-center">{i + 1}</span>
-                        <span className="material-symbols-outlined text-gray-400 text-lg">location_on</span>
-                        <div className="flex-1">
-                          <p className="text-sm font-black text-gray-800">{town?.name || v.townId}</p>
-                          {v.patient && <p className="text-[10px] font-bold text-gray-500">{v.patient}</p>}
-                        </div>
-                        <button onClick={() => removeVisit(v.id)} className="p-1.5 hover:bg-red-50 rounded-lg transition-all text-gray-300 hover:text-red-500">
-                          <span className="material-symbols-outlined text-lg">close</span>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
 
           <button
             onClick={calculateRoute}
-            disabled={visits.length === 0 || loading}
+            disabled={!townId || townId === 'forcall' || loading}
             className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-gray-300 disabled:to-gray-300 text-white rounded-2xl text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-md"
           >
             <span className={`material-symbols-outlined text-2xl ${loading ? 'animate-spin' : ''}`}>
@@ -443,6 +421,60 @@ export const DietasView: React.FC = () => {
               <span className="material-symbols-outlined text-lg">delete</span>
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Registro de Dietas */}
+      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 md:p-8 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-emerald-600 text-white rounded-2xl shadow-lg"><span className="material-symbols-outlined">fact_check</span></div>
+            <div><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Historial de Dietas</h3><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Control ZBS Forcall</p></div>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/50">
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">Fecha</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">Itinerario</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">Paciente</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right">Km comp.</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right">Registrado por</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {registry.length > 0 ? (
+                registry.map((entry) => (
+                  <tr key={entry.date + entry.timestamp} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-5">
+                      <span className="text-sm font-black text-gray-800">{formatDateDisplay(entry.date)}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-emerald-700">Forcall</span>
+                        <span className="material-symbols-outlined text-gray-300 text-sm">arrow_forward</span>
+                        <span className="text-xs font-black text-gray-800">{entry.townName}</span>
+                        <span className="material-symbols-outlined text-gray-300 text-sm">arrow_forward</span>
+                        <span className="text-xs font-bold text-emerald-700">Forcall</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className="text-xs font-bold text-gray-600">{entry.patient || '—'}</span>
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <span className="text-sm font-black text-emerald-700">{entry.computableKm.toFixed(1)} km</span>
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <span className="text-xs font-black text-gray-600 uppercase tracking-tighter">{entry.savedBy}</span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan={5} className="px-6 py-12 text-center opacity-30 text-[10px] font-black uppercase tracking-widest">Sin registros</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
