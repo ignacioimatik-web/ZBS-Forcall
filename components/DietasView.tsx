@@ -96,94 +96,58 @@ function deleteDayData(dateStr: string) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dates));
 }
 
-const COLS = 12;
-const ROWS = 14;
-const PAD_X = 1.2;
-const PAD_Y = 1.2;
-
-function toGrid(lat: number, lng: number): { col: number; row: number } {
-  const minLat = Math.min(...TOWNS.map(t => t.lat)) - PAD_Y;
-  const maxLat = Math.max(...TOWNS.map(t => t.lat)) + PAD_Y;
-  const minLng = Math.min(...TOWNS.map(t => t.lng)) - PAD_X;
-  const maxLng = Math.max(...TOWNS.map(t => t.lng)) + PAD_X;
-  return {
-    col: ((lng - minLng) / (maxLng - minLng)) * (COLS - 1),
-    row: (ROWS - 1) - ((lat - minLat) / (maxLat - minLat)) * (ROWS - 1),
-  };
-}
-
 const RouteMap: React.FC<{
   points: { id: string; name: string; lat: number; lng: number }[];
   legs: RouteLeg[];
   allTowns: Town[];
 }> = ({ points, legs, allTowns }) => {
-  const routeTownIds = new Set(points.map(p => p.id));
-  const gridPositions = new Map(allTowns.map(t => [t.id, toGrid(t.lat, t.lng)]));
-  const cellW = 100 / COLS;
-  const cellH = 100 / ROWS;
+  const minLat = Math.min(...allTowns.map(t => t.lat)) - 0.015;
+  const maxLat = Math.max(...allTowns.map(t => t.lat)) + 0.015;
+  const minLng = Math.min(...allTowns.map(t => t.lng)) - 0.015;
+  const maxLng = Math.max(...allTowns.map(t => t.lng)) + 0.015;
 
-  const toSvgX = (col: number) => col * cellW + cellW / 2;
-  const toSvgY = (row: number) => row * cellH + cellH / 2;
+  const x = (lng: number) => ((lng - minLng) / (maxLng - minLng)) * 100;
+  const y = (lat: number) => (1 - (lat - minLat) / (maxLat - minLat)) * 100;
+
+  const routeTownIds = new Set(points.map(p => p.id));
 
   return (
     <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-      <defs>
-        <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669" />
-        </marker>
-        <marker id="arrow-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="#9ca3af" />
-        </marker>
-      </defs>
-
-      {allTowns.filter(t => !routeTownIds.has(t.id)).map(t => {
-        const pos = gridPositions.get(t.id)!;
-        return (
-          <g key={t.id} opacity={0.35}>
-            <circle cx={toSvgX(pos.col)} cy={toSvgY(pos.row)} r={1.2} fill="#d1d5db" />
-            <text x={toSvgX(pos.col)} y={toSvgY(pos.row) - 2} textAnchor="middle" fontSize={2.8} fill="#9ca3af" fontWeight="bold">{t.name}</text>
-          </g>
-        );
-      })}
-
+      <rect x="0" y="0" width="100" height="100" fill="#f8fafc" rx="4" />
+      {allTowns.filter(t => !routeTownIds.has(t.id)).map(t => (
+        <g key={t.id} opacity={0.4}>
+          <circle cx={x(t.lng)} cy={y(t.lat)} r={1} fill="#cbd5e1" />
+          <text x={x(t.lng)} y={y(t.lat) - 2} textAnchor="middle" fontSize={2.2} fill="#94a3b8" fontWeight="bold">{t.name}</text>
+        </g>
+      ))}
       {legs.map((leg, i) => {
-        const fromPos = gridPositions.get(leg.fromId);
-        const toPos = gridPositions.get(leg.toId);
-        if (!fromPos || !toPos) return null;
-        const x1 = toSvgX(fromPos.col), y1 = toSvgY(fromPos.row);
-        const x2 = toSvgX(toPos.col), y2 = toSvgY(toPos.row);
-        const midX = (x1 + x2) / 2, midY = (y1 + y2) / 2;
+        const from = points.find(p => p.id === leg.fromId);
+        const to = points.find(p => p.id === leg.toId);
+        if (!from || !to) return null;
+        const x1 = x(from.lng), y1 = y(from.lat);
+        const x2 = x(to.lng), y2 = y(to.lat);
         return (
           <g key={i}>
-            <line
-              x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke={leg.computable ? '#059669' : '#9ca3af'}
-              strokeWidth={leg.computable ? 1.8 : 0.8}
-              strokeDasharray={leg.computable ? '' : '2 2'}
-              markerEnd={`url(#${leg.computable ? 'arrow-green' : 'arrow-gray'})`}
+            <line x1={x1} y1={y1} x2={x2} y2={y2}
+              stroke={leg.computable ? '#059669' : '#cbd5e1'}
+              strokeWidth={leg.computable ? 1.5 : 1}
+              strokeDasharray={leg.computable ? '' : '3 2'}
             />
-            <rect x={midX - 5} y={midY - 1.8} width={10} height={3.6} rx={1.8} fill="white" opacity={0.9} />
-            <text x={midX} y={midY + 0.7} textAnchor="middle" fontSize={2.5} fill={leg.computable ? '#059669' : '#6b7280'} fontWeight="black">
+            <rect x={(x1+x2)/2-4} y={(y1+y2)/2-1.5} width={8} height={3} rx={1.5} fill="rgba(255,255,255,0.92)" />
+            <text x={(x1+x2)/2} y={(y1+y2)/2+0.6} textAnchor="middle" fontSize={2.2} fill={leg.computable ? '#059669' : '#94a3b8'} fontWeight="black">
               {leg.distanceKm.toFixed(1)} km
             </text>
           </g>
         );
       })}
-
       {points.map((p, i) => {
-        const pos = gridPositions.get(p.id);
-        if (!pos) return null;
-        const cx = toSvgX(pos.col), cy = toSvgY(pos.row);
-        const isStart = i === 0;
-        const isEnd = i === points.length - 1;
-        const fill = isStart ? '#059669' : isEnd ? '#dc2626' : '#0ea5e9';
-        const r = isStart || isEnd ? 3.5 : 2.5;
+        const cx = x(p.lng), cy = y(p.lat);
+        const isEdge = i === 0 || i === points.length - 1;
         return (
           <g key={p.id}>
-            <circle cx={cx} cy={cy} r={r + 1.2} fill="white" />
-            <circle cx={cx} cy={cy} r={r} fill={fill} stroke="white" strokeWidth={0.6} />
-            <text x={cx} y={cy - r - 1.8} textAnchor="middle" fontSize={2.5} fill="#374151" fontWeight="black">
-              {p.name}{p.id === 'forcall' ? ' (C.Salud)' : ''}
+            <circle cx={cx} cy={cy} r={isEdge ? 3 : 2.2} fill="white" stroke={isEdge ? (i === 0 ? '#059669' : '#dc2626') : '#0ea5e9'} strokeWidth={1.2} />
+            <text x={cx} y={cy - (isEdge ? 3.8 : 3)} textAnchor="middle" fontSize={2.5} fill="#1e293b" fontWeight="black">
+              {p.name}{p.id === 'forcall' ? '*' : ''}
             </text>
           </g>
         );
@@ -319,13 +283,19 @@ export const DietasView: React.FC = () => {
     setDate(d.toISOString().slice(0, 10));
   };
 
-  const routePoints = legs.length > 0
-    ? [
-        { id: startTownId, name: getTown(startTownId)?.name || '', lat: getTown(startTownId)?.lat || 0, lng: getTown(startTownId)?.lng || 0 },
-        ...visits.map(v => ({ id: v.townId, name: getTown(v.townId)?.name || '', lat: getTown(v.townId)?.lat || 0, lng: getTown(v.townId)?.lng || 0 })),
-        { id: endTownId, name: getTown(endTownId)?.name || '', lat: getTown(endTownId)?.lat || 0, lng: getTown(endTownId)?.lng || 0 },
-      ]
-    : [];
+  const routePoints = legs.length > 0 ? (() => {
+    const build = (id: string) => {
+      const t = getTown(id);
+      return t ? { id: t.id, name: t.name, lat: t.lat, lng: t.lng } : null;
+    };
+    const start = build(startTownId);
+    const end = build(endTownId);
+    return [
+      start,
+      ...visits.map(v => build(v.townId)),
+      end,
+    ].filter(Boolean) as { id: string; name: string; lat: number; lng: number }[];
+  })() : [];
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
@@ -564,7 +534,7 @@ export const DietasView: React.FC = () => {
                   <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block"></span> Vuelta</span>
                 </div>
               </div>
-              <div className="p-1 sm:p-3 aspect-[4/3] sm:aspect-auto sm:min-h-[350px]">
+              <div className="h-[320px] sm:h-[450px] w-full">
                 <RouteMap points={routePoints} legs={legs} allTowns={TOWNS} />
               </div>
             </div>
