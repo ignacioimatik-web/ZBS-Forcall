@@ -6,6 +6,7 @@ import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType, 
 import { ConfirmationModal } from './ConfirmationModal';
 import { ShiftBadge } from './ShiftBadge';
 import { useT } from '../lib/i18n';
+import { USERS } from '../lib/users';
 
 declare var html2pdf: any;
 
@@ -54,6 +55,7 @@ interface UnifiedCalendarProps {
   noteDates?: string[];
   onCellNoteClick?: (date: Date) => void;
   onSelectDay?: (date: Date) => void;
+  onProfessionalChange?: (professional: string) => void;
 }
 
 export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({ 
@@ -63,7 +65,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   onSwapEvents, currentUser, activeCategory = 'Todo',
   availablePersonnel = [], bulkMode = false, selectedBulkDates = [], onToggleBulkDate,
   swapMode = false, onCancelSwap, hideHeader = false, hideMonthNav = false, id = "calendar-container", isReadOnly = false,
-  currentMonth: externalMonth, onMonthChange, getPersonnelType, noteDates = [], onCellNoteClick, onSelectDay
+  currentMonth: externalMonth, onMonthChange, getPersonnelType, noteDates = [], onCellNoteClick, onSelectDay, onProfessionalChange
 }) => {
   const { t } = useT();
   const [internalMonth, setInternalMonth] = useState(new Date());
@@ -77,6 +79,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [personnelName, setPersonnelName] = useState('');
   const [firstSwapTarget, setFirstSwapTarget] = useState<CalendarEvent | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -107,6 +110,21 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     const totalDays = new Date(year, month + 1, 0).getDate();
     return Array.from({ length: totalDays }, (_, i) => new Date(year, month, i + 1));
   }, [currentMonth]);
+
+  const allProfessionals = useMemo(() => {
+    return USERS
+      .filter(u => u.category !== 'Administrativos')
+      .map(u => u.name)
+      .sort((a, b) => a.localeCompare(b));
+  }, []);
+
+  const professionalMonthCount = useMemo(() => {
+    if (selectedProfessional === 'all') return 0;
+    const month = currentMonth.getMonth();
+    const year = currentMonth.getFullYear();
+    const all = [...guardias, ...libranzas, ...doblas, ...vacaciones] as { personnelName: string; date: Date }[];
+    return all.filter(ev => ev.personnelName === selectedProfessional && ev.date.getMonth() === month && ev.date.getFullYear() === year).length;
+  }, [selectedProfessional, currentMonth, guardias, libranzas, doblas, vacaciones]);
 
   const startingEmptyCells = useMemo(() => {
     const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
@@ -248,6 +266,26 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
             </div>
           )}
           <div className="flex items-center gap-2">
+            {selectedProfessional !== 'all' && (
+              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1.5 rounded-lg hidden sm:flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">badge</span>
+                {professionalMonthCount} asignaciones
+              </span>
+            )}
+            <div className="relative">
+              <select
+                value={selectedProfessional}
+                onChange={(e) => { setSelectedProfessional(e.target.value); onProfessionalChange?.(e.target.value); }}
+                aria-label="Filtrar por profesional"
+                className="appearance-none text-[10px] font-bold bg-gray-50 border border-gray-200 rounded-lg pl-2 pr-6 py-1.5 text-gray-600 focus:ring-2 focus:ring-blue-400 focus:outline-none cursor-pointer hover:bg-gray-100 transition-colors min-w-[90px] sm:min-w-[120px]"
+              >
+                <option value="all">Todos los profesionales</option>
+                {allProfessionals.map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined text-sm text-gray-400 absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+            </div>
              {swapMode && (
                 <button onClick={() => { setFirstSwapTarget(null); onCancelSwap?.(); }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95">{t('unifiedCalendar.cancelSwap')}</button>
              )}
@@ -334,7 +372,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                     const chipStyle = getEventStyle(ev);
                     const isInteractive = canDelete && !swapMode && !bulkMode;
                     return (
-                    <button key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`w-full text-left h-[26px] px-2 rounded-lg text-[11px] font-semibold border leading-none flex items-center gap-1.5 transition-all ${chipStyle} ${isInteractive ? 'cursor-pointer hover:brightness-105 active:scale-[0.98]' : ''} ${swapMode ? 'cursor-pointer hover:brightness-105 active:scale-95' : ''}`} aria-label={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`}>
+                    <button key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`w-full text-left h-[26px] px-2 rounded-lg text-[11px] font-semibold border leading-none flex items-center gap-1.5 transition-all ${chipStyle} ${isInteractive ? 'cursor-pointer hover:brightness-105 active:scale-[0.98]' : ''} ${swapMode ? 'cursor-pointer hover:brightness-105 active:scale-95' : ''} ${selectedProfessional !== 'all' ? (ev.personnelName === selectedProfessional ? 'ring-2 ring-blue-400 ring-inset' : 'opacity-35') : ''}`} aria-label={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`}>
                       <ShiftBadge kind={ev._kind} type={ev.type} />
                       <span className="truncate flex-1 min-w-0">{ev.personnelName || ev.title}</span>
                     </button>

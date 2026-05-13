@@ -103,6 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { t } = useT();
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
 
   const metrics = [
     { count: guardias.filter(g => g.type === 'medica').length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
@@ -223,6 +224,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               currentMonth={calendarMonth}
               onMonthChange={setCalendarMonth}
               onSelectDay={handleSelectDay}
+              onProfessionalChange={setSelectedProfessional}
             />
           </div>
 
@@ -236,6 +238,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               meetings={meetings}
               onClose={() => setSelectedDate(null)}
               user={user}
+              selectedProfessional={selectedProfessional}
+              onClearProfessionalFilter={() => setSelectedProfessional('all')}
             />
           </div>
         </div>

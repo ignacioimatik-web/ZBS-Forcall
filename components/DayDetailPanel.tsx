@@ -12,6 +12,8 @@ interface DayDetailPanelProps {
   meetings: Meeting[];
   onClose: () => void;
   user?: { name: string } | null;
+  selectedProfessional?: string;
+  onClearProfessionalFilter?: () => void;
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -70,6 +72,8 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
   meetings,
   onClose,
   user,
+  selectedProfessional = 'all',
+  onClearProfessionalFilter,
 }) => {
   const { t } = useT();
 
@@ -129,6 +133,23 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
               {conflicts.length > 0 && (
                 <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Con incidencias</span>
               )}
+              {selectedProfessional !== 'all' && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[10px]">badge</span>
+                    Filtro: {selectedProfessional}
+                  </span>
+                  {onClearProfessionalFilter && (
+                    <button
+                      onClick={onClearProfessionalFilter}
+                      className="text-[9px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full hover:bg-gray-200 transition-colors"
+                      aria-label="Limpiar filtro de profesional"
+                    >
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <button onClick={onClose} aria-label="Cerrar detalle del día" className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
@@ -177,7 +198,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
               {items && items.length > 0 ? (
                 <div className="space-y-1">
                   {items.map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100">
+                    <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${selectedProfessional !== 'all' ? (item.personnelName === selectedProfessional ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-300' : 'opacity-35 bg-gray-50 border-gray-100') : 'bg-gray-50 border-gray-100'}`}>
                       <ShiftBadge kind={item.kind} type={item.type} />
                       <span className="text-xs font-medium text-gray-800 truncate">{item.label}</span>
                     </div>
