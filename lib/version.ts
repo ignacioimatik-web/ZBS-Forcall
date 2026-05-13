@@ -1,4 +1,4 @@
-export const VERSION = '1.5.0';
+export const VERSION = '1.6.0';
 export const VERSION_STRING = `Gestión Equipos v${VERSION}`;
 export const VERSION_YEAR = '2026';
 
@@ -10,6 +10,21 @@ export interface VersionEntry {
 }
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: '1.6.0',
+    date: 'Mayo 2026',
+    title: 'Valencià, notas en calendario y mejoras de UI',
+    changes: [
+      'Traducción completa al valenciano con sistema i18n y selector de idioma.',
+      'Selector de idioma ES/VA en pantalla de login.',
+      'Notas diarias en libranzas/refuerzo al hacer clic en celda.',
+      'Panel de notas para Xelo/Elena (edición) y resto (lectura).',
+      'Eliminación de la sección Dietas.',
+      'Renombrado "Historial de Permutas" a "Cambios de Guardia".',
+      'Renombrado "Administrativos" a "Gestión Admin".',
+      'Correcciones de errores y mejoras de estabilidad.',
+    ],
+  },
   {
     version: '1.5.0',
     date: 'Mayo 2026',
