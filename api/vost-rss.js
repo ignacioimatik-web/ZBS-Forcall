@@ -1,4 +1,7 @@
-const RSS_URL = 'https://nitter.net/VOSTcvalenciana/rss';
+import https from 'https';
+
+const HOST = 'nitter.net';
+const PATH = '/VOSTcvalenciana/rss';
 
 const decodeHtml = (value = '') =>
   value
@@ -10,12 +13,6 @@ const decodeHtml = (value = '') =>
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
     .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)));
 
-const cleanText = (value = '') =>
-  decodeHtml(value)
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
 const cleanContent = (value = '') =>
   decodeHtml(value)
     .replace(/<!\[CDATA\[/g, '')
@@ -26,6 +23,38 @@ const cleanContent = (value = '') =>
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
+const cleanText = (value = '') =>
+  decodeHtml(value)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+function fetchRss() {
+  return new Promise((resolve, reject) => {
+    const req = https.get(
+      {
+        hostname: HOST,
+        path: PATH,
+        headers: {
+          'user-agent': 'ZBS-Forcall/1.0',
+          accept: 'application/rss+xml, application/xml, text/xml',
+        },
+        timeout: 15000,
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => resolve(data));
+      },
+    );
+    req.on('error', reject);
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('Timeout'));
+    });
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -33,44 +62,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(RSS_URL, {
-      headers: {
-        'user-agent': 'ZBS-Forcall/1.0',
-        accept: 'application/rss+xml, application/xml, text/xml',
-      },
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      throw new Error(`RSS respondió ${response.status}`);
-    }
-
-    const xml = await response.text();
+    const xml = await fetchRss();
     const items = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/g;
     let match;
 
     while ((match = itemRegex.exec(xml)) !== null) {
       const content = match[1];
-      const titleMatch = content.match(/<title[^>]*>([\s\S]*?)<\/title>/);
       const descMatch = content.match(/<description[^>]*>([\s\S]*?)<\/description>/);
       const pubDateMatch = content.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/);
       const linkMatch = content.match(/<link[^>]*>([\s\S]*?)<\/link>/);
       const guidMatch = content.match(/<guid[^>]*>([\s\S]*?)<\/guid>/);
 
-      const title = titleMatch ? cleanText(titleMatch[1]) : '';
       const description = descMatch ? cleanContent(descMatch[1]) : '';
       const pubDate = pubDateMatch ? cleanText(pubDateMatch[1]) : '';
       const link = linkMatch ? cleanText(linkMatch[1]) : '';
       const guid = guidMatch ? cleanText(guidMatch[1]) : '';
 
-      if (title || description) {
-        items.push({
-          title: title || description.slice(0, 100),
-          content: description,
-          pubDate,
-          link: link || guid || '',
-        });
+      if (description) {
+        items.push({ content: description, pubDate, link: link || guid || '' });
       }
     }
 
@@ -79,7 +89,6 @@ export default async function handler(req, res) {
   } catch (error) {
     res.status(500).json({
       error: 'No se pudieron obtener los tweets de VOSTcvalenciana.',
-      details: error instanceof Error ? error.message : 'Error desconocido',
       posts: [],
     });
   }
