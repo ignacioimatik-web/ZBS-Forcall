@@ -284,29 +284,6 @@ export const DietasView: React.FC<{ currentUser: User | null }> = ({ currentUser
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-5">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-emerald-500 text-lg">flag</span>
-                Inicio jornada
-              </p>
-              <div className="w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm font-black text-gray-500 flex items-center gap-2">
-                <span className="material-symbols-outlined text-emerald-600 text-lg">home</span>
-                Forcall
-              </div>
-            </div>
-            <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-5">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-red-500 text-lg">flag</span>
-                Fin jornada
-              </p>
-              <div className="w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm font-black text-gray-500 flex items-center gap-2">
-                <span className="material-symbols-outlined text-red-500 text-lg">home</span>
-                Forcall
-              </div>
-            </div>
-          </div>
-
           <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Itinerario único</p>
