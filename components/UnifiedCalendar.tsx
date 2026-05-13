@@ -4,6 +4,7 @@ import { Meeting, MeetingType, Guardia, User, Libranza, Dobla, Vacacion } from '
 import { getHolidayName } from '../utils';
 import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType, canManageVacaciones } from '../lib/guardiaPermissions';
 import { ConfirmationModal } from './ConfirmationModal';
+import { ShiftBadge } from './ShiftBadge';
 import { useT } from '../lib/i18n';
 
 declare var html2pdf: any;
@@ -137,37 +138,33 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   };
 
   const getEventStyle = (ev: CalendarEvent) => {
-    // Swap target siempre tiene prioridad visual
-    if (firstSwapTarget?.id === ev.id) return 'bg-indigo-700 text-white border-indigo-900 ring-4 ring-indigo-200 animate-pulse z-50';
+    if (firstSwapTarget?.id === ev.id) return 'bg-indigo-100 text-indigo-900 border-indigo-300 ring-2 ring-indigo-300 z-50';
     
-    // Discriminar por _kind primero (libranzas y doblas)
     if (ev._kind === 'libranza') {
-      const base = 'bg-green-100 text-green-900 border-green-300';
-      return ev.isChange ? `${base} ring-2 ring-orange-400` : base;
+      const base = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+      return ev.isChange ? `${base} ring-2 ring-amber-300` : base;
     }
     if (ev._kind === 'dobla') {
-      const base = 'bg-orange-100 text-orange-900 border-orange-300';
-      return ev.isChange ? `${base} ring-2 ring-orange-400` : base;
+      const base = 'bg-orange-50 text-orange-800 border-orange-200';
+      return ev.isChange ? `${base} ring-2 ring-amber-300` : base;
     }
     if (ev._kind === 'meeting') {
-      return 'bg-sky-100 text-sky-900 border-sky-300';
+      return 'bg-sky-50 text-sky-800 border-sky-200';
     }
     if (ev._kind === 'vacacion') {
-      return 'bg-purple-100 text-purple-900 border-purple-300';
+      return 'bg-violet-50 text-violet-800 border-violet-200';
     }
     
-    // Guardias: discriminar por type
     if (ev.type === 'medica') {
-      const base = 'bg-blue-100 text-blue-900 border-blue-300';
-      return ev.isChange ? `${base} ring-2 ring-orange-400` : base;
+      const base = 'bg-blue-50 text-blue-800 border-blue-200';
+      return ev.isChange ? `${base} ring-2 ring-amber-300` : base;
     }
     if (ev.type === 'enfermeria') {
-      const base = 'bg-red-100 text-red-900 border-red-300';
-      return ev.isChange ? `${base} ring-2 ring-orange-400` : base;
+      const base = 'bg-rose-50 text-rose-800 border-rose-200';
+      return ev.isChange ? `${base} ring-2 ring-amber-300` : base;
     }
     
-    // Fallback
-    return 'bg-sky-100 text-sky-900 border-sky-300';
+    return 'bg-gray-50 text-gray-800 border-gray-200';
   };
 
   const handleEntryClick = (e: React.MouseEvent, ev: CalendarEvent) => {
@@ -232,9 +229,9 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   };
 
   return (
-    <div id={id} className="w-full space-y-4 bg-gray-50/10 p-1 rounded-3xl">
+    <div id={id} className="w-full bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
       {!hideHeader && (
-        <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-3 md:p-4 rounded-3xl shadow-sm border border-gray-100 no-print sticky top-0 z-40 gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-white px-4 py-3 border-b border-gray-200 no-print sticky top-0 z-40 gap-3">
           {!hideMonthNav && (
             <div className="flex items-center gap-1 sm:gap-2">
               <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_left</span></button>
@@ -259,12 +256,15 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-3">
+      <div className="hidden md:grid md:grid-cols-7 bg-gray-50 border-b border-gray-200">
         {[t('unifiedCalendar.mon'), t('unifiedCalendar.tue'), t('unifiedCalendar.wed'), t('unifiedCalendar.thu'), t('unifiedCalendar.fri'), t('unifiedCalendar.sat'), t('unifiedCalendar.sun')].map(d => (
-          <div key={d} className="hidden md:block text-center text-[11px] font-black text-gray-400 uppercase tracking-[0.3em] p-2">{d}</div>
+          <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider py-2.5 border-r border-gray-200 last:border-r-0">{d}</div>
         ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-7 gap-3 md:gap-0">
+
         {Array.from({ length: startingEmptyCells }).map((_, i) => (
-          <div key={`empty-${i}`} className="hidden md:block min-h-[140px] bg-gray-50/20 rounded-2xl border border-transparent" />
+          <div key={`empty-${i}`} className="hidden md:block min-h-[130px] bg-gray-50/50 border-b border-r border-gray-100" />
         ))}
         {daysInMonth.map((date, i) => {
           const { events, holiday } = getEventsForDay(date);
@@ -276,19 +276,19 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
           if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
             if (isMobile) return null;
             return (
-              <div key={i} className={`flex md:flex-col items-center md:pt-4 md:pb-0 ${onCellNoteClick ? 'cursor-pointer' : ''}`} onClick={() => onCellNoteClick?.(date)}>
+              <div key={i} className={`hidden md:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[130px] bg-white ${onCellNoteClick ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => onCellNoteClick?.(date)}>
                 <div className="flex items-center gap-1">
-                  <span className={`text-2xl font-black leading-none ${isToday ? 'text-indigo-600' : isFestivo ? 'text-red-600' : isWeekend ? 'text-slate-400' : 'text-gray-300'}`}>{date.getDate()}</span>
+                  <span className={`text-sm font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
                   {noteDates.includes(date.toDateString()) && (
-                    <span className="material-symbols-outlined text-amber-500 text-lg">sticky_note_2</span>
+                    <span className="material-symbols-outlined text-amber-500 text-base">sticky_note_2</span>
                   )}
                   {onCellNoteClick && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onCellNoteClick(date); }}
-                      className={`p-0.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${noteDates.includes(date.toDateString()) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
+                      className={`p-0.5 rounded transition-all opacity-0 group-hover:opacity-100 ${noteDates.includes(date.toDateString()) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
                       aria-label={noteDates.includes(date.toDateString()) ? 'Editar nota' : 'Añadir nota'}
                     >
-                      <span className="material-symbols-outlined text-base">{noteDates.includes(date.toDateString()) ? 'edit_note' : 'note_add'}</span>
+                      <span className="material-symbols-outlined text-sm">{noteDates.includes(date.toDateString()) ? 'edit_note' : 'note_add'}</span>
                     </button>
                   )}
                 </div>
@@ -300,53 +300,52 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
             <div 
               key={i} 
               onClick={() => handleCellClick(date)} 
-              className={`flex md:flex-col gap-3 md:gap-0 p-4 rounded-3xl border transition-all relative group md:min-h-[200px]
-                ${isToday ? 'bg-indigo-50 border-indigo-200 shadow-inner' : 
-                  isFestivo ? 'bg-gradient-to-br from-white via-red-50 to-red-100/40 border-red-100 shadow-inner' : 
-                  isWeekend ? 'bg-gradient-to-br from-white via-slate-50 to-slate-100/50 border-gray-100 shadow-sm' : 
-                  'bg-white border-gray-100'} 
-                ${canManageActiveCategory && !swapMode ? 'cursor-pointer hover:border-indigo-400 hover:shadow-md' : ''} 
-                ${isSelected ? 'ring-4 ring-amber-500 border-amber-500 bg-amber-50 z-10 shadow-xl' : ''}`}
+              className={`flex md:flex-col gap-2 p-3 border-b border-r border-gray-100 relative group md:min-h-[130px] bg-white transition-colors
+                ${isToday ? 'bg-blue-50/40' : ''} 
+                ${isFestivo ? 'bg-red-50/20' : ''} 
+                ${canManageActiveCategory && !swapMode ? 'cursor-pointer hover:bg-gray-50' : ''} 
+                ${isSelected ? 'ring-2 ring-inset ring-blue-500 bg-blue-50 z-10' : ''}`}
             >
-              <div className="flex flex-col items-center justify-center md:justify-between md:items-start md:flex-row md:mb-3 min-w-[50px]">
+              <div className="flex items-center justify-between min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className={`text-2xl font-black leading-none ${isToday ? 'text-indigo-600' : isFestivo ? 'text-red-600' : isWeekend ? 'text-slate-400' : 'text-gray-300'}`}>{date.getDate()}</span>
+                  <span className={`text-sm font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
                   {noteDates.includes(date.toDateString()) && (
-                    <span className="material-symbols-outlined text-amber-500 text-lg">sticky_note_2</span>
+                    <span className="material-symbols-outlined text-amber-500 text-base ml-0.5">sticky_note_2</span>
                   )}
                   {onCellNoteClick && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onCellNoteClick(date); }}
-                      className={`p-0.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${noteDates.includes(date.toDateString()) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
+                      className={`p-0.5 rounded transition-all opacity-0 group-hover:opacity-100 ${noteDates.includes(date.toDateString()) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
                       aria-label={noteDates.includes(date.toDateString()) ? 'Editar nota' : 'Añadir nota'}
                     >
-                      <span className="material-symbols-outlined text-base">{noteDates.includes(date.toDateString()) ? 'edit_note' : 'note_add'}</span>
+                      <span className="material-symbols-outlined text-sm">{noteDates.includes(date.toDateString()) ? 'edit_note' : 'note_add'}</span>
                     </button>
                   )}
                 </div>
-                <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
-                {isFestivo && <span className="hidden md:block w-3 h-3 bg-red-500 rounded-full shadow-sm animate-pulse" title={holiday}></span>}
+                <span className="md:hidden text-[10px] font-bold text-gray-400 uppercase tracking-wider">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
+                {isFestivo && <span className="hidden md:block w-2 h-2 bg-red-400 rounded-full" title={holiday}></span>}
               </div>
               {events.length > 0 ? (
-                <div className="flex-1 space-y-0.5 md:space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
-                  {events.map((ev: CalendarEvent, idx) => {
+                <div className="flex-1 space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
+                  {events.slice(0, 4).map((ev: CalendarEvent, idx) => {
                     const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
-                    const badge: { label: string; style: string } | null =
-                      ev._kind === 'libranza' ? { label: 'L', style: 'bg-green-600 text-white' } :
-                      ev._kind === 'dobla' ? { label: 'R', style: 'bg-orange-600 text-white' } :
-                      ev._kind === 'guardia' && ev.type === 'medica' ? { label: 'M', style: 'bg-blue-600 text-white' } :
-                      ev._kind === 'guardia' && ev.type === 'enfermeria' ? { label: 'E', style: 'bg-red-600 text-white' } :
-                      ev._kind === 'meeting' ? { label: 'MT', style: 'bg-sky-600 text-white' } : null;
+                    const chipStyle = getEventStyle(ev);
+                    const isInteractive = canDelete && !swapMode && !bulkMode;
                     return (
-                    <button key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`w-full text-left px-2.5 py-1.5 md:px-2 md:py-1 rounded-xl text-[13px] md:text-[10px] font-black border leading-tight transition-all relative flex items-start gap-1.5 shadow-sm ${getEventStyle(ev)} ${canDelete && !swapMode && !bulkMode ? 'cursor-pointer active:scale-[0.97] hover:brightness-110' : ''} ${swapMode ? 'cursor-pointer hover:brightness-110 active:scale-95' : ''}`} aria-label={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`}>
-                      {badge && <span className={`text-[9px] md:text-[7px] font-black px-1.5 py-0.5 rounded-md leading-none shrink-0 ${badge.style}`}>{badge.label}</span>}
-                      <span className="whitespace-normal flex-1 min-w-0 leading-snug">{ev.personnelName || ev.title}</span>
+                    <button key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`w-full text-left h-[26px] px-2 rounded-lg text-[11px] font-semibold border leading-none flex items-center gap-1.5 transition-all ${chipStyle} ${isInteractive ? 'cursor-pointer hover:brightness-105 active:scale-[0.98]' : ''} ${swapMode ? 'cursor-pointer hover:brightness-105 active:scale-95' : ''}`} aria-label={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`}>
+                      <ShiftBadge kind={ev._kind} type={ev.type} />
+                      <span className="truncate flex-1 min-w-0">{ev.personnelName || ev.title}</span>
                     </button>
                     );
                   })}
+                  {events.length > 4 && (
+                    <div className="h-[26px] px-2 rounded-lg text-[10px] font-bold text-gray-400 flex items-center justify-center border border-dashed border-gray-200">
+                      +{events.length - 4} m&aacute;s
+                    </div>
+                  )}
                 </div>
               ) : events.length === 0 && canManageActiveCategory && !swapMode ? (
-                <div className="flex-1 flex items-center justify-center text-gray-400 text-xs font-bold uppercase tracking-[0.2em]">{t('common.libre')}</div>
+                <div className="flex-1 flex items-center justify-center text-gray-400 text-[10px] font-bold uppercase tracking-wider">{t('common.libre')}</div>
               ) : null}
             </div>
           );
