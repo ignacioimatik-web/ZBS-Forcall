@@ -9,7 +9,7 @@ import { StatusSummary } from './StatusSummary';
 import { DayDetailPanel } from './DayDetailPanel';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 import { useT } from '../lib/i18n';
-import { getMonthValidationSummary, type DayValidationStatus } from '../lib/calendarValidation';
+import { validateMonth, getMonthValidationSummary, type DayValidationStatus } from '../lib/calendarValidation';
 
 interface DashboardProps {
   meetings: Meeting[];
