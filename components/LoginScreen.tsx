@@ -200,7 +200,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                   >
                     {cat.icon}
                   </span>
-                  <span className="text-base font-bold">{cat.label}</span>
+                  <span className="text-base font-bold">{t(`login.${({ Medicina: 'medicina', enfermeria: 'enfermeria', Administrativos: 'administrativos' } as Record<string, string>)[cat.id]}`)}</span>
                   <span className="material-symbols-outlined text-lg ml-auto opacity-40">
                     chevron_right
                   </span>
