@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Meeting, User, Guardia, Libranza, Dobla, Vacacion } from '../types';
 import { UnifiedCalendar } from './UnifiedCalendar';
+import { PageHeader } from './PageHeader';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 import { useT } from '../lib/i18n';
 
@@ -40,18 +41,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const { t } = useT();
   const [calendarMonth, setCalendarMonth] = useState(new Date());
-  const stats = [
-    { label: t('dashboard.med'), count: guardias.filter(g => g.type === 'medica').length, icon: 'stethoscope', color: 'text-blue-500' },
-    { label: t('dashboard.enf'), count: guardias.filter(g => g.type === 'enfermeria').length, icon: 'vaccines', color: 'text-red-500' },
-    { label: t('dashboard.lib'), count: libranzas.length, icon: 'beach_access', color: 'text-green-500' },
-    { label: t('dashboard.vac'), count: vacaciones.length, icon: 'flight', color: 'text-purple-400' },
-    { label: t('dashboard.ref'), count: doblas.length, icon: 'dynamic_feed', color: 'text-orange-500' }
+
+  const metrics = [
+    { count: guardias.filter(g => g.type === 'medica').length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
+    { count: guardias.filter(g => g.type === 'enfermeria').length, label: t('dashboard.enf'), accentColor: 'bg-red-500' },
+    { count: libranzas.length, label: t('dashboard.lib'), accentColor: 'bg-green-500' },
+    { count: vacaciones.length, label: t('dashboard.vac'), accentColor: 'bg-purple-400' },
+    { count: doblas.length, label: t('dashboard.ref'), accentColor: 'bg-orange-500' },
   ];
 
   const handleDownloadActiveCalendar = () => {
-    // Build entries for all categories
     const entries = [] as PDFCalendarData['entries'];
-    // Guardias
     guardias.forEach(g => {
       entries.push({
         date: g.date,
@@ -60,7 +60,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         kind: g.type === 'medica' ? 'M' : 'E'
       });
     });
-    // Libranzas
     libranzas.forEach(l => {
       entries.push({
         date: l.date,
@@ -69,7 +68,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         kind: 'L'
       });
     });
-    // Doblas
     doblas.forEach(d => {
       entries.push({
         date: d.date,
@@ -78,7 +76,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         kind: 'R'
       });
     });
-    // Meetings
     meetings.forEach(m => {
       entries.push({
         date: m.date,
@@ -98,53 +95,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
     downloadCalendarPDF(data, filename);
   };
 
-  const getGreeting = () => {
-    if (!user) return t('dashboard.bienvenido');
-    const { name, role } = user;
-    if (name.toLowerCase().includes('invitado')) return `${t('dashboard.bienvenido')}, ${name}`;
-    if (name.includes('Dra')) return `${t('dashboard.bienvenida')}, ${name}`;
-    if (name.includes('Dr')) return `${t('dashboard.bienvenidoM')}, ${name}`;
-    const femaleNames = ['Elena', 'Delia', 'Xelo', 'Rosa', 'Maite', 'Silvia', 'Pilar'];
-    if (femaleNames.some(fn => name.includes(fn))) return `${t('dashboard.bienvenida')}, ${name}`;
-    const maleNames = ['Fernando', 'Jorge', 'Frank', 'Ilie', 'Joan', 'Vicente', 'Carlos'];
-    if (maleNames.some(mn => name.includes(mn))) return `${t('dashboard.bienvenidoM')}, ${name}`;
-    if (role === 'enfermera') return `${t('dashboard.bienvenida')}, ${name}`;
-    if (role === 'Administrador') return `${t('dashboard.bienvenidoM')}, ${name}`;
-    return `${t('dashboard.hola')}, ${name}`;
-  };
-
   return (
-    <div className="space-y-4 md:space-y-8 animate-fade-in pb-12">
-      <div className="bg-gradient-to-br from-forcall-800 to-forcall-900 md:rounded-3xl p-6 md:p-8 text-white shadow-xl -mx-4 md:mx-0">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-center md:text-left">
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight">{getGreeting()}</h2>
-            <p className="opacity-70 text-xs md:text-sm font-medium mt-1">{t('dashboard.title')}</p>
-          </div>
-          <div className="flex items-center gap-2 md:gap-4 bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/10 overflow-x-auto max-w-full no-scrollbar">
-            {stats.map((stat, idx) => (
-              <div key={stat.label} className="flex items-center gap-2 px-3 py-1 border-r last:border-0 border-white/10 whitespace-nowrap">
-                <span className={`material-symbols-outlined text-lg ${stat.color}`}>{stat.icon}</span>
-                <div className="flex flex-col leading-none">
-                  <span className="text-sm font-black">{stat.count}</span>
-                  <span className="text-[8px] font-black uppercase opacity-60 tracking-tighter">{stat.label}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-6 -mx-4 md:mx-0">
-        <div className="flex justify-between items-center px-4 md:px-0 no-print">
-           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('dashboard.consolidated')}</h3>
-           <button 
+    <div className="animate-fade-in pb-12">
+      <PageHeader
+        title="Cuadrante unificado"
+        subtitle="Gesti&oacute;n centralizada de equipos"
+        metrics={metrics}
+        actions={
+          <button
             onClick={handleDownloadActiveCalendar}
-            className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg active:scale-95"
-           >
-             <span className="material-symbols-outlined text-sm">picture_as_pdf</span> {t('dashboard.downloadCalendar')}
-           </button>
-        </div>
+            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-sm hover:bg-gray-800 active:scale-95 transition-all"
+          >
+            <span className="material-symbols-outlined text-sm">picture_as_pdf</span>
+            {t('dashboard.downloadCalendar')}
+          </button>
+        }
+      />
+
+      <div className="-mx-4 md:mx-0">
         <UnifiedCalendar 
           id="dashboard-calendar"
           meetings={meetings} 
