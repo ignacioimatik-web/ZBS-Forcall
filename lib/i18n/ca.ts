@@ -39,7 +39,7 @@ const ca: Dict = {
     clearData: 'Problemes d\'accés? Netejar dades del lloc',
     medicina: 'Medicina',
     enfermeria: 'Infermeria',
-    administrativos: 'Administratius',
+    administrativos: 'Gestió Admin',
     language: 'Idioma',
   },
   header: {
@@ -375,7 +375,7 @@ const ca: Dict = {
   users: {
     medicina: 'Medicina',
     enfermeria: 'Infermeria',
-    administrativos: 'Administratius',
+    administrativos: 'Gestió Admin',
   },
   holidays: {
     newYear: 'Any Nou',
