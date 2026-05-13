@@ -332,7 +332,9 @@ const App: React.FC = () => {
         </div>
       )}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-8rem)]">
-        {renderContent()}
+        <div key={activeTab} className="animate-wave-in animate-stagger">
+          {renderContent()}
+        </div>
       </main>
       <Footer />
       {notification && <NotificationToast message={notification} onClose={() => setNotification(null)} />}
