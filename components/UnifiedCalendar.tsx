@@ -49,6 +49,7 @@ interface UnifiedCalendarProps {
   currentMonth?: Date;
   onMonthChange?: (month: Date) => void;
   noteDates?: string[];
+  onCellNoteClick?: (date: Date) => void;
 }
 
 export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({ 
@@ -190,6 +191,10 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
 
   const handleCellClick = (date: Date) => {
     if (swapMode) return;
+    if (onCellNoteClick && (!canManageActiveCategory || activeCategory === 'Todo')) {
+      onCellNoteClick(date);
+      return;
+    }
     if (!canManageActiveCategory || activeCategory === 'Todo') return;
     if (bulkMode && onToggleBulkDate) { onToggleBulkDate(date); return; }
     setSelectedDate(date);
@@ -266,11 +271,20 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
           if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
             if (isMobile) return null;
             return (
-              <div key={i} className="flex md:flex-col items-center md:pt-4 md:pb-0">
+              <div key={i} className={`flex md:flex-col items-center md:pt-4 md:pb-0 ${onCellNoteClick ? 'cursor-pointer' : ''}`} onClick={() => onCellNoteClick?.(date)}>
                 <div className="flex items-center gap-1">
                   <span className={`text-2xl font-black leading-none ${isToday ? 'text-indigo-600' : isFestivo ? 'text-red-600' : isWeekend ? 'text-slate-400' : 'text-gray-300'}`}>{date.getDate()}</span>
                   {noteDates.includes(date.toDateString()) && (
                     <span className="material-symbols-outlined text-amber-500 text-lg">sticky_note_2</span>
+                  )}
+                  {onCellNoteClick && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onCellNoteClick(date); }}
+                      className={`p-0.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${noteDates.includes(date.toDateString()) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
+                      title="Nota"
+                    >
+                      <span className="material-symbols-outlined text-base">{noteDates.includes(date.toDateString()) ? 'edit_note' : 'note_add'}</span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -294,6 +308,15 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                   <span className={`text-2xl font-black leading-none ${isToday ? 'text-indigo-600' : isFestivo ? 'text-red-600' : isWeekend ? 'text-slate-400' : 'text-gray-300'}`}>{date.getDate()}</span>
                   {noteDates.includes(date.toDateString()) && (
                     <span className="material-symbols-outlined text-amber-500 text-lg">sticky_note_2</span>
+                  )}
+                  {onCellNoteClick && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onCellNoteClick(date); }}
+                      className={`p-0.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${noteDates.includes(date.toDateString()) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
+                      title="Nota"
+                    >
+                      <span className="material-symbols-outlined text-base">{noteDates.includes(date.toDateString()) ? 'edit_note' : 'note_add'}</span>
+                    </button>
                   )}
                 </div>
                 <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">{date.toLocaleDateString('es', {weekday: 'short'})}</span>

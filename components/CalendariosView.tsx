@@ -489,6 +489,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             id="calendario-principal"
             getPersonnelType={(name) => nurses.includes(name) ? 'enfermeria' : 'medica'}
             noteDates={noteDates}
+            onCellNoteClick={isPlanningCategory ? (date) => { setNoteModalDate(date); setNoteText(notes[date.toDateString()] || ''); } : undefined}
           />
         </main>
       </div>
@@ -553,6 +554,43 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                 );
               })
             )}
+          </div>
+        </div>
+      )}
+
+      {noteModalDate && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm no-print" onClick={() => setNoteModalDate(null)}>
+          <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 animate-slide-in-up" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-black text-gray-900 mb-2 flex items-center gap-3">
+              <span className={`p-2 rounded-xl text-white ${canWriteNotes ? 'bg-amber-500' : 'bg-gray-400'} material-symbols-outlined`}>sticky_note_2</span>
+              Nota del día
+            </h3>
+            <p className="text-sm font-bold text-gray-500 mb-5">
+              {noteModalDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+            {canWriteNotes ? (
+              <textarea
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                placeholder="Escribe una nota para este día..."
+                rows={4}
+                className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none placeholder:text-gray-300"
+              />
+            ) : (
+              <div className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-sm text-gray-700 min-h-[80px]">
+                {noteText || 'No hay nota para este día.'}
+              </div>
+            )}
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setNoteModalDate(null)} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-colors">
+                {canWriteNotes ? 'Cancelar' : 'Cerrar'}
+              </button>
+              {canWriteNotes && (
+                <button onClick={() => { if (noteModalDate) saveNote(noteModalDate, noteText); setNoteModalDate(null); }} className="flex-1 py-4 bg-amber-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-600 transition-all shadow-xl active:scale-95">
+                  Guardar nota
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
