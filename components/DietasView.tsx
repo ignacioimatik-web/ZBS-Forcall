@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 interface Town {
   id: string;
@@ -29,15 +32,15 @@ interface DayData {
 }
 
 const TOWNS: Town[] = [
-  { id: 'forcall', name: 'Forcall', lat: 40.646, lng: -0.200 },
-  { id: 'cinctorres', name: 'Cinctorres', lat: 40.583, lng: -0.217 },
-  { id: 'villores', name: 'Villores', lat: 40.667, lng: -0.200 },
-  { id: 'portell', name: 'Portell de Morella', lat: 40.533, lng: -0.263 },
-  { id: 'la_mata', name: 'La Mata de Morella', lat: 40.617, lng: -0.283 },
-  { id: 'todolella', name: 'Todolella', lat: 40.650, lng: -0.246 },
-  { id: 'olocau', name: 'Olocau del Rey', lat: 40.633, lng: -0.350 },
-  { id: 'zorita', name: 'Zorita del Maestrazgo', lat: 40.728, lng: -0.167 },
-  { id: 'palanques', name: 'Palanques', lat: 40.633, lng: -0.183 },
+  { id: 'forcall', name: 'Forcall', lat: 40.64609, lng: -0.19957 },
+  { id: 'cinctorres', name: 'Cinctorres', lat: 40.57646, lng: -0.21857 },
+  { id: 'villores', name: 'Villores', lat: 40.67630, lng: -0.20068 },
+  { id: 'portell', name: 'Portell de Morella', lat: 40.53280, lng: -0.26218 },
+  { id: 'la_mata', name: 'La Mata de Morella', lat: 40.61643, lng: -0.27953 },
+  { id: 'todolella', name: 'Todolella', lat: 40.64698, lng: -0.24676 },
+  { id: 'olocau', name: 'Olocau del Rey', lat: 40.63763, lng: -0.33988 },
+  { id: 'zorita', name: 'Zorita del Maestrazgo', lat: 40.72871, lng: -0.16628 },
+  { id: 'palanques', name: 'Palanques', lat: 40.71737, lng: -0.17905 },
 ];
 
 function getTown(id: string): Town | undefined {
@@ -95,6 +98,77 @@ function deleteDayData(dateStr: string) {
   const dates = loadSavedDates().filter(d => d !== dateStr);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dates));
 }
+
+const routeBounds = L.latLngBounds(TOWNS.map(t => [t.lat, t.lng]));
+
+const RouteMap: React.FC<{
+  points: { id: string; name: string; lat: number; lng: number }[];
+  legs: RouteLeg[];
+  allTowns: Town[];
+}> = ({ points, legs, allTowns }) => {
+  const routeTownIds = new Set(points.map(p => p.id));
+
+  return (
+    <MapContainer bounds={routeBounds} boundsOptions={{ padding: [50, 50] }} className="w-full h-[300px] md:h-[450px] z-0" zoomControl={false}>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      {allTowns.filter(t => !routeTownIds.has(t.id)).map(t => (
+        <CircleMarker key={t.id} center={[t.lat, t.lng]} radius={5} color="#d1d5db" fillColor="#e5e7eb" fillOpacity={0.6} weight={1}>
+          <Tooltip><span className="text-[11px] font-bold">{t.name}</span></Tooltip>
+        </CircleMarker>
+      ))}
+      {legs.map((leg, i) => {
+        const from = points.find(p => p.id === leg.fromId);
+        const to = points.find(p => p.id === leg.toId);
+        if (!from || !to) return null;
+        const midLat = (from.lat + to.lat) / 2;
+        const midLng = (from.lng + to.lng) / 2;
+        return (
+          <React.Fragment key={i}>
+            <Polyline
+              positions={[[from.lat, from.lng], [to.lat, to.lng]]}
+              color={leg.computable ? '#059669' : '#9ca3af'}
+              weight={leg.computable ? 5 : 3}
+              opacity={leg.computable ? 0.9 : 0.5}
+              dashArray={leg.computable ? undefined : '8 6'}
+            />
+            <CircleMarker
+              center={[midLat, midLng]}
+              radius={0}
+            >
+              <Tooltip permanent direction="center" className="distance-label">
+                <span className="bg-white/95 text-[11px] font-black px-2 py-0.5 rounded-full border border-gray-200 shadow-sm whitespace-nowrap">
+                  {leg.distanceKm.toFixed(1)} km
+                </span>
+              </Tooltip>
+            </CircleMarker>
+          </React.Fragment>
+        );
+      })}
+      {points.map((p, i) => (
+        <CircleMarker
+          key={p.id}
+          center={[p.lat, p.lng]}
+          radius={i === 0 || i === points.length - 1 ? 10 : 8}
+          color="#fff"
+          weight={3}
+          fillColor={i === 0 ? '#059669' : i === points.length - 1 ? '#dc2626' : '#0ea5e9'}
+          fillOpacity={1}
+        >
+          <Tooltip permanent direction="top" offset={[0, -4]}>
+            <span className="text-[11px] font-black whitespace-nowrap">
+              {i === 0 ? '🟢 ' : i === points.length - 1 ? '🔴 ' : ''}
+              {p.name}
+              {p.id === 'forcall' ? ' (C.Salud)' : ''}
+            </span>
+          </Tooltip>
+        </CircleMarker>
+      ))}
+    </MapContainer>
+  );
+};
 
 export const DietasView: React.FC = () => {
   const [date, setDate] = useState(todayStr());
@@ -220,9 +294,16 @@ export const DietasView: React.FC = () => {
   const navigateDate = (offset: number) => {
     const d = new Date(date + 'T12:00:00');
     d.setDate(d.getDate() + offset);
-    setDate(todayStr());
     setDate(d.toISOString().slice(0, 10));
   };
+
+  const routePoints = legs.length > 0
+    ? [
+        { id: startTownId, name: getTown(startTownId)?.name || '', lat: getTown(startTownId)?.lat || 0, lng: getTown(startTownId)?.lng || 0 },
+        ...visits.map(v => ({ id: v.townId, name: getTown(v.townId)?.name || '', lat: getTown(v.townId)?.lat || 0, lng: getTown(v.townId)?.lng || 0 })),
+        { id: endTownId, name: getTown(endTownId)?.name || '', lat: getTown(endTownId)?.lat || 0, lng: getTown(endTownId)?.lng || 0 },
+      ]
+    : [];
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
@@ -446,6 +527,28 @@ export const DietasView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {legs.length > 0 && (
+        <div className="grid grid-cols-1 2xl:grid-cols-12 gap-6 items-stretch">
+          <div className="2xl:col-span-7">
+            <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 bg-stone-50 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Mapa</p>
+                  <h3 className="text-sm font-black text-gray-900 mt-1">Ruta del día</h3>
+                </div>
+                <div className="flex items-center gap-3 text-[10px] font-bold text-gray-500">
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span> Ida</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block"></span> Vuelta</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> Visita</span>
+                </div>
+              </div>
+              <RouteMap points={routePoints} legs={legs} allTowns={TOWNS} />
+            </div>
+          </div>
+          <div className="2xl:col-span-5 hidden 2xl:block" />
+        </div>
+      )}
     </div>
   );
 };
