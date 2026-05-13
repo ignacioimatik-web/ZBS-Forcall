@@ -257,7 +257,8 @@ function generateVersionesPDF() {
   ctx.y += 7;
 
   for (const entry of CHANGELOG) {
-    ctx = ensureSpace(ctx, 28, 'Historial de Versiones', docName);
+    const entryNeeded = 14 + entry.changes.length * 4;
+    ctx = ensureSpace(ctx, entryNeeded, 'Historial de Versiones', docName);
 
     ctx.doc.setFillColor(...RED);
     ctx.doc.circle(MARGIN + 1.5, ctx.y + 2, 1.5, 'F');
