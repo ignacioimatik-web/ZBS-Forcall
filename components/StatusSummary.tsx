@@ -6,6 +6,8 @@ interface StatusSummaryProps {
   gaps: number;
   conflicts: number;
   pendingValidation: number | null;
+  validationErrors?: number;
+  validationWarnings?: number;
 }
 
 export const StatusSummary: React.FC<StatusSummaryProps> = ({
@@ -14,6 +16,8 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({
   gaps,
   conflicts,
   pendingValidation,
+  validationErrors = 0,
+  validationWarnings = 0,
 }) => {
   const cards = [
     {
@@ -34,11 +38,19 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({
     },
     {
       label: 'Conflictos',
-      value: String(conflicts),
+      value: String(conflicts + validationErrors),
       icon: 'warning',
       accentClass: 'bg-red-500',
       textClass: 'text-red-700',
       bgClass: 'bg-red-50',
+    },
+    {
+      label: 'Avisos',
+      value: String(validationWarnings),
+      icon: 'error_outline',
+      accentClass: 'bg-orange-500',
+      textClass: 'text-orange-700',
+      bgClass: 'bg-orange-50',
     },
     {
       label: 'Pendiente validar',
@@ -51,7 +63,7 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3">
       {cards.map((card) => (
         <div
           key={card.label}

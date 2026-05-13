@@ -9,6 +9,7 @@ import { StatusSummary } from './StatusSummary';
 import { DayDetailPanel } from './DayDetailPanel';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 import { useT } from '../lib/i18n';
+import { getMonthValidationSummary, type DayValidationStatus } from '../lib/calendarValidation';
 
 interface DashboardProps {
   meetings: Meeting[];
@@ -115,6 +116,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     { count: doblas.length, label: t('dashboard.ref'), accentColor: 'bg-orange-500' },
   ];
 
+  const validation = useMemo(
+    () => getMonthValidationSummary(validateMonth(calendarMonth, guardias, libranzas, doblas, vacaciones, meetings)),
+    [calendarMonth, guardias, libranzas, doblas, vacaciones, meetings],
+  );
+
   const status = useMemo(
     () => computeStatusMetrics(calendarMonth, guardias, libranzas, doblas, meetings),
     [calendarMonth, guardias, libranzas, doblas, meetings],
@@ -197,6 +203,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           gaps={status.gaps}
           conflicts={status.conflicts}
           pendingValidation={null}
+          validationErrors={validation.errors}
+          validationWarnings={validation.warnings}
         />
 
         <CalendarToolbar

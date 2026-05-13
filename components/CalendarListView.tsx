@@ -2,6 +2,7 @@ import React from 'react';
 import { Meeting, Guardia, Libranza, Dobla, Vacacion } from '../types';
 import { ShiftBadge } from './ShiftBadge';
 import { useT } from '../lib/i18n';
+import { validateDay } from '../lib/calendarValidation';
 
 interface CalendarListViewProps {
   currentMonth: Date;
@@ -187,8 +188,9 @@ export const CalendarListView: React.FC<CalendarListViewProps> = ({
                 const isToday = row.date.toDateString() === todayStr;
                 const isSelected = selectedDate && selectedDate.toDateString() === row.date.toDateString();
                 const isWeekend = row.date.getDay() === 0 || row.date.getDay() === 6;
-                const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaciones, row.meetings);
-                const statusConfig = getStatusConfig(status, t);
+const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaciones, row.meetings);
+                 const statusConfig = getStatusConfig(status, t);
+                 const validation = validateDay(row.date, row.guardias, row.libranzas, row.doblas, row.vacaciones, row.meetings);
                 const hasSelectedProfessional = selectedProfessional !== 'all';
                 const dayHasProf = [
                   ...row.guardias,
@@ -280,12 +282,14 @@ export const CalendarListView: React.FC<CalendarListViewProps> = ({
                       </div>
                     </td>
 
-                    {/* Estado */}
-                    <td className="px-3 py-2 border-b border-gray-100 text-center">
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none ${statusConfig.className}`}>
-                        {statusConfig.label}
-                      </span>
-                    </td>
+{/* Estado */}
+                     <td className="px-3 py-2 border-b border-gray-100 text-center">
+                       {(function() {
+                         if (validation.hasConflict) return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 leading-none">Conflicto</span>;
+                         if (validation.hasWarning) return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 leading-none">{statusConfig.label}</span>;
+                         return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none ${statusConfig.className}`}>{statusConfig.label}</span>;
+                       })()}
+                     </td>
                   </tr>
                 );
               })}

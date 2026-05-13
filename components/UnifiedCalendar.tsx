@@ -7,6 +7,7 @@ import { ConfirmationModal } from './ConfirmationModal';
 import { ShiftBadge } from './ShiftBadge';
 import { useT } from '../lib/i18n';
 import { USERS } from '../lib/users';
+import { validateMonth } from '../lib/calendarValidation';
 
 declare var html2pdf: any;
 
@@ -126,12 +127,20 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     return all.filter(ev => ev.personnelName === selectedProfessional && ev.date.getMonth() === month && ev.date.getFullYear() === year).length;
   }, [selectedProfessional, currentMonth, guardias, libranzas, doblas, vacaciones]);
 
-  const startingEmptyCells = useMemo(() => {
-    const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
-    return firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
-  }, [currentMonth]);
+const startingEmptyCells = useMemo(() => {
+     const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+     return firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+   }, [currentMonth]);
 
-  const getEventsForDay = (date: Date) => {
+   const monthValidations = useMemo(() => {
+     return validateMonth(currentMonth, guardias, libranzas, doblas, vacaciones, meetings);
+   }, [currentMonth, guardias, libranzas, doblas, vacaciones, meetings]);
+
+   const getValidationForDay = (date: Date) => {
+     return monthValidations.find(v => v.date === date.toDateString()) || null;
+   };
+
+   const getEventsForDay = (date: Date) => {
     const dStr = date.toDateString();
     let events: CalendarEvent[] = [];
     if (activeCategory === 'Todo') {
@@ -306,19 +315,26 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
         {Array.from({ length: startingEmptyCells }).map((_, i) => (
           <div key={`empty-${i}`} className="hidden md:block min-h-[130px] bg-gray-50/50 border-b border-r border-gray-100" />
         ))}
-        {daysInMonth.map((date, i) => {
-          const { events, holiday } = getEventsForDay(date);
-          const isToday = new Date().toDateString() === date.toDateString();
-          const isSelected = selectedBulkDates?.some(d => d.toDateString() === date.toDateString());
-          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-          const isFestivo = !!holiday;
+{daysInMonth.map((date, i) => {
+           const { events, holiday } = getEventsForDay(date);
+           const isToday = new Date().toDateString() === date.toDateString();
+           const isSelected = selectedBulkDates?.some(d => d.toDateString() === date.toDateString());
+           const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+           const isFestivo = !!holiday;
+           const validation = getValidationForDay(date);
+           const hasError = validation && validation.hasConflict;
+           const hasWarning = validation && validation.hasWarning;
           
           if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
             if (isMobile) return null;
             return (
-              <div key={i} className={`hidden md:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[130px] bg-white ${onCellNoteClick ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => onCellNoteClick?.(date)}>
-                <div className="flex items-center gap-1">
-                  <span className={`text-sm font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
+<div key={i} className={`hidden md:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[130px] bg-white ${onCellNoteClick ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => onCellNoteClick?.(date)}>
+                 <div className="flex items-center gap-1">
+<span className={`text-sm font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
+                   {hasError && <span className="material-symbols-outlined text-[10px] text-red-500" title="Conflicto detectado">warning</span>}
+                   {hasWarning && !hasError && <span className="material-symbols-outlined text-[10px] text-amber-500" title="Aviso de validación">error_outline</span>}
+                   {hasError && <span className="material-symbols-outlined text-[10px] text-red-500" title="Conflicto">warning</span>}
+                   {hasWarning && !hasError && <span className="material-symbols-outlined text-[10px] text-amber-500" title="Aviso">error_outline</span>}
                   {noteDates.includes(date.toDateString()) && (
                     <span className="material-symbols-outlined text-amber-500 text-base">sticky_note_2</span>
                   )}
