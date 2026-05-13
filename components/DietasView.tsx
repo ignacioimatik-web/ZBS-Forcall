@@ -1,7 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
 interface Town {
   id: string;
@@ -99,7 +96,21 @@ function deleteDayData(dateStr: string) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dates));
 }
 
-const routeBounds = L.latLngBounds(TOWNS.map(t => [t.lat, t.lng]));
+const COLS = 12;
+const ROWS = 14;
+const PAD_X = 1.2;
+const PAD_Y = 1.2;
+
+function toGrid(lat: number, lng: number): { col: number; row: number } {
+  const minLat = Math.min(...TOWNS.map(t => t.lat)) - PAD_Y;
+  const maxLat = Math.max(...TOWNS.map(t => t.lat)) + PAD_Y;
+  const minLng = Math.min(...TOWNS.map(t => t.lng)) - PAD_X;
+  const maxLng = Math.max(...TOWNS.map(t => t.lng)) + PAD_X;
+  return {
+    col: ((lng - minLng) / (maxLng - minLng)) * (COLS - 1),
+    row: (ROWS - 1) - ((lat - minLat) / (maxLat - minLat)) * (ROWS - 1),
+  };
+}
 
 const RouteMap: React.FC<{
   points: { id: string; name: string; lat: number; lng: number }[];
@@ -107,66 +118,77 @@ const RouteMap: React.FC<{
   allTowns: Town[];
 }> = ({ points, legs, allTowns }) => {
   const routeTownIds = new Set(points.map(p => p.id));
+  const gridPositions = new Map(allTowns.map(t => [t.id, toGrid(t.lat, t.lng)]));
+  const cellW = 100 / COLS;
+  const cellH = 100 / ROWS;
+
+  const toSvgX = (col: number) => col * cellW + cellW / 2;
+  const toSvgY = (row: number) => row * cellH + cellH / 2;
 
   return (
-    <MapContainer bounds={routeBounds} boundsOptions={{ padding: [50, 50] }} className="w-full h-[300px] md:h-[450px] z-0" zoomControl={false}>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {allTowns.filter(t => !routeTownIds.has(t.id)).map(t => (
-        <CircleMarker key={t.id} center={[t.lat, t.lng]} radius={5} color="#d1d5db" fillColor="#e5e7eb" fillOpacity={0.6} weight={1}>
-          <Tooltip><span className="text-[11px] font-bold">{t.name}</span></Tooltip>
-        </CircleMarker>
-      ))}
-      {legs.map((leg, i) => {
-        const from = points.find(p => p.id === leg.fromId);
-        const to = points.find(p => p.id === leg.toId);
-        if (!from || !to) return null;
-        const midLat = (from.lat + to.lat) / 2;
-        const midLng = (from.lng + to.lng) / 2;
+    <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669" />
+        </marker>
+        <marker id="arrow-gray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#9ca3af" />
+        </marker>
+      </defs>
+
+      {allTowns.filter(t => !routeTownIds.has(t.id)).map(t => {
+        const pos = gridPositions.get(t.id)!;
         return (
-          <React.Fragment key={i}>
-            <Polyline
-              positions={[[from.lat, from.lng], [to.lat, to.lng]]}
-              color={leg.computable ? '#059669' : '#9ca3af'}
-              weight={leg.computable ? 5 : 3}
-              opacity={leg.computable ? 0.9 : 0.5}
-              dashArray={leg.computable ? undefined : '8 6'}
-            />
-            <CircleMarker
-              center={[midLat, midLng]}
-              radius={0}
-            >
-              <Tooltip permanent direction="center" className="distance-label">
-                <span className="bg-white/95 text-[11px] font-black px-2 py-0.5 rounded-full border border-gray-200 shadow-sm whitespace-nowrap">
-                  {leg.distanceKm.toFixed(1)} km
-                </span>
-              </Tooltip>
-            </CircleMarker>
-          </React.Fragment>
+          <g key={t.id} opacity={0.35}>
+            <circle cx={toSvgX(pos.col)} cy={toSvgY(pos.row)} r={1.2} fill="#d1d5db" />
+            <text x={toSvgX(pos.col)} y={toSvgY(pos.row) - 2} textAnchor="middle" fontSize={2.8} fill="#9ca3af" fontWeight="bold">{t.name}</text>
+          </g>
         );
       })}
-      {points.map((p, i) => (
-        <CircleMarker
-          key={p.id}
-          center={[p.lat, p.lng]}
-          radius={i === 0 || i === points.length - 1 ? 10 : 8}
-          color="#fff"
-          weight={3}
-          fillColor={i === 0 ? '#059669' : i === points.length - 1 ? '#dc2626' : '#0ea5e9'}
-          fillOpacity={1}
-        >
-          <Tooltip permanent direction="top" offset={[0, -4]}>
-            <span className="text-[11px] font-black whitespace-nowrap">
-              {i === 0 ? '🟢 ' : i === points.length - 1 ? '🔴 ' : ''}
-              {p.name}
-              {p.id === 'forcall' ? ' (C.Salud)' : ''}
-            </span>
-          </Tooltip>
-        </CircleMarker>
-      ))}
-    </MapContainer>
+
+      {legs.map((leg, i) => {
+        const fromPos = gridPositions.get(leg.fromId);
+        const toPos = gridPositions.get(leg.toId);
+        if (!fromPos || !toPos) return null;
+        const x1 = toSvgX(fromPos.col), y1 = toSvgY(fromPos.row);
+        const x2 = toSvgX(toPos.col), y2 = toSvgY(toPos.row);
+        const midX = (x1 + x2) / 2, midY = (y1 + y2) / 2;
+        return (
+          <g key={i}>
+            <line
+              x1={x1} y1={y1} x2={x2} y2={y2}
+              stroke={leg.computable ? '#059669' : '#9ca3af'}
+              strokeWidth={leg.computable ? 1.8 : 0.8}
+              strokeDasharray={leg.computable ? '' : '2 2'}
+              markerEnd={`url(#${leg.computable ? 'arrow-green' : 'arrow-gray'})`}
+            />
+            <rect x={midX - 5} y={midY - 1.8} width={10} height={3.6} rx={1.8} fill="white" opacity={0.9} />
+            <text x={midX} y={midY + 0.7} textAnchor="middle" fontSize={2.5} fill={leg.computable ? '#059669' : '#6b7280'} fontWeight="black">
+              {leg.distanceKm.toFixed(1)} km
+            </text>
+          </g>
+        );
+      })}
+
+      {points.map((p, i) => {
+        const pos = gridPositions.get(p.id);
+        if (!pos) return null;
+        const cx = toSvgX(pos.col), cy = toSvgY(pos.row);
+        const isStart = i === 0;
+        const isEnd = i === points.length - 1;
+        const fill = isStart ? '#059669' : isEnd ? '#dc2626' : '#0ea5e9';
+        const r = isStart || isEnd ? 3.5 : 2.5;
+        return (
+          <g key={p.id}>
+            <circle cx={cx} cy={cy} r={r + 1.2} fill="white" />
+            <circle cx={cx} cy={cy} r={r} fill={fill} stroke="white" strokeWidth={0.6} />
+            <text x={cx} y={cy - r - 1.8} textAnchor="middle" fontSize={2.5} fill="#374151" fontWeight="black">
+              {p.name}{p.id === 'forcall' ? ' (C.Salud)' : ''}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
   );
 };
 
@@ -228,7 +250,7 @@ export const DietasView: React.FC = () => {
     const endTown = getTown(endTownId);
     if (!startTown || !endTown) { setError('Configura inicio y fin de jornada.'); setLoading(false); return; }
 
-    const points: { id: string; name: string; lat: number; lng: number }[] = [
+    const points = [
       { id: startTownId, name: startTown.name, ...startTown },
       ...visits.map(v => {
         const t = getTown(v.townId);
@@ -540,10 +562,11 @@ export const DietasView: React.FC = () => {
                 <div className="flex items-center gap-3 text-[10px] font-bold text-gray-500">
                   <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span> Ida</span>
                   <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block"></span> Vuelta</span>
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> Visita</span>
                 </div>
               </div>
-              <RouteMap points={routePoints} legs={legs} allTowns={TOWNS} />
+              <div className="p-1 sm:p-3 aspect-[4/3] sm:aspect-auto sm:min-h-[350px]">
+                <RouteMap points={routePoints} legs={legs} allTowns={TOWNS} />
+              </div>
             </div>
           </div>
           <div className="2xl:col-span-5 hidden 2xl:block" />
