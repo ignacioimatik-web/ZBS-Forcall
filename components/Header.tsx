@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { VERSION_STRING } from '../lib/version';
 
 interface HeaderProps {
   activeTab: string;
@@ -18,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
             <span className="material-symbols-outlined text-3xl text-earth-100">landscape</span>
             <div>
               <h1 className="font-bold text-xl tracking-tight">Zona Básica Salud</h1>
-              <p className="text-xs text-forcall-100 opacity-80">Gestión Equipos v1.5.0</p>
+              <p className="text-xs text-forcall-100 opacity-80">{VERSION_STRING}</p>
             </div>
           </div>
           

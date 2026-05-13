@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { CATEGORIES, getUsersByCategory } from '../lib/users';
+import { VERSION_STRING } from '../lib/version';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -299,7 +300,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       </div>
 
       <div className="relative z-10 mt-6 text-center text-white/60 text-xs space-y-2">
-        <p>© 2026 ZBS Forcall — Gestión Equipos V1.4.1</p>
+        <p>© 2026 ZBS Forcall — {VERSION_STRING}</p>
         <button
           onClick={() => {
             document.cookie.split(';').forEach(c => {

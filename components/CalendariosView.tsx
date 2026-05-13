@@ -8,6 +8,7 @@ import { canManageGuardiaCategory, canManagePlanningType, canManageVacaciones } 
 import { useAuditLogs } from '../hooks/useAuditLogs';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { VERSION_STRING } from '../lib/version';
 
 interface CalendariosViewProps {
   meetings: Meeting[]; guardias: Guardia[]; libranzas: Libranza[]; doblas: Dobla[]; vacaciones: Vacacion[]; manualHolidays: ManualHoliday[];
@@ -225,7 +226,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('© 2026 ZBS Forcall — Gestión Equipos V1.4.1', 10, doc.internal.pageSize.getHeight() - 7);
+    doc.text(`${VERSION_STRING} — Registro de Permutas`, 10, doc.internal.pageSize.getHeight() - 7);
     doc.text(`Página 1 de 1`, pageW - 10, doc.internal.pageSize.getHeight() - 7, { align: 'right' });
 
     doc.save(`Registro_Permutas_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`);
