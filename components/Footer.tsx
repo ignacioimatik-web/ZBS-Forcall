@@ -135,11 +135,132 @@ function generateTermsPDF() {
   doc.save('Terminos_Uso_ZBS_Gestion_Equipos.pdf');
 }
 
+function generateVersionesPDF() {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const margin = 20;
+  const bodyW = doc.internal.pageSize.getWidth() - margin * 2;
+  let y = margin;
+
+  const title = (text: string) => {
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(text, margin, y);
+    y += 9;
+  };
+  const subtitle = (text: string) => {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    doc.text(text, margin, y);
+    y += 5;
+    doc.setTextColor(0);
+  };
+  const version = (ver: string, date: string, desc: string) => {
+    if (y > 260) { doc.addPage(); y = margin; }
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(ver, margin, y);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(120);
+    doc.text(date, margin + 50, y);
+    doc.setTextColor(0);
+    y += 5;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const lines = doc.splitTextToSize(desc, bodyW);
+    lines.forEach((l: string) => {
+      if (y > 270) { doc.addPage(); y = margin; }
+      doc.text(l, margin + 3, y);
+      y += 4.2;
+    });
+    y += 4;
+  };
+
+  title('Historial de Versiones');
+  subtitle('ZBS Gestión de Equipos — Documento de versionado semántico');
+  y += 2;
+
+  version(
+    'v1.5.0',
+    'Mayo 2026',
+    'Dietas / Kilometraje para hoja de dietas.\n' +
+    '• Planificación de rutas de visitas a domicilio por población.\n' +
+    '• Cálculo de distancias reales por carretera vía OSRM.\n' +
+    '• Clasificación de tramos computables / no computables para dietas.\n' +
+    '• Persistencia del día en localStorage con historial de sesiones.\n' +
+    '• Navegación entre días con calendario de fechas guardadas.'
+  );
+  version(
+    'v1.4.0',
+    'Mayo 2026',
+    'Filtros de calendario por grupo de usuario y mejoras visuales.\n' +
+    '• Calendarios filtrados por grupo (médico/enfermería/ambos).\n' +
+    '• Corrección de barras grises fantasma en celdas vacías del calendario.\n' +
+    '• Estadística de vacaciones en el Dashboard.\n' +
+    '• Corrección de teléfonos de los 13 ayuntamientos de Els Ports.\n' +
+    '• Mejoras en AlertasView: eliminación de resumen operativo, rename a Nota de prensa.'
+  );
+  version(
+    'v1.3.0',
+    'Mayo 2026',
+    'Sistema de chat interno con mensajería privada.\n' +
+    '• Chat en tiempo real con Supabase Realtime.\n' +
+    '• Soporte de imágenes y audio en mensajes.\n' +
+    '• Mensajería privada (DMs) con indicadores de no leídos.\n' +
+    '• Eliminación de mensajes con limpieza de adjuntos.\n' +
+    '• Compatibilidad iOS Safari (optimistic updates, uuidv4 fallback).\n' +
+    '• Seguridad: autenticación vía triggers de base de datos (sender_id = auth.uid()).\n' +
+    '• Ocultación de usuarios externos en lista de DMs.'
+  );
+  version(
+    'v1.2.0',
+    'Mayo 2026',
+    'Permisos por rol, permutas de guardias y planificación.\n' +
+    '• Permisos de gestión por rol: administrador, coordinador, médico, enfermera.\n' +
+    '• Permutas de guardias con historial de auditoría.\n' +
+    '• Exportación iCal del calendario personal.\n' +
+    '• Notificaciones push para guardias, libranzas y refuerzos (24h antes).\n' +
+    '• Gestión de vacaciones por coordinadores.\n' +
+    '• Cierre de sesión automático por inactividad (1 hora).\n' +
+    '• Etiquetas de tipo (M/E/L/R/MT) en calendario y PDF.\n' +
+    '• Seguridad: eliminación de API keys del frontend, SRI hashes en CDNs.'
+  );
+  version(
+    'v1.1.0',
+    'Marzo–Mayo 2026',
+    'Calendario, clima y alertas.\n' +
+    '• Código de colores por tipo: medicina azul, enfermería rojo.\n' +
+    '• Exportación PDF unificada del calendario en A4.\n' +
+    '• Datos meteorológicos reales vía Open-Meteo API.\n' +
+    '• Alertas oficiales de Protección Civil (112 Comunitat Valenciana).\n' +
+    '• Diseño de alertas tipo periódico con mapa de preemergencias.\n' +
+    '• Transcripción por voz (Web Speech API).\n' +
+    '• Indicador visual de carga de datos.'
+  );
+  version(
+    'v1.0.0',
+    'Febrero 2026',
+    'Versión inicial desarrollada con Vercent.\n' +
+    '• Gestión básica de guardias médicas y de enfermería.\n' +
+    '• Autenticación mediante PIN local.\n' +
+    '• Integración con Supabase (PostgreSQL, Auth, RLS).\n' +
+    '• Calendario unificado con vista mensual.\n' +
+    '• Gestión de libranzas, refuerzos y reuniones.\n' +
+    '• Dashboard con resumen de indicadores.\n' +
+    '• Migración a autenticación real con Supabase Auth.'
+  );
+
+  doc.save('Versiones_ZBS_Gestion_Equipos.pdf');
+}
+
 export const Footer: React.FC = () => (
   <footer className="border-t border-gray-200 mt-12 py-6">
     <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[9px] font-bold text-gray-500">
       <span>© 2026 ZBS Gestión de Equipos. Todos los derechos reservados.</span>
       <div className="flex items-center gap-3">
+        <button onClick={generateVersionesPDF} className="hover:text-gray-800 transition-colors underline underline-offset-2">Versiones</button>
+        <span className="text-gray-300">·</span>
         <button onClick={generatePrivacyPDF} className="hover:text-gray-800 transition-colors underline underline-offset-2">Privacidad</button>
         <span className="text-gray-300">·</span>
         <button onClick={generateTermsPDF} className="hover:text-gray-800 transition-colors underline underline-offset-2">Términos</button>
