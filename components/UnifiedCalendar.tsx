@@ -191,7 +191,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
 
   const handleCellClick = (date: Date) => {
     if (swapMode) return;
-    if (onCellNoteClick && (!canManageActiveCategory || activeCategory === 'Todo')) {
+    if (onCellNoteClick) {
       onCellNoteClick(date);
       return;
     }
