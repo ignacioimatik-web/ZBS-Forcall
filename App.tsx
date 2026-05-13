@@ -6,6 +6,7 @@ import { NotificationToast } from './components/NotificationToast';
 import { LoginScreen } from './components/LoginScreen';
 import { AlertasView } from './components/AlertasView';
 import { ChatView } from './components/ChatView';
+import { DietasView } from './components/DietasView';
 import { Footer } from './components/Footer';
 import { TranscriptionTool } from './components/TranscriptionTool';
 import { ManualHoliday, Vacacion, Meeting, Guardia, Libranza, Dobla, AuditLog } from './types';
@@ -302,6 +303,8 @@ const App: React.FC = () => {
         return <TranscriptionTool />;
       case 'Alertas':
         return <AlertasView />;
+      case 'Dietas':
+        return <DietasView />;
       default:
         return null;
     }
