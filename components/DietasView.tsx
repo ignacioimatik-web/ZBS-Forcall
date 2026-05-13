@@ -96,66 +96,6 @@ function deleteDayData(dateStr: string) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(dates));
 }
 
-const RouteMap: React.FC<{
-  points: { id: string; name: string; lat: number; lng: number }[];
-  legs: RouteLeg[];
-  allTowns: Town[];
-}> = ({ points, legs, allTowns }) => {
-  const minLat = Math.min(...allTowns.map(t => t.lat)) - 0.015;
-  const maxLat = Math.max(...allTowns.map(t => t.lat)) + 0.015;
-  const minLng = Math.min(...allTowns.map(t => t.lng)) - 0.015;
-  const maxLng = Math.max(...allTowns.map(t => t.lng)) + 0.015;
-
-  const x = (lng: number) => ((lng - minLng) / (maxLng - minLng)) * 100;
-  const y = (lat: number) => (1 - (lat - minLat) / (maxLat - minLat)) * 100;
-
-  const routeTownIds = new Set(points.map(p => p.id));
-
-  return (
-    <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-      <rect x="0" y="0" width="100" height="100" fill="#f8fafc" rx="4" />
-      {allTowns.filter(t => !routeTownIds.has(t.id)).map(t => (
-        <g key={t.id} opacity={0.4}>
-          <circle cx={x(t.lng)} cy={y(t.lat)} r={1} fill="#cbd5e1" />
-          <text x={x(t.lng)} y={y(t.lat) - 2} textAnchor="middle" fontSize={2.2} fill="#94a3b8" fontWeight="bold">{t.name}</text>
-        </g>
-      ))}
-      {legs.map((leg, i) => {
-        const from = points.find(p => p.id === leg.fromId);
-        const to = points.find(p => p.id === leg.toId);
-        if (!from || !to) return null;
-        const x1 = x(from.lng), y1 = y(from.lat);
-        const x2 = x(to.lng), y2 = y(to.lat);
-        return (
-          <g key={i}>
-            <line x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke={leg.computable ? '#059669' : '#cbd5e1'}
-              strokeWidth={leg.computable ? 1.5 : 1}
-              strokeDasharray={leg.computable ? '' : '3 2'}
-            />
-            <rect x={(x1+x2)/2-4} y={(y1+y2)/2-1.5} width={8} height={3} rx={1.5} fill="rgba(255,255,255,0.92)" />
-            <text x={(x1+x2)/2} y={(y1+y2)/2+0.6} textAnchor="middle" fontSize={2.2} fill={leg.computable ? '#059669' : '#94a3b8'} fontWeight="black">
-              {leg.distanceKm.toFixed(1)} km
-            </text>
-          </g>
-        );
-      })}
-      {points.map((p, i) => {
-        const cx = x(p.lng), cy = y(p.lat);
-        const isEdge = i === 0 || i === points.length - 1;
-        return (
-          <g key={p.id}>
-            <circle cx={cx} cy={cy} r={isEdge ? 3 : 2.2} fill="white" stroke={isEdge ? (i === 0 ? '#059669' : '#dc2626') : '#0ea5e9'} strokeWidth={1.2} />
-            <text x={cx} y={cy - (isEdge ? 3.8 : 3)} textAnchor="middle" fontSize={2.5} fill="#1e293b" fontWeight="black">
-              {p.name}{p.id === 'forcall' ? '*' : ''}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
-  );
-};
-
 export const DietasView: React.FC = () => {
   const [date, setDate] = useState(todayStr());
   const [startTownId, setStartTownId] = useState('forcall');
@@ -282,20 +222,6 @@ export const DietasView: React.FC = () => {
     d.setDate(d.getDate() + offset);
     setDate(d.toISOString().slice(0, 10));
   };
-
-  const routePoints = legs.length > 0 ? (() => {
-    const build = (id: string) => {
-      const t = getTown(id);
-      return t ? { id: t.id, name: t.name, lat: t.lat, lng: t.lng } : null;
-    };
-    const start = build(startTownId);
-    const end = build(endTownId);
-    return [
-      start,
-      ...visits.map(v => build(v.townId)),
-      end,
-    ].filter(Boolean) as { id: string; name: string; lat: number; lng: number }[];
-  })() : [];
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
@@ -519,29 +445,6 @@ export const DietasView: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {legs.length > 0 && (
-        <div className="grid grid-cols-1 2xl:grid-cols-12 gap-6 items-stretch">
-          <div className="2xl:col-span-7">
-            <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 bg-stone-50 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Mapa</p>
-                  <h3 className="text-sm font-black text-gray-900 mt-1">Ruta del día</h3>
-                </div>
-                <div className="flex items-center gap-3 text-[10px] font-bold text-gray-500">
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span> Ida</span>
-                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block"></span> Vuelta</span>
-                </div>
-              </div>
-              <div className="h-[320px] sm:h-[450px] w-full">
-                <RouteMap points={routePoints} legs={legs} allTowns={TOWNS} />
-              </div>
-            </div>
-          </div>
-          <div className="2xl:col-span-5 hidden 2xl:block" />
-        </div>
-      )}
     </div>
   );
 };
