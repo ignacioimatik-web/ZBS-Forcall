@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogout }) => {
-  const tabs = ['Unificado', 'Guardias', 'Chat', 'Dictado', 'Alertas', 'Dietas'];
+  const tabs = ['Unificado', 'Guardias', 'Chat', 'Dictado', 'Alertas'];
 
   return (
     <header className="bg-gradient-to-r from-forcall-900 via-forcall-800 to-earth-900 text-white shadow-lg sticky top-0 z-50">
