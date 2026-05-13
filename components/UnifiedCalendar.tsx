@@ -71,6 +71,29 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [firstSwapTarget, setFirstSwapTarget] = useState<CalendarEvent | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [noteModalDate, setNoteModalDate] = useState<Date | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [notes, setNotes] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem('zbs_notes') || '{}'); }
+    catch { return {}; }
+  });
+
+  const saveNote = (date: Date, text: string) => {
+    const key = `${activeCategory}_${date.toDateString()}`;
+    const updated = { ...notes };
+    if (text.trim()) {
+      updated[key] = text.trim();
+    } else {
+      delete updated[key];
+    }
+    setNotes(updated);
+    localStorage.setItem('zbs_notes', JSON.stringify(updated));
+  };
+
+  const getNote = (date: Date): string | null => {
+    const key = `${activeCategory}_${date.toDateString()}`;
+    return notes[key] || null;
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -189,8 +212,12 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
 
   const handleCellClick = (date: Date) => {
     if (swapMode) return;
-    if (!canManageActiveCategory || activeCategory === 'Todo') return;
     if (bulkMode && onToggleBulkDate) { onToggleBulkDate(date); return; }
+    if (!canManageActiveCategory || activeCategory === 'Todo') {
+      setNoteModalDate(date);
+      setNoteText(getNote(date) || '');
+      return;
+    }
     setSelectedDate(date);
     setPersonnelName(availablePersonnel[0] || '');
     setIsModalOpen(true);
@@ -265,8 +292,20 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
           if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
             if (isMobile) return null;
             return (
-              <div key={i} className="flex md:flex-col items-center md:pt-4 md:pb-0">
-                <span className={`text-2xl font-black leading-none ${isToday ? 'text-indigo-600' : isFestivo ? 'text-red-600' : isWeekend ? 'text-slate-400' : 'text-gray-300'}`}>{date.getDate()}</span>
+              <div key={i} className="flex md:flex-col items-center md:pt-4 md:pb-0 relative group cursor-pointer" onClick={() => { setNoteModalDate(date); setNoteText(getNote(date) || ''); }}>
+                <div className="flex items-center gap-1">
+                  <span className={`text-2xl font-black leading-none ${isToday ? 'text-indigo-600' : isFestivo ? 'text-red-600' : isWeekend ? 'text-slate-400' : 'text-gray-300'}`}>{date.getDate()}</span>
+                  {getNote(date) && (
+                    <span className="material-symbols-outlined text-amber-500 text-lg" title={getNote(date) || ''}>sticky_note_2</span>
+                  )}
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setNoteModalDate(date); setNoteText(getNote(date) || ''); }}
+                  className={`p-0.5 rounded-md transition-all opacity-0 group-hover:opacity-100 absolute top-0 right-0 ${getNote(date) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
+                  title="Añadir nota"
+                >
+                  <span className="material-symbols-outlined text-base">{getNote(date) ? 'sticky_note_2' : 'note_add'}</span>
+                </button>
               </div>
             );
           }
@@ -284,8 +323,22 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                 ${isSelected ? 'ring-4 ring-amber-500 border-amber-500 bg-amber-50 z-10 shadow-xl' : ''}`}
             >
               <div className="flex flex-col items-center justify-center md:justify-between md:items-start md:flex-row md:mb-3 min-w-[50px]">
-                <span className={`text-2xl font-black leading-none ${isToday ? 'text-indigo-600' : isFestivo ? 'text-red-600' : isWeekend ? 'text-slate-400' : 'text-gray-300'}`}>{date.getDate()}</span>
-                <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
+                <div className="flex items-center gap-1">
+                  <span className={`text-2xl font-black leading-none ${isToday ? 'text-indigo-600' : isFestivo ? 'text-red-600' : isWeekend ? 'text-slate-400' : 'text-gray-300'}`}>{date.getDate()}</span>
+                  {getNote(date) && (
+                    <span className="material-symbols-outlined text-amber-500 text-lg" title={getNote(date) || ''}>sticky_note_2</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setNoteModalDate(date); setNoteText(getNote(date) || ''); }}
+                    className={`p-0.5 rounded-md transition-all opacity-0 group-hover:opacity-100 ${getNote(date) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
+                    title="Añadir nota"
+                  >
+                    <span className="material-symbols-outlined text-base">{getNote(date) ? 'sticky_note_2' : 'note_add'}</span>
+                  </button>
+                  <span className="md:hidden text-[10px] font-black text-gray-400 uppercase tracking-widest">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
+                </div>
                 {isFestivo && <span className="hidden md:block w-3 h-3 bg-red-500 rounded-full shadow-sm animate-pulse" title={holiday}></span>}
               </div>
               {events.length > 0 ? (
@@ -335,6 +388,34 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
                 <button type="submit" className={`flex-1 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 ${canManageActiveCategory ? 'bg-emerald-600' : 'bg-orange-600'}`}>Confirmar</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {noteModalDate && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm no-print" onClick={() => setNoteModalDate(null)}>
+          <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 animate-slide-in-up" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-black text-gray-900 mb-2 flex items-center gap-3">
+              <span className="p-2 rounded-xl text-white bg-amber-500 material-symbols-outlined">sticky_note_2</span>
+              Nota del día
+            </h3>
+            <p className="text-sm font-bold text-gray-500 mb-5">
+              {noteModalDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+            <textarea
+              value={noteText}
+              onChange={e => setNoteText(e.target.value)}
+              placeholder="Escribe una nota para este día..."
+              rows={5}
+              className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none placeholder:text-gray-300"
+            />
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setNoteModalDate(null)} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-colors">
+                Cancelar
+              </button>
+              <button onClick={() => { if (noteModalDate) saveNote(noteModalDate, noteText); setNoteModalDate(null); }} className="flex-1 py-4 bg-amber-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-600 transition-all shadow-xl active:scale-95">
+                Guardar nota
+              </button>
+            </div>
           </div>
         </div>
       )}
