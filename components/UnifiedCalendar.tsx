@@ -60,8 +60,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   availablePersonnel = [], bulkMode = false, selectedBulkDates = [], onToggleBulkDate,
   swapMode = false, onCancelSwap, hideHeader = false, id = "calendar-container", isReadOnly = false,
   currentMonth: externalMonth, onMonthChange, getPersonnelType, noteDates = [], onCellNoteClick
-
-
+}) => {
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
