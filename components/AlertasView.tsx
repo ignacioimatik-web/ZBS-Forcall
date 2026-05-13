@@ -148,17 +148,17 @@ export const AlertasView: React.FC = () => {
       contacts: [
         { name: "Ayto. Forcall", phone: "964 17 10 01" },
         { name: "Ayto. Morella", phone: "964 16 00 34" },
-        { name: "Ayto. Cinctorres", phone: "964 18 10 19" },
-        { name: "Ayto. Villores", phone: "964 17 11 12" },
-        { name: "Ayto. Castellfort", phone: "964 44 59 01" },
-        { name: "Ayto. Portell de Morella", phone: "964 17 80 00" },
-        { name: "Ayto. La Mata de Morella", phone: "964 17 10 66" },
-        { name: "Ayto. Todolella", phone: "964 17 11 02" },
-        { name: "Ayto. Olocau del Rey", phone: "964 17 82 03" },
-        { name: "Ayto. Zorita del Maestrazgo", phone: "964 17 11 08" },
-        { name: "Ayto. Herbers", phone: "964 17 31 16" },
-        { name: "Ayto. Palanques", phone: "964 17 31 20" },
-        { name: "Ayto. Vallibona", phone: "964 17 04 22" }
+        { name: "Ayto. Cinctorres", phone: "964 18 10 01" },
+        { name: "Ayto. Villores", phone: "964 17 10 85" },
+        { name: "Ayto. Castellfort", phone: "964 44 57 81" },
+        { name: "Ayto. Portell de Morella", phone: "964 17 87 79" },
+        { name: "Ayto. La Mata de Morella", phone: "964 18 00 01" },
+        { name: "Ayto. Todolella", phone: "964 17 11 78" },
+        { name: "Ayto. Olocau del Rey", phone: "964 17 84 17" },
+        { name: "Ayto. Zorita del Maestrazgo", phone: "964 17 70 70" },
+        { name: "Ayto. Herbers", phone: "978 85 66 02" },
+        { name: "Ayto. Palanques", phone: "964 17 13 06" },
+        { name: "Ayto. Vallibona", phone: "964 17 20 20" }
       ]
     }
   ]);
@@ -276,7 +276,6 @@ export const AlertasView: React.FC = () => {
             <span className="material-symbols-outlined text-3xl">campaign</span>
             Alertas y estado de Els Ports
           </h2>
-          <p className="opacity-90 mt-2 text-sm font-medium">Diseño apaisado con visión rápida de Protección Civil, avisos y directorio operativo.</p>
         </div>
         <div className="flex gap-2">
           <button onClick={fetchCivilProtectionStatus} disabled={civilProtectionLoading} className="bg-white text-red-700 hover:bg-red-50 px-4 py-2 rounded-2xl text-xs font-black transition-all border border-white/30 flex items-center gap-2">
@@ -335,7 +334,7 @@ export const AlertasView: React.FC = () => {
                             rel="noreferrer"
                             className="block rounded-[1.75rem] border border-gray-200 bg-white p-4 hover:bg-gray-50 transition-all"
                           >
-                            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2">Breve {index + 1}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2">Nota de prensa {index + 1}</p>
                             <h5 className="text-sm font-black text-gray-900 leading-snug">{brief.title}</h5>
                             <p className="text-xs text-gray-600 mt-2 leading-relaxed">{brief.summary}</p>
                           </a>
