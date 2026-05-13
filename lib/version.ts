@@ -1,4 +1,4 @@
-export const VERSION = '1.6.0';
+export const VERSION = '1.7.0';
 export const VERSION_STRING = `Gestión Equipos v${VERSION}`;
 export const VERSION_YEAR = '2026';
 
@@ -10,6 +10,21 @@ export interface VersionEntry {
 }
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: '1.7.0',
+    date: 'Mayo 2026',
+    title: 'Panel lateral de detalle del día y rediseño del calendario',
+    changes: [
+      'Panel lateral de detalle del día con secciones agrupadas (guardia, libranza, dobla, vacación, reunión) y detección de conflictos.',
+      'Desplazamiento suave y auto-scroll al panel al seleccionar un día.',
+      'Indicador visual de día seleccionado con anillo (ring-2) en el calendario.',
+      'Rediseño del calendario: contenedor blanco tipo card, rejilla basada en bordes, chips de eventos más suaves.',
+      'Componente ShiftBadge reutilizable para etiquetas de tipo (M/E/L/R/MT/VAC).',
+      'Indicador +N de eventos adicionales en celdas del calendario.',
+      'Layout responsive de dos columnas (calendario + panel) en desktop, apilado en móvil.',
+      'Correcciones de selectores de idioma VA.',
+    ],
+  },
   {
     version: '1.6.0',
     date: 'Mayo 2026',

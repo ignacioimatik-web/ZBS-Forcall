@@ -1,0 +1,206 @@
+import React from 'react';
+import { Meeting, Guardia, Libranza, Dobla, Vacacion } from '../types';
+import { ShiftBadge } from './ShiftBadge';
+import { useT } from '../lib/i18n';
+
+interface DayDetailPanelProps {
+  selectedDate: Date | null;
+  guardias: Guardia[];
+  libranzas: Libranza[];
+  doblas: Dobla[];
+  vacaciones: Vacacion[];
+  meetings: Meeting[];
+  onClose: () => void;
+  user?: { name: string } | null;
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('es-ES', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+}
+
+interface Assignment {
+  kind: string;
+  type?: string;
+  label: string;
+  personnelName?: string;
+}
+
+function getDayConflicts(assignments: Assignment[]): string[] {
+  const conflicts: string[] = [];
+  const byPerson: Record<string, string[]> = {};
+
+  for (const a of assignments) {
+    if (!a.personnelName) continue;
+    if (!byPerson[a.personnelName]) byPerson[a.personnelName] = [];
+    byPerson[a.personnelName].push(a.kind);
+  }
+
+  for (const [person, kinds] of Object.entries(byPerson)) {
+    const unique = new Set(kinds);
+    if (unique.size > 1) {
+      conflicts.push(`${person} asignado a ${Array.from(unique).join(' y ')} el mismo d&iacute;a`);
+    }
+  }
+
+  return conflicts;
+}
+
+const sectionConfig: Record<string, { label: string; icon: string }> = {
+  guardia: { label: 'Medicina / Enfermer&iacute;a', icon: 'stethoscope' },
+  libranza: { label: 'Libranzas', icon: 'beach_access' },
+  dobla: { label: 'Refuerzos', icon: 'dynamic_feed' },
+  vacacion: { label: 'Vacaciones', icon: 'flight' },
+  meeting: { label: 'Reuniones / MT', icon: 'groups' },
+};
+
+export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
+  selectedDate,
+  guardias,
+  libranzas,
+  doblas,
+  vacaciones,
+  meetings,
+  onClose,
+  user,
+}) => {
+  const { t } = useT();
+
+  if (!selectedDate) {
+    return (
+      <aside className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm" aria-label="Detalle del día seleccionado">
+        <h3 className="text-sm font-bold text-gray-900 mb-2">Detalle del d&iacute;a</h3>
+        <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+          <span className="material-symbols-outlined text-4xl mb-3">calendar_month</span>
+          <p className="text-sm font-medium text-center">Selecciona un d&iacute;a del calendario para ver sus asignaciones.</p>
+        </div>
+      </aside>
+    );
+  }
+
+  const today = new Date();
+  const isTodaySelected = isSameDay(selectedDate, today);
+
+  const assignments: Assignment[] = [
+    ...guardias.filter(g => isSameDay(g.date, selectedDate)).map(g => ({
+      kind: 'guardia', type: g.type, label: g.personnelName, personnelName: g.personnelName,
+    })),
+    ...libranzas.filter(l => isSameDay(l.date, selectedDate)).map(l => ({
+      kind: 'libranza', label: l.personnelName, personnelName: l.personnelName,
+    })),
+    ...doblas.filter(d => isSameDay(d.date, selectedDate)).map(d => ({
+      kind: 'dobla', label: d.personnelName, personnelName: d.personnelName,
+    })),
+    ...vacaciones.filter(v => isSameDay(v.date, selectedDate)).map(v => ({
+      kind: 'vacacion', label: v.personnelName, personnelName: v.personnelName,
+    })),
+    ...meetings.filter(m => isSameDay(m.date, selectedDate)).map(m => ({
+      kind: 'meeting', label: m.title, personnelName: undefined,
+    })),
+  ];
+
+  const grouped: Record<string, Assignment[]> = {};
+  for (const a of assignments) {
+    const key = a.kind;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(a);
+  }
+
+  const conflicts = getDayConflicts(assignments);
+  const orderedSections = ['guardia', 'libranza', 'dobla', 'vacacion', 'meeting'];
+
+  return (
+    <aside className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden sticky top-20" aria-label={`Detalle del día: ${formatDate(selectedDate)}`}>
+      <div className="p-4 border-b border-gray-100">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-gray-900 leading-tight">{formatDate(selectedDate)}</h3>
+            <div className="flex items-center gap-2 mt-1.5">
+              {isTodaySelected && (
+                <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">Hoy</span>
+              )}
+              {conflicts.length > 0 && (
+                <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Con incidencias</span>
+              )}
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Cerrar detalle del día" className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+            <span className="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+        {/* Conflictos */}
+        {conflicts.length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="material-symbols-outlined text-red-600 text-lg">warning</span>
+              <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Incidencias</span>
+            </div>
+            {conflicts.map((c, i) => (
+              <p key={i} className="text-xs text-red-700 ml-7" dangerouslySetInnerHTML={{ __html: c }} />
+            ))}
+          </div>
+        )}
+
+        {/* Sin incidencias */}
+        {conflicts.length === 0 && assignments.length > 0 && (
+          <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+            <span className="material-symbols-outlined text-lg">check_circle</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">Sin incidencias</span>
+          </div>
+        )}
+
+        {/* Sections */}
+        {orderedSections.map((key) => {
+          const items = grouped[key];
+          const config = sectionConfig[key];
+          if (!config) return null;
+
+          return (
+            <div key={key}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="material-symbols-outlined text-gray-400 text-base">{config.icon}</span>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{config.label}</span>
+                {items && items.length > 0 && (
+                  <span className="text-[10px] font-bold text-gray-400 ml-auto">{items.length}</span>
+                )}
+              </div>
+              {items && items.length > 0 ? (
+                <div className="space-y-1">
+                  {items.map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100">
+                      <ShiftBadge kind={item.kind} type={item.type} />
+                      <span className="text-xs font-medium text-gray-800 truncate">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[11px] text-gray-400 italic pl-1">Sin asignaci&oacute;n</p>
+              )}
+            </div>
+          );
+        })}
+
+        {assignments.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+            <span className="material-symbols-outlined text-3xl mb-2">info</span>
+            <p className="text-sm font-medium">No hay asignaciones para este d&iacute;a.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 border-t border-gray-100 bg-gray-50/50 space-y-2">
+        <p className="text-[9px] text-gray-400 font-medium text-center">Selecciona un d&iacute;a para ver su detalle</p>
+      </div>
+    </aside>
+  );
+};

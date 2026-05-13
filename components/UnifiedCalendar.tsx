@@ -53,6 +53,7 @@ interface UnifiedCalendarProps {
   onMonthChange?: (month: Date) => void;
   noteDates?: string[];
   onCellNoteClick?: (date: Date) => void;
+  onSelectDay?: (date: Date) => void;
 }
 
 export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({ 
@@ -190,6 +191,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   };
 
   const handleCellClick = (date: Date) => {
+    onSelectDay?.(date);
     if (swapMode) return;
     if (onCellNoteClick) {
       onCellNoteClick(date);
