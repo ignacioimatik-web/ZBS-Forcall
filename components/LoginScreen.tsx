@@ -330,7 +330,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             onClick={() => setLang('ca')}
             className={`px-3 py-1 rounded-lg font-bold uppercase tracking-wider transition-all ${lang === 'ca' ? 'bg-white/20 text-white' : 'text-white/40 hover:text-white/70'}`}
           >
-            CA
+            VA
           </button>
         </div>
         <p>© 2026 ZBS Forcall — {VERSION_STRING}</p>

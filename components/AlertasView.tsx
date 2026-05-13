@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useT } from '../lib/i18n';
 
 interface PhoneCategory {
   title: string;
@@ -118,6 +119,7 @@ const fallbackCivilProtection: CivilProtectionUpdate = {
 };
 
 export const AlertasView: React.FC = () => {
+  const { t } = useT();
   const [civilProtectionLoading, setCivilProtectionLoading] = useState(false);
   const [civilProtectionError, setCivilProtectionError] = useState<string | null>(null);
   const [civilProtectionUpdate, setCivilProtectionUpdate] = useState<CivilProtectionUpdate | null>(null);
@@ -296,16 +298,16 @@ export const AlertasView: React.FC = () => {
     <div className="space-y-6 animate-fade-in pb-12">
       <div className="bg-gradient-to-r from-red-700 via-red-600 to-orange-700 rounded-3xl p-6 text-white shadow-lg flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] opacity-80">Edición de emergencias</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] opacity-80">{t('alertas.emergencyEdition')}</p>
           <h2 className="text-2xl md:text-3xl font-black flex items-center gap-2 mt-2">
             <span className="material-symbols-outlined text-3xl">campaign</span>
-            Alertas y estado de Els Ports
+            {t('alertas.alertsAndStatus')}
           </h2>
         </div>
         <div className="flex gap-2">
           <button onClick={fetchCivilProtectionStatus} disabled={civilProtectionLoading} className="bg-white text-red-700 hover:bg-red-50 px-4 py-2 rounded-2xl text-xs font-black transition-all border border-white/30 flex items-center gap-2">
             <span className={`material-symbols-outlined text-lg ${civilProtectionLoading ? 'animate-spin' : ''}`}>refresh</span>
-            PROTECCIÓN CIVIL
+            {t('alertas.civilProtection')}
           </button>
         </div>
       </div>
@@ -315,8 +317,8 @@ export const AlertasView: React.FC = () => {
           <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 bg-stone-50 border-b border-gray-100 flex items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Portada</p>
-                <h3 className="text-lg font-black text-gray-900 mt-1">Protección Civil oficial</h3>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('alertas.cover')}</p>
+                <h3 className="text-lg font-black text-gray-900 mt-1">{t('alertas.officialCivilProtection')}</h3>
               </div>
               {civilProtectionUpdate && (
                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getLevelClasses(civilProtectionUpdate.level)}`}>
@@ -337,7 +339,7 @@ export const AlertasView: React.FC = () => {
                   <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
                     <div className="xl:col-span-3 space-y-4">
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Titular principal</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('alertas.mainHeadline')}</p>
                         <h4 className="text-2xl font-black text-gray-900 leading-tight mt-2">{civilProtectionUpdate.headline}</h4>
                         <div className="flex flex-wrap gap-2 mt-3 text-[10px] font-black uppercase tracking-widest text-gray-500">
                           <span className="px-3 py-1 rounded-full bg-gray-100 border border-gray-200">{civilProtectionUpdate.territory}</span>
@@ -354,13 +356,13 @@ export const AlertasView: React.FC = () => {
                             rel="noreferrer"
                             className="block rounded-[1.75rem] border border-gray-200 bg-white p-4 hover:bg-gray-50 transition-all"
                           >
-                            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2">Nota de prensa {index + 1}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2">{t('alertas.pressRelease')} {index + 1}</p>
                             <h5 className="text-sm font-black text-gray-900 leading-snug">{brief.title}</h5>
                             <p className="text-xs text-gray-600 mt-2 leading-relaxed">{brief.summary}</p>
                           </a>
                         )) : (
                           <div className="md:col-span-2 rounded-[1.75rem] border border-gray-200 bg-white p-4 text-xs font-bold text-gray-500">
-                            No hay breves adicionales ahora mismo. Usa el botón de actualizar para recargar las publicaciones oficiales.
+                            {t('alertas.noBriefs')}
                           </div>
                         )}
                       </div>
@@ -392,7 +394,7 @@ export const AlertasView: React.FC = () => {
                       className="flex items-center justify-center gap-2 rounded-2xl bg-forcall-50 text-forcall-700 border border-forcall-100 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-forcall-100 transition-all"
                     >
                       <span className="material-symbols-outlined text-sm">open_in_new</span>
-                      Fuente oficial
+                      {t('alertas.officialSource')}
                     </a>
                     <a
                       href="https://www.112cv.gva.es/WebPublica-MapasOnLineV2/portadaCastellano.jsf"
@@ -401,7 +403,7 @@ export const AlertasView: React.FC = () => {
                       className="flex items-center justify-center gap-2 rounded-2xl bg-orange-50 text-orange-700 border border-orange-100 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all"
                     >
                       <span className="material-symbols-outlined text-sm">map</span>
-                      Mapa 112CV
+                      {t('alertas.map112')}
                     </a>
                     <button
                       onClick={fetchCivilProtectionStatus}
@@ -409,7 +411,7 @@ export const AlertasView: React.FC = () => {
                       className="flex items-center justify-center gap-2 rounded-2xl bg-gray-900 text-white border border-gray-900 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all disabled:opacity-60"
                     >
                       <span className={`material-symbols-outlined text-sm ${civilProtectionLoading ? 'animate-spin' : ''}`}>refresh</span>
-                      Actualizar bloque
+                      {t('alertas.refreshBlock')}
                     </button>
                   </div>
                 </>
@@ -421,8 +423,8 @@ export const AlertasView: React.FC = () => {
         <aside className="2xl:col-span-4 space-y-6">
           <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Teletipo</p>
-              <h3 className="text-lg font-black text-gray-900 mt-1">Avisos operativos</h3>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('alertas.teletype')}</p>
+              <h3 className="text-lg font-black text-gray-900 mt-1">{t('alertas.operationalNotes')}</h3>
             </div>
             <div className="p-4 space-y-2">
               {protocols.map(p => (
@@ -440,7 +442,7 @@ export const AlertasView: React.FC = () => {
           <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-100">
               <h3 className="font-black text-gray-800 text-xs uppercase tracking-widest flex items-center gap-2">
-                <span className="material-symbols-outlined text-red-600">emergency</span> Urgencias
+                <span className="material-symbols-outlined text-red-600">emergency</span> {t('alertas.emergencies')}
               </h3>
             </div>
             <div className="p-1 space-y-0.5 max-h-[520px] overflow-y-auto no-scrollbar">
@@ -473,18 +475,18 @@ export const AlertasView: React.FC = () => {
 
           <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Red social</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('alertas.socialNetwork')}</p>
               <h3 className="text-lg font-black text-gray-900 mt-1">@VOSTcvalenciana</h3>
             </div>
             <div className="p-4 space-y-3">
               {vostLoading ? (
                 <div className="flex items-center gap-2 py-4 text-gray-400">
                   <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Cargando posts...</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">{t('alertas.loadingPosts')}</span>
                 </div>
               ) : vostPosts.length === 0 ? (
                 <div className="py-4 text-[10px] font-bold text-gray-500 text-center">
-                  No hay posts disponibles ahora mismo.
+                  {t('alertas.noPosts')}
                 </div>
               ) : (
                 vostPosts.slice(0, 2).map((post, i) => (
@@ -516,21 +518,21 @@ export const AlertasView: React.FC = () => {
         <div className="bg-emerald-600 text-white p-5 rounded-3xl shadow-md border border-white/10 flex flex-col md:flex-row items-center gap-4">
           <span className="material-symbols-outlined text-4xl">check_circle</span>
           <div className="flex-1">
-            <h3 className="font-black uppercase text-sm tracking-widest">Estado Carreteras: Nivel Verde</h3>
+            <h3 className="font-black uppercase text-sm tracking-widest">{t('alertas.roadStatus')}</h3>
             <p className="text-sm opacity-90 font-medium">Condiciones favorables para la actividad asistencial.</p>
           </div>
-          <a href="https://etraffic.dgt.es" target="_blank" rel="noreferrer" className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-[10px] uppercase tracking-widest border border-white/20">CONSULTAR DGT</a>
+          <a href="https://etraffic.dgt.es" target="_blank" rel="noreferrer" className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-[10px] uppercase tracking-widest border border-white/20">{t('alertas.consultDGT')}</a>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tiempo actual</h3>
+              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{t('alertas.currentWeather')}</h3>
               <div className="flex gap-2">
                 {weatherError && <span className="text-[8px] text-red-500 font-bold self-center">{weatherError}</span>}
                 <button onClick={fetchWeather} disabled={weatherLoading} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 text-[9px] font-black uppercase tracking-widest transition-all">
                   <span className={`material-symbols-outlined text-sm ${weatherLoading ? 'animate-spin' : ''}`}>refresh</span>
-                  Actualizar
+                  {t('alertas.refresh')}
                 </button>
               </div>
             </div>
@@ -538,7 +540,7 @@ export const AlertasView: React.FC = () => {
               {weatherLoading && currentWeather.length === 0 ? (
                 <div className="sm:col-span-2 flex items-center justify-center py-12 text-gray-400">
                   <span className="material-symbols-outlined animate-spin mr-2">refresh</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Cargando datos meteorológicos...</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">{t('alertas.loadingWeather')}</span>
                 </div>
               ) : null}
               {currentWeather.map(p => {
@@ -561,7 +563,7 @@ export const AlertasView: React.FC = () => {
 
           <div className="space-y-4">
             <div className="bg-sky-50 rounded-3xl p-6 border border-sky-100">
-              <h3 className="text-[10px] font-black text-sky-800 uppercase tracking-widest mb-4">Previsión 5 Días</h3>
+              <h3 className="text-[10px] font-black text-sky-800 uppercase tracking-widest mb-4">{t('alertas.forecast5Days')}</h3>
               <div className="space-y-3">
                 {forecast.map((f, i) => (
                   <div key={i} className="flex justify-between items-center bg-white/50 p-2 rounded-xl text-xs font-bold">

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useT } from '../lib/i18n';
 
 interface WeatherPoint {
   id: string;
@@ -24,6 +25,7 @@ interface ForecastDay {
 
 export const WeatherView: React.FC = () => {
   const [loading, setLoading] = useState(true);
+  const { t } = useT();
   
   // Datos rigurosos al estilo AEMET (Agencia Estatal de Meteorología)
   const [currentWeather] = useState<WeatherPoint[]>([
@@ -43,24 +45,24 @@ export const WeatherView: React.FC = () => {
   const protocols = [
     {
       id: 'hypothermia',
-      title: 'Hipotermia: Visitas en Entorno Rural',
+      title: t('weather.protocolHypothermiaTitle'),
       icon: 'medical_services',
       color: 'text-blue-600',
-      content: 'Vigilar temperatura en domicilios de pacientes frágiles. AEMET prevé heladas en cotas > 800m.'
+      content: t('weather.protocolHypothermiaContent')
     },
     {
       id: 'wind',
-      title: 'Aviso Viento: N-232 y CV-125',
+      title: t('weather.protocolWindTitle'),
       icon: 'air',
       color: 'text-teal-600',
-      content: 'Precaución por rachas laterales en el Puerto de Querol. Efecto pantalla al salir de túneles.'
+      content: t('weather.protocolWindContent')
     },
     {
       id: 'logistics',
-      title: 'Logística Sanitaria Invernal',
+      title: t('weather.protocolLogisticsTitle'),
       icon: 'ac_unit',
       color: 'text-indigo-600',
-      content: 'Verificar estado de cadenas en vehículos de guardia ante avisos de nieve por encima de nivel amarillo.'
+      content: t('weather.protocolLogisticsContent')
     }
   ];
 
@@ -89,32 +91,32 @@ export const WeatherView: React.FC = () => {
           bg: 'bg-yellow-400', 
           text: 'text-yellow-950', 
           icon: 'warning', 
-          label: 'Aviso Amarillo', 
-          msg: 'Riesgo Meteorológico: Precaución en red secundaria y puertos (Querol/Torremiró). Posible nieve o viento.' 
+          labelKey: 'weather.roadLevelYellow',
+          msgKey: 'weather.roadMsgAmarilla'
         };
       case 'Naranja':
         return { 
           bg: 'bg-orange-500', 
           text: 'text-white', 
           icon: 'ac_unit', 
-          label: 'Aviso Naranja', 
-          msg: 'Riesgo Importante: Nieve o heladas severas. Cadenas obligatorias en cotas altas. Evitar desplazamientos no urgentes.' 
+          labelKey: 'weather.roadLevelOrange',
+          msgKey: 'weather.roadMsgNaranja'
         };
       case 'Roja':
         return { 
           bg: 'bg-red-600', 
           text: 'text-white', 
           icon: 'dangerous', 
-          label: 'Aviso Rojo', 
-          msg: 'Riesgo Extremo: Desplazamientos prohibidos salvo emergencias sanitarias críticas. ZBS Forcall en alerta máxima.' 
+          labelKey: 'weather.roadLevelRed',
+          msgKey: 'weather.roadMsgRoja'
         };
       default:
         return { 
           bg: 'bg-emerald-600', 
           text: 'text-white', 
           icon: 'check_circle', 
-          label: 'Nivel Verde', 
-          msg: 'Sin avisos meteorológicos (AEMET). Condiciones favorables para la actividad asistencial.' 
+          labelKey: 'weather.roadLevelGreen',
+          msgKey: 'weather.roadMsgDefault'
         };
     }
   };
@@ -135,9 +137,9 @@ export const WeatherView: React.FC = () => {
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <span className="material-symbols-outlined">cloud_sync</span>
-              Observatorio ZBS Forcall (AEMET)
+              {t('weather.observatory')}
             </h2>
-            <p className="opacity-90 mt-1 text-sm">Información orientativa para la toma de decisiones.</p>
+            <p className="opacity-90 mt-1 text-sm">{t('weather.disclaimer')}</p>
           </div>
           <div className="flex items-center gap-3">
              <a href="https://www.aemet.es" target="_blank" rel="noopener noreferrer" className="bg-white p-1 rounded-full border border-white/20">
@@ -153,8 +155,8 @@ export const WeatherView: React.FC = () => {
           <span className="material-symbols-outlined text-4xl">{roadConfig.icon}</span>
         </div>
         <div className="flex-1 text-center md:text-left">
-          <h3 className="text-lg font-bold uppercase tracking-wide">Estado Carreteras: {roadConfig.label}</h3>
-          <p className="text-sm opacity-90 font-medium leading-relaxed">{roadConfig.msg}</p>
+          <h3 className="text-lg font-bold uppercase tracking-wide">{t('weather.roadStatus')}: {t(roadConfig.labelKey)}</h3>
+          <p className="text-sm opacity-90 font-medium leading-relaxed">{t(roadConfig.msgKey)}</p>
         </div>
         <a 
           href="https://etraffic.dgt.es/etrafficWEB/" 
@@ -162,7 +164,7 @@ export const WeatherView: React.FC = () => {
           rel="noopener noreferrer"
           className="w-full md:w-auto px-6 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl font-bold text-xs uppercase tracking-widest border border-white/20 flex items-center justify-center gap-2 transition-all shadow-sm"
         >
-          Estado Carreteras
+          {t('weather.roadStatus')}
           <span className="material-symbols-outlined text-sm">open_in_new</span>
         </a>
       </div>
@@ -171,7 +173,7 @@ export const WeatherView: React.FC = () => {
         <div className="md:col-span-2 space-y-6">
            <h3 className="font-bold text-gray-700 flex items-center gap-2 px-2">
              <span className="material-symbols-outlined text-amber-500">thermometer</span>
-             Estaciones en Tiempo Real
+             {t('weather.realTimeStations')}
            </h3>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              {currentWeather.map((p) => {
@@ -196,23 +198,21 @@ export const WeatherView: React.FC = () => {
              })}
            </div>
 
-           {/* Información Adicional de AEMET */}
-           <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 flex items-center gap-4">
-              <span className="material-symbols-outlined text-blue-600 text-4xl">info</span>
-              <div>
-                <h4 className="font-bold text-blue-900">Nota informativa Els Ports</h4>
-                <p className="text-sm text-blue-800 leading-relaxed">
-                  Las estaciones de <strong>Portell</strong> y <strong>Morella</strong> suelen registrar las temperaturas más bajas de la zona. Se recomienda extremar la precaución en las visitas domiciliarias matinales durante los meses de invierno.
-                </p>
-              </div>
-           </div>
+            {/* Información Adicional de AEMET */}
+            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 flex items-center gap-4">
+               <span className="material-symbols-outlined text-blue-600 text-4xl">info</span>
+               <div>
+                 <h4 className="font-bold text-blue-900">{t('weather.infoNote')}</h4>
+                 <p className="text-sm text-blue-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: t('weather.infoNoteText') }} />
+               </div>
+            </div>
         </div>
 
         <div className="space-y-6">
           <div className="space-y-4">
             <h3 className="font-bold text-gray-700 flex items-center gap-2">
               <span className="material-symbols-outlined text-sky-600">policy</span>
-              Protocolos de Actuación
+              {t('weather.actionProtocols')}
             </h3>
             <div className="space-y-3">
               {protocols.map((p) => (
@@ -229,8 +229,8 @@ export const WeatherView: React.FC = () => {
 
           <div className="bg-sky-50 p-5 rounded-2xl border border-sky-100">
              <div className="flex items-center justify-between mb-4">
-               <h4 className="text-xs font-bold text-sky-800 uppercase tracking-widest">Previsión 3 Días</h4>
-               <span className="text-[10px] text-sky-600 font-bold bg-white px-1.5 py-0.5 rounded border border-sky-200">DATOS AEMET</span>
+                <h4 className="text-xs font-bold text-sky-800 uppercase tracking-widest">{t('weather.forecast3Days')}</h4>
+                <span className="text-[10px] text-sky-600 font-bold bg-white px-1.5 py-0.5 rounded border border-sky-200">{t('weather.aemetData')}</span>
              </div>
              <div className="space-y-4">
                 {forecast.map((f, i) => (

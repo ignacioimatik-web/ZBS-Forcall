@@ -108,7 +108,7 @@ const App: React.FC = () => {
 
   const handleUpsertGuardia = useCallback(async (guardia: Guardia) => {
     if (!canManageGuardiaType(user, guardia.type)) {
-      setNotification(getGuardiaPermissionMessage(guardia.type));
+      setNotification(getGuardiaPermissionMessage(guardia.type, t));
       return false;
     }
     const existing = guardias.find(g => g.id === guardia.id);
@@ -124,7 +124,7 @@ const App: React.FC = () => {
     const existing = guardias.find(g => g.id === id);
     if (!existing) return false;
     if (!canManageGuardiaType(user, existing.type)) {
-      setNotification(getGuardiaPermissionMessage(existing.type));
+      setNotification(getGuardiaPermissionMessage(existing.type, t));
       return false;
     }
     return await deleteGuardia(id);

@@ -15,7 +15,7 @@ function getNested(obj: Dict, path: string): string | undefined {
   return typeof current === 'string' ? current : undefined;
 }
 
-interface I18nCtx {
+export interface I18nCtx {
   lang: Lang;
   setLang: (l: Lang) => void;
   t: (path: string, fallback?: string) => string;
@@ -26,6 +26,8 @@ const I18nContext = createContext<I18nCtx>({
   setLang: () => {},
   t: (path, fb) => fb || path,
 });
+
+export { I18nContext };
 
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lang, setLangState] = useState<Lang>(() => {

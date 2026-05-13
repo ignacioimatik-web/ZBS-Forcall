@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from '../lib/i18n';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -15,8 +16,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   message,
   onConfirm,
   onCancel,
-  confirmLabel = 'Eliminar'
+  confirmLabel
 }) => {
+  const { t } = useT();
   if (!isOpen) return null;
 
   return (
@@ -35,14 +37,14 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             onClick={onConfirm}
             className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-100 transition-colors"
           >
-            {confirmLabel}
+            {confirmLabel || t('common.delete')}
           </button>
           <button
             type="button"
             onClick={onCancel}
             className="px-4 py-2 bg-white text-gray-700 font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition-colors"
           >
-            Cancelar
+            {t('common.cancel')}
           </button>
         </div>
       </div>

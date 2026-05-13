@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { useChat } from '../hooks/useChat';
+import { useT } from '../lib/i18n';
 
 interface ChatViewProps {
   currentUser: User | null;
@@ -11,6 +12,7 @@ type Conversation =
   | { type: 'dm'; userId: string; label: string };
 
 export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
+  const { t } = useT();
   const { profiles, messagesByChannel, sendMessage, sendPrivateMessage, sendImage, sendAudio, deleteMessage, isUploading } = useChat(currentUser?.id);
   const [inputText, setInputText] = useState('');
   const [showAttach, setShowAttach] = useState(false);
@@ -27,7 +29,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const teamConv: Conversation = { type: 'channel', id: 'general', label: 'Chat de Equipo' };
+  const teamConv: Conversation = { type: 'channel', id: 'general', label: t('chat.teamChat') };
   const dmConvs: Conversation[] = profiles
     .filter(p => p.id !== currentUser?.id && !p.full_name?.toLowerCase().includes('externo'))
     .map(p => ({ type: 'dm' as const, userId: p.id, label: p.full_name || p.email }));
@@ -185,7 +187,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
       <div className="w-full md:w-1/4 bg-earth-50 border-r border-gray-200 flex flex-col overflow-y-auto">
         {/* Team channel */}
         <div className="p-3 border-b border-gray-200 bg-earth-50">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Canales</h2>
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('chat.channels')}</h2>
         </div>
         <button
           onClick={() => handleSetActiveConv(teamConv)}
@@ -205,7 +207,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
 
         {/* Direct messages */}
         <div className="p-3 border-b border-t border-gray-200 bg-earth-50 mt-2">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mensajes Directos</h2>
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('chat.directMessages')}</h2>
         </div>
         <div className="flex-1">
           {dmConvs.map(conv => {
@@ -239,7 +241,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
             );
           })}
           {dmConvs.length === 0 && (
-            <p className="text-xs text-gray-400 text-center py-4">No hay otros usuarios</p>
+            <p className="text-xs text-gray-400 text-center py-4">{t('chat.noOtherUsers')}</p>
           )}
         </div>
       </div>
@@ -259,7 +261,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
             <h3 className="font-bold text-gray-800 text-lg">{activeConv.label}</h3>
           </div>
           <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
-            {conversationMessages.length} mensajes
+            {conversationMessages.length} {t('chat.messages')}
           </span>
         </div>
 
@@ -270,8 +272,8 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
               <span className="material-symbols-outlined text-5xl mb-3">
                 {activeConv.type === 'channel' ? 'forum' : 'chat'}
               </span>
-              <p className="font-medium">No hay mensajes aquí.</p>
-              <p className="text-sm">¡Sé el primero en escribir!</p>
+              <p className="font-medium">{t('chat.noMessages')}</p>
+              <p className="text-sm">{t('chat.beFirst')}</p>
             </div>
           ) : (
             conversationMessages.map((msg) => {
@@ -296,7 +298,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
                             className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                           >
                             <span className="material-symbols-outlined text-base">delete</span>
-                            Eliminar
+                            {t('chat.delete')}
                           </button>
                         </div>
                       )}
@@ -334,7 +336,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
             <div className="flex items-center gap-3 bg-red-50 rounded-xl px-4 py-3">
               <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
               <span className="font-bold text-red-600 text-sm">{formatTime(recordingTime)}</span>
-              <span className="text-red-500 text-sm flex-1">Grabando nota de voz...</span>
+              <span className="text-red-500 text-sm flex-1">{t('chat.recording')}</span>
               <button
                 onClick={stopRecording}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
@@ -361,7 +363,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
                       className="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-blue-50 transition-colors"
                     >
                       <span className="material-symbols-outlined text-2xl text-blue-500">image</span>
-                      <span className="text-[10px] font-bold text-gray-600">Foto</span>
+                      <span className="text-[10px] font-bold text-gray-600">{t('chat.photo')}</span>
                     </button>
                     <button
                       type="button"
@@ -369,7 +371,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
                       className="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-red-50 transition-colors"
                     >
                       <span className="material-symbols-outlined text-2xl text-red-500">mic</span>
-                      <span className="text-[10px] font-bold text-gray-600">Audio</span>
+                      <span className="text-[10px] font-bold text-gray-600">{t('chat.audio')}</span>
                     </button>
                   </div>
                 )}
@@ -387,7 +389,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder={activeConv.type === 'channel' ? 'Mensaje en #Chat de Equipo...' : `Mensaje para ${activeConv.label}...`}
+                  placeholder={activeConv.type === 'channel' ? `${t('chat.messagePlaceholder')} #${teamConv.label}...` : `${t('chat.messagePlaceholder')} ${activeConv.label}...`}
                   className={`w-full border border-gray-300 rounded-full pl-5 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow shadow-sm ${
                     isUploading ? 'opacity-50' : 'focus:ring-forcall-500'
                   }`}

@@ -2,12 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { useAvisos } from '../hooks/useAvisos';
+import { useT } from '../lib/i18n';
 
 interface AvisosViewProps {
   currentUser: User | null;
 }
 
 export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
+  const { t } = useT();
   const { avisos: messages, addAviso, isLoading } = useAvisos('avisos');
   const [inputText, setInputText] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
@@ -26,7 +28,7 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
    */
   const solicitarPermisos = async () => {
     if (!('Notification' in window)) {
-      alert("Este navegador no soporta notificaciones de escritorio.");
+      alert(t('avisos.notSupported'));
       return;
     }
     
@@ -34,7 +36,7 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
       const permission = await Notification.requestPermission();
       setPermisoEstado(permission);
       if (permission === 'granted') {
-        enviarAvisoGrupo("Sistema de avisos activado correctamente.");
+        enviarAvisoGrupo(t('avisos.systemActivated'));
       }
     } catch (error) {
       console.error("Error al solicitar permisos:", error);
@@ -57,7 +59,7 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
       };
       
       try {
-        new Notification("ZBS FORCALL: AVISO CRÍTICO", options);
+        new Notification(t('avisos.criticalNotice'), options);
       } catch (e) {
         // Fallback para algunos navegadores móviles que requieren Service Workers para notificaciones
         console.warn("La notificación nativa requiere Service Worker en este dispositivo.");
@@ -88,8 +90,8 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
     if (result && isUrgent) {
       enviarAvisoGrupo(inputText);
       setShowNotification({ 
-        title: 'AVISO URGENTE EMITIDO', 
-        msg: `Notificación push enviada a los dispositivos activos.` 
+        title: t('avisos.urgentEmitted'), 
+        msg: t('avisos.pushSent') 
       });
       setTimeout(() => setShowNotification(null), 5000);
     }
@@ -117,9 +119,9 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
 
       {/* CABECERA DE IMPRESIÓN */}
       <div className="print-only mb-6 border-b-2 border-gray-900 pb-4">
-        <h1 className="text-2xl font-black uppercase">Registro de Comunicaciones Críticas</h1>
-        <p className="text-lg font-bold text-gray-700">Zona Básica de Salud Forcall</p>
-        <p className="text-xs text-gray-500 mt-1 uppercase font-black">Historial generado el {new Date().toLocaleDateString()}</p>
+        <h1 className="text-2xl font-black uppercase">{t('avisos.commLog')}</h1>
+        <p className="text-lg font-bold text-gray-700">{t('avisos.commLogSubtitle')}</p>
+        <p className="text-xs text-gray-500 mt-1 uppercase font-black">{`${t('avisos.historyGenerated')} ${new Date().toLocaleDateString()}`}</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full print:border-0 print:shadow-none">
@@ -129,8 +131,8 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
                 <span className="material-symbols-outlined">campaign</span>
              </div>
              <div>
-               <h3 className="font-bold">Centro de Avisos Forcall</h3>
-               <p className="text-[10px] opacity-70 uppercase tracking-tighter">Canal oficial de comunicación crítica</p>
+                <h3 className="font-bold">{t('avisos.center')}</h3>
+                <p className="text-[10px] opacity-70 uppercase tracking-tighter">{t('avisos.officialChannel')}</p>
              </div>
            </div>
            <div className="flex items-center gap-2">
@@ -138,7 +140,7 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
                onClick={handlePrint}
                className="text-[10px] bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg border border-white/20 transition-all font-bold flex items-center gap-1"
              >
-               <span className="material-symbols-outlined text-sm">print</span> IMPRIMIR
+                <span className="material-symbols-outlined text-sm">print</span> {t('avisos.print')}
              </button>
            </div>
         </div>
@@ -153,7 +155,7 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
                }`}>
                   <div className="flex justify-between items-center mb-1 gap-4">
                     <span className={`text-[10px] font-black uppercase ${msg.isUrgent ? 'text-red-600' : msg.senderId === currentUser?.id ? 'text-white/70' : 'text-gray-400'} print:text-black`}>
-                      {msg.senderName} {msg.isUrgent && '• AVISO URGENTE'}
+                      {msg.senderName} {msg.isUrgent && `• ${t('avisos.urgentNotice')}`}
                     </span>
                     <span className={`text-[9px] ${msg.senderId === currentUser?.id ? 'text-white/60' : 'text-gray-400'} print:text-black`}>
                       {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {msg.timestamp.toLocaleDateString()}
@@ -177,10 +179,10 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
                   </span>
                   <div>
                     <p className="text-[10px] font-black text-blue-900 uppercase tracking-widest">
-                      Estado Notificaciones Push
+                      {t('avisos.pushStatus')}
                     </p>
                     <p className="text-[9px] text-blue-700 font-bold">
-                      {permisoEstado === 'granted' ? 'SISTEMA ACTIVO' : 'SISTEMA PENDIENTE DE AUTORIZACIÓN'}
+                      {permisoEstado === 'granted' ? t('avisos.systemActive') : t('avisos.systemPending')}
                     </p>
                   </div>
                 </div>
@@ -192,7 +194,7 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                 >
-                  {permisoEstado === 'granted' ? 'SISTEMA CONFIGURADO' : 'ACTIVAR API NOTIFICACIONES'}
+                  {permisoEstado === 'granted' ? t('avisos.systemConfigured') : t('avisos.activateApi')}
                 </button>
               </div>
 
@@ -205,7 +207,7 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
                       className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
                     />
                     <span className={`text-xs font-bold transition-colors ${isUrgent ? 'text-red-600' : 'text-gray-500 group-hover:text-gray-700'}`}>
-                      Marcar como URGENTE (Disparar Notificación Push Nativa)
+                      {t('avisos.markUrgent')}
                     </span>
                  </label>
               </div>
@@ -215,7 +217,7 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
                    type="text" 
                    value={inputText}
                    onChange={(e) => setInputText(e.target.value)}
-                   placeholder="Escribe el aviso oficial aquí..."
+                    placeholder={t('avisos.writeHere')}
                    className={`flex-1 bg-gray-50 border rounded-xl px-5 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${isUrgent ? 'border-red-200 focus:ring-red-500' : 'border-gray-200 focus:ring-forcall-500'}`}
                  />
                  <button 
@@ -228,7 +230,7 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
                     ) : (
                       <>
                         <span className="material-symbols-outlined text-lg">{isUrgent ? 'emergency' : 'send'}</span>
-                        <span>{isUrgent ? 'ENVIAR URGENTE' : 'AVISAR'}</span>
+                        <span>{isUrgent ? t('avisos.sendUrgent') : t('avisos.warn')}</span>
                       </>
                     )}
                  </button>
@@ -238,10 +240,10 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
             <div className="p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl text-center">
               <span className="material-symbols-outlined text-gray-300 text-3xl mb-2">lock_person</span>
               <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
-                Función restringida a Coordinación
+                {t('avisos.restrictedCoord')}
               </p>
               <p className="text-[10px] text-gray-400 mt-1">
-                Solo la Dra. Elena Benages puede emitir avisos oficiales vía API Nativa.
+                {t('avisos.onlyElena')}
               </p>
             </div>
           )}
@@ -250,9 +252,9 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
       
       <div className="mt-4 bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-3 no-print">
          <span className="material-symbols-outlined text-blue-600 text-lg">info</span>
-         <p className="text-xs text-blue-800 leading-tight">
-           La <strong>API de Notificaciones Push</strong> nativa permite recibir alertas incluso si la app está en segundo plano. Compatible con Safari 16.4+ en iOS y navegadores modernos en Android/Escritorio.
-         </p>
+          <p className="text-xs text-blue-800 leading-tight">
+            {t('avisos.pushInfo1')} <strong>{t('avisos.pushInfoBold')}</strong> {t('avisos.pushInfo2')}
+          </p>
       </div>
     </div>
   );

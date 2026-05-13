@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Guardia, Libranza, Dobla } from '../types';
+import { useT } from '../lib/i18n';
 
 interface UseRemindersResult {
   scheduleReminder: (title: string, body: string, date: Date) => void;
@@ -8,6 +9,7 @@ interface UseRemindersResult {
 }
 
 export function useReminders(userName?: string): UseRemindersResult {
+  const { t } = useT();
   const timersRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
@@ -78,24 +80,25 @@ export function useReminders(userName?: string): UseRemindersResult {
           .lte('date', nextWeek.toISOString().split('T')[0]);
 
         // Programar recordatorios (1 día antes a las 20:00)
-        const scheduleForType = (items: any[], type: string) => {
+        const scheduleForType = (items: any[], typeKey: string) => {
           items?.forEach((item: any) => {
             const eventDate = new Date(item.date);
             const reminderDate = new Date(eventDate);
             reminderDate.setDate(reminderDate.getDate() - 1);
             reminderDate.setHours(20, 0, 0, 0);
             
+            const typeLabel = t(`reminders.${typeKey}`);
             scheduleReminder(
-              `Recordatorio: ${type}`,
-              `Tu ${type.toLowerCase()} es el ${eventDate.toLocaleDateString('es-ES')}`,
+              `${t('reminders.reminder')} ${typeLabel}`,
+              `${t('reminders.your')} ${typeLabel.toLowerCase()} ${t('reminders.isOn')} ${eventDate.toLocaleDateString('es-ES')}`,
               reminderDate
             );
           });
         };
 
-        scheduleForType(guardias || [], (guardias || []).some((g: any) => g.type === 'medica') ? 'Guardia Medica' : 'Guardia Enfermeria');
-        scheduleForType(libranzas || [], (libranzas || []).some((l: any) => l.type === 'medica') ? 'Libranza Medica' : 'Libranza Enfermeria');
-        scheduleForType(doblas || [], (doblas || []).some((d: any) => d.type === 'medica') ? 'Dobla Medica' : 'Dobla Enfermeria');
+        scheduleForType(guardias || [], (guardias || []).some((g: any) => g.type === 'medica') ? 'guardiaMedica' : 'guardiaEnfermeria');
+        scheduleForType(libranzas || [], (libranzas || []).some((l: any) => l.type === 'medica') ? 'libranzaMedica' : 'libranzaEnfermeria');
+        scheduleForType(doblas || [], (doblas || []).some((d: any) => d.type === 'medica') ? 'doblaMedica' : 'doblaEnfermeria');
       } catch (error) {
         console.error('Error loading reminders:', error);
       }

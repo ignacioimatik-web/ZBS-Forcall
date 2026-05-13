@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useT } from '../lib/i18n';
 import { Guardia, User } from '../types';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 import { NotificationToast } from './NotificationToast';
@@ -15,6 +16,7 @@ interface GuardiasViewProps {
 type FilterType = 'Todas' | 'medica' | 'enfermeria';
 
 export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuardia, onDeleteGuardia, currentUser }) => {
+  const { t } = useT();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,7 +85,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: g.type === 'medica' ? 'M' : 'E' });
       });
     const data: PDFCalendarData = {
-      title: 'Calendario Guardias Forcall',
+      title: t('guardias.pdfTitle'),
       subtitle: `${new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
       month,
       year,
@@ -92,10 +94,10 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
     const filename = `Calendario_Guardias_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
     try {
       downloadCalendarPDF(data, filename);
-      setDownloadMsg('PDF descargado correctamente');
+      setDownloadMsg(t('guardias.pdfDownloaded'));
     } catch (e) {
       console.error(e);
-      setDownloadMsg('Error al generar PDF');
+      setDownloadMsg(t('guardias.pdfError'));
     } finally {
       setIsDownloading(false);
     }
@@ -138,9 +140,9 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
     <div className="space-y-6 animate-fade-in">
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-          <h2 className="text-xl font-black text-gray-900 tracking-tight">Guardias Mensuales</h2>
+          <h2 className="text-xl font-black text-gray-900 tracking-tight">{t('guardias.monthly')}</h2>
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
-            {canEdit ? 'Gestión de Turnos' : 'Consulta de Cuadrante'} ZBS Forcall
+            {canEdit ? t('guardias.shiftManagement') : t('guardias.queryView')}
           </p>
         </div>
         
@@ -156,7 +158,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                     : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
-                {option}
+                {option === 'Todas' ? t('guardias.filterAll') : option === 'medica' ? t('guardias.filterMedical') : t('guardias.filterNursing')}
               </button>
             ))}
           </div>
@@ -177,7 +179,10 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
 
       <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
         <div className="grid grid-cols-7 bg-gray-900 border-b border-gray-900">
-          {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((d) => (
+          {[
+            t('guardias.dayMon'), t('guardias.dayTue'), t('guardias.dayWed'),
+            t('guardias.dayThu'), t('guardias.dayFri'), t('guardias.daySat'), t('guardias.daySun')
+          ].map((d) => (
             <div key={d} className="p-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
               {d}
             </div>
@@ -256,27 +261,27 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
       <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-wrap gap-8 justify-center no-print">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-slate-100 rounded border border-gray-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fin de Semana</span>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendWeekend')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-red-500 rounded border border-red-600"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Día Festivo</span>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendHoliday')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-blue-100 rounded border border-blue-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Guardia medica</span>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendGuardiaMedical')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-red-100 rounded border border-red-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Guardia Enfermeria</span>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendGuardiaNursing')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-orange-100 rounded border border-orange-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Libranza</span>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendLibranza')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-stone-200 rounded border border-stone-300"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Refuerzo</span>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendRefuerzo')}</span>
         </div>
       </div>
 
@@ -284,37 +289,37 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in no-print">
           <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 animate-slide-in-up">
             <h3 className="text-xl font-black text-gray-900 mb-6 tracking-tight">
-              Asignar Turno
+              {t('guardias.assignShift')}
             </h3>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="bg-forcall-50 p-4 rounded-2xl border border-forcall-100 mb-4">
-                <p className="text-[10px] font-black text-forcall-700 uppercase tracking-widest mb-1">Día Seleccionado</p>
+                <p className="text-[10px] font-black text-forcall-700 uppercase tracking-widest mb-1">{t('guardias.selectedDay')}</p>
                 <p className="font-bold text-forcall-900">{selectedDay?.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-blue-700 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">stethoscope</span> Personal Medico
+                  <span className="material-symbols-outlined text-sm">stethoscope</span> {t('guardias.medicalStaff')}
                 </label>
                 <input
                   type="text"
                   value={formData.doctorName}
                   onChange={(e) => setFormData({ ...formData, doctorName: e.target.value })}
-                  placeholder="Nombre del doctor/a"
+                  placeholder={t('guardias.doctorPlaceholder')}
                   className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50 transition-all font-bold text-sm"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-red-700 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">vaccines</span> Personal Enfermeria
+                  <span className="material-symbols-outlined text-sm">vaccines</span> {t('guardias.nursingStaff')}
                 </label>
                 <input
                   type="text"
                   value={formData.nurseName}
                   onChange={(e) => setFormData({ ...formData, nurseName: e.target.value })}
-                  placeholder="Nombre enfermero/a"
+                  placeholder={t('guardias.nursePlaceholder')}
                   className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-red-50 transition-all font-bold text-sm"
                 />
               </div>
@@ -325,14 +330,14 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-colors"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={!formData.doctorName.trim() && !formData.nurseName.trim()}
                   className="flex-1 py-4 bg-forcall-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
                 >
-                  Confirmar
+                  {t('common.confirm')}
                 </button>
               </div>
             </form>

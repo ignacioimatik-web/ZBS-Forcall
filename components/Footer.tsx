@@ -1,6 +1,7 @@
 import React from 'react';
 import { jsPDF } from 'jspdf';
 import { VERSION_STRING, CHANGELOG } from '../lib/version';
+import { useT } from '../lib/i18n';
 
 type RGB = [number, number, number];
 
@@ -300,19 +301,22 @@ function generateVersionesPDF() {
   doc.save('Versiones_ZBS_Gestion_Equipos.pdf');
 }
 
-export const Footer: React.FC = () => (
+export const Footer: React.FC = () => {
+  const { t } = useT();
+  return (
   <footer className="border-t border-gray-200 mt-12 py-6">
     <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[9px] font-bold text-gray-500">
-      <span>© 2026 ZBS Gestión de Equipos. Todos los derechos reservados.</span>
+      <span>{t('footer.copyright')}</span>
       <div className="flex items-center gap-3">
-        <button onClick={generateVersionesPDF} className="hover:text-gray-800 transition-colors underline underline-offset-2">Versiones</button>
+        <button onClick={generateVersionesPDF} className="hover:text-gray-800 transition-colors underline underline-offset-2">{t('footer.versions')}</button>
         <span className="text-gray-300">·</span>
-        <button onClick={generatePrivacyPDF} className="hover:text-gray-800 transition-colors underline underline-offset-2">Privacidad</button>
+        <button onClick={generatePrivacyPDF} className="hover:text-gray-800 transition-colors underline underline-offset-2">{t('footer.privacy')}</button>
         <span className="text-gray-300">·</span>
-        <button onClick={generateTermsPDF} className="hover:text-gray-800 transition-colors underline underline-offset-2">Términos</button>
+        <button onClick={generateTermsPDF} className="hover:text-gray-800 transition-colors underline underline-offset-2">{t('footer.terms')}</button>
         <span className="text-gray-300">·</span>
-        <a href="mailto:ignacio@digitalcode.es" className="hover:text-gray-800 transition-colors underline underline-offset-2">Contacto</a>
+        <a href="mailto:ignacio@digitalcode.es" className="hover:text-gray-800 transition-colors underline underline-offset-2">{t('footer.contact')}</a>
       </div>
     </div>
   </footer>
-);
+  );
+};

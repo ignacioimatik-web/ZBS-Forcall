@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import type { User, Profile } from '../types';
 import { appRoleToUserRole } from '../types';
 import { USERS } from '../lib/users';
+import { useT } from '../lib/i18n';
 
 const STORAGE_KEY = 'zbs_forcall_user';
 
@@ -32,6 +33,7 @@ interface UseAuthResult {
 }
 
 export function useAuth(): UseAuthResult {
+  const { t } = useT();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +175,7 @@ export function useAuth(): UseAuthResult {
     const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> =>
       Promise.race([
         promise,
-        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Tiempo de espera agotado')), ms)),
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error(t('auth.timeout'))), ms)),
       ]);
 
     try {
@@ -184,7 +186,7 @@ export function useAuth(): UseAuthResult {
 
       if (signInError) {
         setError(signInError.message === 'Invalid login credentials'
-          ? 'PIN incorrecto o usuario no registrado. Contacta al administrador.'
+          ? t('auth.wrongPin')
           : signInError.message);
         return { success: false, error: signInError.message };
       }
@@ -197,7 +199,7 @@ export function useAuth(): UseAuthResult {
 
       return { success: true };
     } catch (err: any) {
-      const msg = err.message || 'Error al iniciar sesión';
+      const msg = err.message || t('auth.loginError');
       setError(msg);
       return { success: false, error: msg };
     }
@@ -237,7 +239,7 @@ export function useAuth(): UseAuthResult {
       clearTimeout(warningTimer);
       warningTimer = setTimeout(() => {
         clearTimeout(inactivityTimer);
-        if (window.confirm('¿Todavía estás ahí? Pulsa OK para mantener la sesión activa.')) {
+        if (window.confirm(t('auth.stillThere'))) {
           resetTimer();
         } else {
           doSignOut();

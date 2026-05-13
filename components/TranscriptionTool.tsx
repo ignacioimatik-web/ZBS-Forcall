@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useT } from '../lib/i18n';
 
 declare var html2pdf: any;
 
 export const TranscriptionTool: React.FC = () => {
+  const { t } = useT();
   const [isRecording, setIsRecording] = useState(false);
   const [transcription, setTranscription] = useState('');
   const [interimText, setInterimText] = useState('');
@@ -39,7 +41,7 @@ export const TranscriptionTool: React.FC = () => {
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setErrorMessage('Tu navegador no soporta dictado por voz. Usa Chrome, Edge o Safari.');
+      setErrorMessage(t('transcription.notSupported'));
       return;
     }
 
@@ -95,15 +97,15 @@ export const TranscriptionTool: React.FC = () => {
 
       recognition.onerror = (event: any) => {
         if (event.error === 'not-allowed') {
-          setErrorMessage('Permiso de micrófono denegado. Permíte el acceso en la configuración del navegador.');
+          setErrorMessage(t('transcription.micDenied'));
         } else if (event.error === 'no-speech') {
-          setErrorMessage('No se detectó voz. Acércate al micrófono y habla claramente.');
+          setErrorMessage(t('transcription.noSpeech'));
         } else if (event.error === 'audio-capture') {
-          setErrorMessage('No se encontró micrófono. Conecta uno e inténtalo de nuevo.');
+          setErrorMessage(t('transcription.noMic'));
         } else if (event.error === 'network') {
-          setErrorMessage('Error de red en el servicio de dictado. Revisa tu conexión a internet.');
+          setErrorMessage(t('transcription.networkError'));
         } else {
-          setErrorMessage(`Error de dictado: ${event.error}`);
+          setErrorMessage(`${t('transcription.dictationError')} ${event.error}`);
         }
         setIsRecording(false);
         if (timerRef.current) {
@@ -129,7 +131,7 @@ export const TranscriptionTool: React.FC = () => {
       timerRef.current = window.setInterval(() => setRecordingTime((p) => p + 1), 1000);
     } catch (err: any) {
       console.error(err);
-      setErrorMessage('No se pudo iniciar la grabación. Asegurate de tener un micrófono disponible.');
+      setErrorMessage(t('transcription.startError'));
     }
   };
 
@@ -184,9 +186,9 @@ export const TranscriptionTool: React.FC = () => {
       <div className="bg-emerald-800 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 no-print">
         <div>
           <h2 className="text-2xl font-black flex items-center gap-2">
-            <span className="material-symbols-outlined text-3xl">mic</span> Dictado Inteligente
+            <span className="material-symbols-outlined text-3xl">mic</span> {t('transcription.title')}
           </h2>
-          <p className="text-xs opacity-70 font-bold uppercase tracking-widest mt-1">Transcripción por voz en tiempo real</p>
+          <p className="text-xs opacity-70 font-bold uppercase tracking-widest mt-1">{t('transcription.subtitle')}</p>
         </div>
         <div className="flex flex-col items-center">
           <button
@@ -207,12 +209,12 @@ export const TranscriptionTool: React.FC = () => {
         {/* Transcripción */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
           <div className="p-4 bg-gray-50 border-b flex justify-between items-center no-print">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Transcripción Original</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('transcription.originalTranscript')}</span>
             <button
               onClick={() => savePDF('trans-area', 'transcripcion')}
               className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-black uppercase"
             >
-              GUARDAR PDF
+              {t('transcription.savePdf')}
             </button>
           </div>
           <div id="trans-area" className="p-6 flex-1 overflow-y-auto">
@@ -223,7 +225,7 @@ export const TranscriptionTool: React.FC = () => {
                 setInterimText('');
               }}
               className="w-full h-full resize-none border-none focus:ring-0 text-sm font-medium leading-relaxed text-gray-800"
-              placeholder="Pulsa el micrófono y empieza a hablar..."
+              placeholder={t('transcription.pressMic')}
             />
           </div>
         </div>

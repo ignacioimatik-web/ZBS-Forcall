@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useT } from '../lib/i18n';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { SessionManager } from './SessionManager';
 import { Meeting, User, MeetingType, Guardia, Libranza, Dobla } from '../types';
@@ -27,6 +28,7 @@ export const SesionesView: React.FC<SesionesViewProps> = ({
   onCancelMeeting,
   user
 }) => {
+  const { t } = useT();
   const [viewMode, setViewMode] = useState<'calendar' | 'manager'>('calendar');
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
 
@@ -39,8 +41,8 @@ export const SesionesView: React.FC<SesionesViewProps> = ({
             <span className="material-symbols-outlined text-3xl">school</span>
           </div>
           <div>
-            <h2 className="text-2xl font-black tracking-tight uppercase">Sesiones y Formación</h2>
-            <p className="text-xs opacity-80 font-bold tracking-widest uppercase">Calendario Académico y de Equipo</p>
+            <h2 className="text-2xl font-black tracking-tight uppercase">{t('sesiones.title')}</h2>
+            <p className="text-xs opacity-80 font-bold tracking-widest uppercase">{t('sesiones.subtitle')}</p>
           </div>
         </div>
 
@@ -52,7 +54,7 @@ export const SesionesView: React.FC<SesionesViewProps> = ({
             }`}
           >
             <span className="material-symbols-outlined text-lg">calendar_month</span>
-            Calendario
+            {t('sesiones.calendarTab')}
           </button>
           <button
             onClick={() => setViewMode('manager')}
@@ -61,7 +63,7 @@ export const SesionesView: React.FC<SesionesViewProps> = ({
             }`}
           >
             <span className="material-symbols-outlined text-lg">description</span>
-            Actas y Detalles
+            {t('sesiones.managerTab')}
           </button>
         </div>
       </div>
@@ -71,10 +73,7 @@ export const SesionesView: React.FC<SesionesViewProps> = ({
           <div className="space-y-4">
             <div className="bg-white p-4 rounded-2xl border border-purple-100 flex items-start gap-3 shadow-sm no-print">
               <span className="material-symbols-outlined text-purple-600">info</span>
-              <p className="text-xs text-gray-600 leading-tight">
-                Haz clic en cualquier día para añadir una <strong>Reunión de Equipo</strong>, <strong>Sesión Clínica</strong> o <strong>Taller</strong>. 
-                Los eventos se sincronizarán automáticamente con el Dashboard de la zona.
-              </p>
+              <p className="text-xs text-gray-600 leading-tight" dangerouslySetInnerHTML={{ __html: t('sesiones.infoText') }} />
             </div>
             
             <UnifiedCalendar 
