@@ -1,4 +1,4 @@
-export const VERSION = '1.7.0';
+export const VERSION = '2.0.0';
 export const VERSION_STRING = `Gestión Equipos v${VERSION}`;
 export const VERSION_YEAR = '2026';
 
@@ -10,6 +10,19 @@ export interface VersionEntry {
 }
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: '2.0.0',
+    date: 'Mayo 2026',
+    title: 'Navegación rediseñada, página de ayuda y unificación visual',
+    changes: [
+      'Subcategorías de Guardias movidas a menú expandible en la barra lateral.',
+      'Nueva página de Ayuda interactiva con guía asistida de la aplicación.',
+      'Rediseño visual de la sección Dictado alineado con Unificado/Guardias.',
+      'Rediseño visual de la sección Alertas alineado con Unificado/Guardias.',
+      'Eliminado el indicador de versión del encabezado superior.',
+      'Corrección de import faltante de useMemo en App.tsx.',
+    ],
+  },
   {
     version: '1.7.0',
     date: 'Mayo 2026',
