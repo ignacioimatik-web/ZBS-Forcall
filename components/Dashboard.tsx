@@ -251,7 +251,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 />
               </div>
 
-              <div className="w-full lg:w-[340px] xl:w-[360px] flex-shrink-0">
+              <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0">
                 <DayDetailPanel
                   selectedDate={selectedDate}
                   guardias={guardias}

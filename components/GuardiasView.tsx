@@ -241,20 +241,20 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                 </div>
 
                 {/* Guardias con ShiftBadge */}
-                <div className="flex-1 space-y-1">
-                  {dayGuardias.length > 0 ? (
-                    dayGuardias.map(g => (
-                      <div
-                        key={g.id}
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold truncate transition-all
-                          ${g.type === 'medica'
-                            ? 'bg-blue-50 text-blue-800 border border-blue-100'
-                            : 'bg-rose-50 text-rose-800 border border-rose-100'
-                          }`}
-                      >
-                        <ShiftBadge kind="guardia" type={g.type} />
-                        <span className="truncate">{g.personnelName}</span>
-                        {canEdit && (
+<div className="flex-1 space-y-1 overflow-hidden">
+                   {dayGuardias.length > 0 ? (
+                     dayGuardias.map(g => (
+                       <div
+                         key={g.id}
+                         className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all whitespace-nowrap
+                           ${g.type === 'medica'
+                             ? 'bg-blue-50 text-blue-800 border border-blue-100'
+                             : 'bg-rose-50 text-rose-800 border border-rose-100'
+                           }`}
+                       >
+                         <ShiftBadge kind="guardia" type={g.type} />
+                         <span className="whitespace-nowrap">{g.personnelName}</span>
+                         {canEdit && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

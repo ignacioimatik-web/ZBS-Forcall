@@ -226,50 +226,65 @@ const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaci
                       </span>
                     </td>
 
-                    {/* Medicina */}
-                    <td className="px-3 py-2 border-b border-gray-100">
-                      <div className="flex flex-wrap gap-0.5">
-                        {row.guardias.filter((g: any) => g.type === 'medica').map((g: any, i: number) => (
-                          <ShiftBadge key={i} kind="guardia" type="medica" />
-                        ))}
-                      </div>
-                    </td>
+{/* Medicina */}
+                     <td className="px-3 py-2 border-b border-gray-100">
+                       <div className="flex flex-wrap gap-0.5">
+                         {row.guardias.filter((g: any) => g.type === 'medica').map((g: any, i: number) => (
+                           <span key={i} className="inline-flex items-center gap-0.5" title={g.personnelName}>
+                             <ShiftBadge kind="guardia" type="medica" />
+                             <span className="text-[9px] font-medium">{g.personnelName}</span>
+                           </span>
+                         ))}
+                       </div>
+                     </td>
 
-                    {/* Enfermería */}
-                    <td className="px-3 py-2 border-b border-gray-100">
-                      <div className="flex flex-wrap gap-0.5">
-                        {row.guardias.filter((g: any) => g.type === 'enfermeria').map((g: any, i: number) => (
-                          <ShiftBadge key={i} kind="guardia" type="enfermeria" />
-                        ))}
-                      </div>
-                    </td>
+                     {/* Enfermería */}
+                     <td className="px-3 py-2 border-b border-gray-100">
+                       <div className="flex flex-wrap gap-0.5">
+                         {row.guardias.filter((g: any) => g.type === 'enfermeria').map((g: any, i: number) => (
+                           <span key={i} className="inline-flex items-center gap-0.5" title={g.personnelName}>
+                             <ShiftBadge kind="guardia" type="enfermeria" />
+                             <span className="text-[9px] font-medium">{g.personnelName}</span>
+                           </span>
+                         ))}
+                       </div>
+                     </td>
 
-                    {/* Libranzas */}
-                    <td className="px-3 py-2 border-b border-gray-100">
-                      <div className="flex flex-wrap gap-0.5">
-                        {row.libranzas.map((l: any, i: number) => (
-                          <ShiftBadge key={i} kind="libranza" type={l.type} />
-                        ))}
-                      </div>
-                    </td>
+                     {/* Libranzas */}
+                     <td className="px-3 py-2 border-b border-gray-100">
+                       <div className="flex flex-wrap gap-0.5">
+                         {row.libranzas.map((l: any, i: number) => (
+                           <span key={i} className="inline-flex items-center gap-0.5" title={l.personnelName}>
+                             <ShiftBadge kind="libranza" type={l.type} />
+                             <span className="text-[9px] font-medium">{l.personnelName}</span>
+                           </span>
+                         ))}
+                       </div>
+                     </td>
 
-                    {/* Refuerzos (Doblas) */}
-                    <td className="px-3 py-2 border-b border-gray-100">
-                      <div className="flex flex-wrap gap-0.5">
-                        {row.doblas.map((d: any, i: number) => (
-                          <ShiftBadge key={i} kind="dobla" type={d.type} />
-                        ))}
-                      </div>
-                    </td>
+                     {/* Refuerzos (Doblas) */}
+                     <td className="px-3 py-2 border-b border-gray-100">
+                       <div className="flex flex-wrap gap-0.5">
+                         {row.doblas.map((d: any, i: number) => (
+                           <span key={i} className="inline-flex items-center gap-0.5" title={d.personnelName}>
+                             <ShiftBadge kind="dobla" type={d.type} />
+                             <span className="text-[9px] font-medium">{d.personnelName}</span>
+                           </span>
+                         ))}
+                       </div>
+                     </td>
 
-                    {/* Vacaciones */}
-                    <td className="px-3 py-2 border-b border-gray-100">
-                      <div className="flex flex-wrap gap-0.5">
-                        {row.vacaciones.map((v: any, i: number) => (
-                          <ShiftBadge key={i} kind="vacacion" type={v.type} />
-                        ))}
-                      </div>
-                    </td>
+                     {/* Vacaciones */}
+                     <td className="px-3 py-2 border-b border-gray-100">
+                       <div className="flex flex-wrap gap-0.5">
+                         {row.vacaciones.map((v: any, i: number) => (
+                           <span key={i} className="inline-flex items-center gap-0.5" title={v.personnelName}>
+                             <ShiftBadge kind="vacacion" type={v.type} />
+                             <span className="text-[9px] font-medium">{v.personnelName}</span>
+                           </span>
+                         ))}
+                       </div>
+                     </td>
 
                     {/* Reunión */}
                     <td className="px-3 py-2 border-b border-gray-100">

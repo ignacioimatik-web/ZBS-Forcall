@@ -388,10 +388,10 @@ const startingEmptyCells = useMemo(() => {
                     const chipStyle = getEventStyle(ev);
                     const isInteractive = canDelete && !swapMode && !bulkMode;
                     return (
-                    <button key={idx} onClick={(e) => handleEntryClick(e, ev)} className={`w-full text-left h-[26px] px-2 rounded-lg text-[11px] font-semibold border leading-none flex items-center gap-1.5 transition-all ${chipStyle} ${isInteractive ? 'cursor-pointer hover:brightness-105 active:scale-[0.98]' : ''} ${swapMode ? 'cursor-pointer hover:brightness-105 active:scale-95' : ''} ${selectedProfessional !== 'all' ? (ev.personnelName === selectedProfessional ? 'ring-2 ring-blue-400 ring-inset' : 'opacity-35') : ''}`} aria-label={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`}>
-                      <ShiftBadge kind={ev._kind} type={ev.type} />
-                      <span className="truncate flex-1 min-w-0">{ev.personnelName || ev.title}</span>
-                    </button>
+<button key={idx} onClick={(e) => handleEntryClick(e, ev)} title={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`} className={`w-full text-left h-[26px] px-1.5 rounded-lg text-[10px] font-semibold border leading-none flex items-center gap-0.5 transition-all hover:brightness-97 active:scale-[0.98] ${chipStyle} ${isInteractive ? 'cursor-pointer' : ''} ${swapMode ? 'cursor-pointer active:scale-95' : ''} ${selectedProfessional !== 'all' ? (ev.personnelName === selectedProfessional ? 'ring-2 ring-blue-400 ring-inset' : 'opacity-35') : ''}`} aria-label={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`}>
+                       <ShiftBadge kind={ev.kind} type={ev.type} />
+                       <span className="flex-auto overflow-hidden">{ev.personnelName || ev.title}</span>
+                     </button>
                     );
                   })}
                   {events.length > 4 && (
