@@ -62,6 +62,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const [bulkPersonnel, setBulkPersonnel] = useState<string | null>(null);
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
   const [isBulkSaving, setIsBulkSaving] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
   const { logs: auditLogs, addLog, deleteLog } = useAuditLogs();
   const [swapMode, setSwapMode] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -424,12 +425,12 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           downloadLabel={t('calendarios.downloadCalendar')}
         />
 
-        {/* Tools bar: swap mode, professional selector, bulk assign */}
+        {/* Tools bar: swap mode, multi-select, export */}
         <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-3 shadow-sm">
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {props.user?.role !== 'Administrador' && (
               <button
-                onClick={() => { setSwapMode(!swapMode); setBulkPersonnel(null); }}
+                onClick={() => { setSwapMode(!swapMode); if (!swapMode) setSelectionMode(false); }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
                   swapMode
                     ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm animate-pulse'
@@ -441,57 +442,18 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
               </button>
             )}
 
-            <select
-              value={bulkPersonnel || ''}
-              disabled={swapMode || !canManageActiveCategory}
-              onChange={(e) => { setBulkPersonnel(e.target.value); setBulkDates([]); }}
-              className="w-full sm:flex-1 sm:min-w-[140px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-100"
-            >
-              <option value="">{t('calendarios.selectProfessional')}</option>
-              {currentPersonnel.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-
-            {bulkPersonnel && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-800 rounded-xl border border-indigo-200 text-[10px] font-black uppercase tracking-widest">
-                  <span className="material-symbols-outlined text-sm">person</span>
-                  {bulkPersonnel}
-                  <button
-                    onClick={() => { setBulkPersonnel(null); setBulkDates([]); }}
-                    className="ml-1 p-0.5 rounded-full hover:bg-indigo-200 transition-colors"
-                    aria-label="Quitar selección"
-                  >
-                    <span className="material-symbols-outlined text-sm">close</span>
-                  </button>
-                </span>
-                <span className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border whitespace-nowrap ${
-                  bulkDates.length === 0
-                    ? 'text-amber-700 bg-amber-50 border-amber-200'
-                    : 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                }`}>
-                  {bulkDates.length === 0
-                    ? `${t('calendarios.tapDays')} ${bulkPersonnel}`
-                    : `${bulkDates.length} ${t('calendarios.daysSelected')}`
-                  }
-                </span>
-                {bulkDates.length > 0 && (
-                  <>
-                    <button
-                      onClick={() => setBulkDates([])}
-                      className="px-3 py-1.5 bg-white text-gray-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-200 hover:bg-gray-50 transition-colors"
-                    >
-                      {t('common.clear')}
-                    </button>
-                    <button
-                      onClick={handleSaveBulk}
-                      disabled={isBulkSaving}
-                      className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-black transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isBulkSaving ? t('common.saving') : t('calendarios.confirmAssignment')}
-                    </button>
-                  </>
-                )}
-              </div>
+            {canManageActiveCategory && (
+              <button
+                onClick={() => { setSelectionMode(!selectionMode); if (!selectionMode) { setSwapMode(false); setBulkPersonnel(null); } }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                  selectionMode
+                    ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                    : 'bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">{selectionMode ? 'select_checked' : 'select'}</span>
+                {selectionMode ? t('calendarios.multiSelectActive') : t('calendarios.multiSelect')}
+              </button>
             )}
 
             {props.user && (
@@ -527,6 +489,51 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           )}
         </div>
 
+        {/* Assignment bar: visible when selection mode is active */}
+        {selectionMode && (
+          <div className={`bg-white border rounded-2xl px-3 sm:px-4 py-3 shadow-sm transition-all ${
+            bulkDates.length > 0 ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-200'
+          }`}>
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
+                <span className="material-symbols-outlined text-sm">select_checked</span>
+                {bulkDates.length === 0
+                  ? t('calendarios.tapDaysMulti')
+                  : `${bulkDates.length} ${t('calendarios.daysSelected')}`
+                }
+              </span>
+
+              {bulkDates.length > 0 && (
+                <>
+                  <select
+                    value={bulkPersonnel || ''}
+                    onChange={(e) => setBulkPersonnel(e.target.value || null)}
+                    className="flex-1 sm:flex-none sm:min-w-[160px] px-4 py-2 bg-white border border-gray-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-50"
+                  >
+                    <option value="">{t('calendarios.selectProfessional')}</option>
+                    {currentPersonnel.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+
+                  <button
+                    onClick={() => setBulkDates([])}
+                    className="px-3 py-2 bg-white text-gray-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    {t('common.clear')}
+                  </button>
+
+                  <button
+                    onClick={handleSaveBulk}
+                    disabled={isBulkSaving || !bulkPersonnel}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-black transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isBulkSaving ? t('common.saving') : t('calendarios.confirmAssignment')}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Main layout: calendar + day detail panel */}
         <div className="flex flex-col lg:flex-row gap-3 lg:gap-6">
           <div className="flex-1 min-w-0 -mx-3 sm:-mx-4 md:mx-0">
@@ -557,7 +564,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
               isReadOnly={!canManageActiveCategory && !isGuardiaCategory}
               activeCategory={activeSub}
               availablePersonnel={currentPersonnel.filter(Boolean)}
-              bulkMode={bulkPersonnel !== null}
+              bulkMode={selectionMode}
               selectedBulkDates={bulkDates}
               onToggleBulkDate={toggleBulkDate}
               swapMode={swapMode}
