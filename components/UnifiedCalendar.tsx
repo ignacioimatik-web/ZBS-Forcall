@@ -400,8 +400,6 @@ const startingEmptyCells = useMemo(() => {
                     </div>
                   )}
                 </div>
-              ) : events.length === 0 && canManageActiveCategory && !swapMode ? (
-                <div className="flex-1 flex items-center justify-center text-gray-400 text-[10px] font-bold uppercase tracking-wider">{t('common.libre')}</div>
               ) : null}
             </div>
           );
