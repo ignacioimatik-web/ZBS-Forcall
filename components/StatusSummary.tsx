@@ -5,20 +5,14 @@ interface StatusSummaryProps {
   totalDays: number;
   coveredDays: number;
   gaps: number;
-  conflicts: number;
-  pendingValidation: number | null;
-  validationErrors?: number;
-  validationWarnings?: number;
+  swapCount: number;
 }
 
 export const StatusSummary: React.FC<StatusSummaryProps> = ({
   totalDays,
   coveredDays,
   gaps,
-  conflicts,
-  pendingValidation,
-  validationErrors = 0,
-  validationWarnings = 0,
+  swapCount,
 }) => {
   const { t } = useT();
   const cards = [
@@ -39,33 +33,17 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({
       bgClass: 'bg-amber-50',
     },
     {
-      label: t('statusSummary.conflicts'),
-      value: String(conflicts + validationErrors),
-      icon: 'warning',
+      label: t('statusSummary.swaps'),
+      value: String(swapCount),
+      icon: 'sync_alt',
       accentClass: 'bg-red-500',
       textClass: 'text-red-700',
       bgClass: 'bg-red-50',
     },
-    {
-      label: t('statusSummary.warnings'),
-      value: String(validationWarnings),
-      icon: 'error_outline',
-      accentClass: 'bg-orange-500',
-      textClass: 'text-orange-700',
-      bgClass: 'bg-orange-50',
-    },
-    {
-      label: t('statusSummary.pending'),
-      value: pendingValidation !== null ? String(pendingValidation) : '--',
-      icon: 'hourglass_empty',
-      accentClass: 'bg-gray-400',
-      textClass: 'text-gray-600',
-      bgClass: 'bg-gray-50',
-    },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3">
+    <div className="grid grid-cols-3 gap-2 md:gap-3">
       {cards.map((card) => (
         <div
           key={card.label}

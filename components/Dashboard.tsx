@@ -205,13 +205,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="space-y-4">
         <div className="print-hide">
           <StatusSummary
-          totalDays={status.totalDays}
-          coveredDays={status.coveredDays}
-          gaps={status.gaps}
-          conflicts={status.conflicts}
-          pendingValidation={null}
-          validationErrors={validation.errors}
-          validationWarnings={validation.warnings}
+            totalDays={status.totalDays}
+            coveredDays={status.coveredDays}
+            gaps={status.gaps}
+            swapCount={status.conflicts}
           />
         </div>
 

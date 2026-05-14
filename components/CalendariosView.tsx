@@ -442,8 +442,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           totalDays={statusSummary.totalDays}
           coveredDays={statusSummary.coveredDays}
           gaps={statusSummary.gaps}
-          conflicts={statusSummary.conflicts}
-          pendingValidation={null}
+          swapCount={permutaHistory.length}
         />
 
         <CalendarToolbar
@@ -505,13 +504,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
         {/* Main layout: calendar + day detail panel */}
         <div className="flex flex-col lg:flex-row gap-3 lg:gap-6">
           <div className="flex-1 min-w-0 -mx-3 sm:-mx-4 md:mx-0">
-            {(activeSub === 'Libranzas' || activeSub === 'Refuerzo' || activeSub === 'Vacaciones') && userGroup !== 'both' && (
-              <div className="mb-4 px-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full">
-                  {t('calendarios.showingOnly')} {userGroup === 'medico' ? t('calendarios.medicina') : t('calendarios.enfermeria')}
-                </span>
-              </div>
-            )}
             <UnifiedCalendar
               key={activeSub}
               meetings={meetings}
@@ -551,6 +543,11 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0 lg:sticky lg:top-20 lg:self-start space-y-3">
             <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-3 shadow-sm">
               <div className="flex flex-col gap-2">
+                {(activeSub === 'Libranzas' || activeSub === 'Refuerzo' || activeSub === 'Vacaciones') && userGroup !== 'both' && (
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-100 px-3 py-1.5 rounded-xl text-center">
+                    {t('calendarios.showingOnly')} {userGroup === 'medico' ? t('calendarios.medicina') : t('calendarios.enfermeria')}
+                  </span>
+                )}
                 {props.user?.role !== 'Administrador' && (
                   <button
                     onClick={() => { setSwapMode(!swapMode); if (!swapMode) setSelectionMode(false); }}

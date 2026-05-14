@@ -91,9 +91,7 @@ pdf: 'PDF',
   statusSummary: {
     complete: 'Cobertura completa',
     gaps: 'Butts',
-    conflicts: 'Conflictes',
-    warnings: 'Avisos',
-    pending: 'Pendent validar',
+    swaps: 'Canvis G',
   },
   calendarios: {
     medicina: 'Medicina',
