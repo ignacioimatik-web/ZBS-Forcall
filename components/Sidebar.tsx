@@ -19,7 +19,7 @@ const tabLabels: Record<string, string> = {
   IAassist: 'header.iaassist',
   Chat: 'header.chat',
   Dictado: 'header.dictado',
-  Alertas: 'header.avisos',
+  Avisos: 'header.avisos',
 };
 
 const tabIcons: Record<string, string> = {
@@ -28,7 +28,7 @@ const tabIcons: Record<string, string> = {
   IAassist: 'auto_awesome',
   Chat: 'forum',
   Dictado: 'mic',
-  Alertas: 'notifications_active',
+  Avisos: 'notifications_active',
 };
 
 const guardiaSubItems = [
