@@ -25,6 +25,8 @@ interface CalendariosViewProps {
   onSwapGuardias: (event1: Guardia & { _kind?: string }, event2: Guardia & { _kind?: string }) => Promise<boolean>;
   onUndoSwap?: (log: AuditLog) => Promise<boolean>;
   user: User | null;
+  activeSub: 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones';
+  onSubCategoryChange: (sub: 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones') => void;
 }
 
 function safeFormatDate(value: any): string {
@@ -52,10 +54,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   }
 
   const userGroup = getUserGroup();
-
-  const [activeSub, setActiveSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'>(
-    userGroup === 'enfermeria' ? 'enfermeria' : 'Medicina'
-  );
+  const activeSub = props.activeSub;
   const [bulkPersonnel, setBulkPersonnel] = useState<string | null>(null);
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
   const { logs: auditLogs, addLog, deleteLog } = useAuditLogs();
@@ -288,17 +287,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     }
   };
 
-  const allNav = [
-    { id: 'Medicina', label: t('calendarios.medicina'), icon: 'stethoscope', activeClass: 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-200 ring-blue-500/20', group: 'medico' as const },
-    { id: 'enfermeria', label: t('calendarios.enfermeria'), icon: 'vaccines', activeClass: 'bg-gradient-to-br from-red-500 to-red-700 text-white shadow-red-200 ring-red-500/20', group: 'enfermeria' as const },
-    { id: 'Libranzas', label: t('calendarios.libranzas'), icon: 'beach_access', activeClass: 'bg-gradient-to-br from-green-500 to-green-700 text-white shadow-green-200 ring-green-500/20', group: null as const },
-    { id: 'Refuerzo', label: t('calendarios.refuerzo'), icon: 'dynamic_feed', activeClass: 'bg-gradient-to-br from-orange-500 to-orange-700 text-white shadow-orange-200 ring-orange-500/20', group: null as const },
-    { id: 'Vacaciones', label: t('calendarios.vacaciones'), icon: 'flight', activeClass: 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-purple-200 ring-purple-500/20', group: null as const }
-  ];
-  const subNav = allNav.filter(item =>
-    userGroup === 'both' || item.group === null || item.group === userGroup
-  );
-
   const permutaHistory = useMemo(() => auditLogs.filter(log => log.type === 'PERMUTA'), [auditLogs]);
 
   const canWriteNotes = props.user?.name === 'Xelo García' || props.user?.name === 'Elena Benages';
@@ -395,24 +383,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           conflicts={statusSummary.conflicts}
           pendingValidation={null}
         />
-
-        {/* Category pills */}
-        <div className="flex overflow-x-auto gap-1.5 no-scrollbar pb-1">
-          {subNav.map(item => (
-            <button
-              key={item.id}
-              onClick={() => { setActiveSub(item.id as 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'); setBulkPersonnel(null); setBulkDates([]); setSwapMode(false); setSelectedDate(null); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap ${
-                activeSub === item.id
-                  ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
-                  : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
-              }`}
-            >
-              <span className="material-symbols-outlined text-sm">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
-        </div>
 
         <CalendarToolbar
           currentMonth={currentMonth}

@@ -57,6 +57,22 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Unificado');
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
+  const [guardiaSub, setGuardiaSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'>('Medicina');
+
+  const appUserGroup = useMemo(() => {
+    if (!user || user.role === 'Administrador') return 'both';
+    if (user.staffGroup === 'medico') return 'medico';
+    if (user.staffGroup === 'enfermeria') return 'enfermeria';
+    if (user.role === 'Medico' || user.role === 'Coordinador') return 'medico';
+    if (user.role === 'enfermera') return 'enfermeria';
+    return 'both';
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      setGuardiaSub(appUserGroup === 'enfermeria' ? 'enfermeria' : 'Medicina');
+    }
+  }, [user, appUserGroup]);
 
   // Inicializar recordatorios (notificaciones programadas) para el usuario actual
   useReminders(user?.name);
@@ -296,6 +312,8 @@ const App: React.FC = () => {
             onSwapGuardias={handleSwapGuardias}
             onUndoSwap={handleUndoSwap}
             user={user}
+            activeSub={guardiaSub}
+            onSubCategoryChange={setGuardiaSub}
           />
         );
       case 'Chat':
@@ -324,7 +342,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} guardiaSubCategory={guardiaSub} onGuardiaSubCategoryChange={setGuardiaSub} />
       <div className="md:pl-60 min-h-screen flex flex-col">
         <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} userName={user?.name} />
         {isDataLoading && (
