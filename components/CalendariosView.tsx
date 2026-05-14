@@ -447,11 +447,11 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                 onClick={() => { setSelectionMode(!selectionMode); if (!selectionMode) { setSwapMode(false); setBulkPersonnel(null); } }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
                   selectionMode
-                    ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                    ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm animate-pulse'
                     : 'bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50'
                 }`}
               >
-                <span className="material-symbols-outlined text-sm">{selectionMode ? 'select_checked' : 'select'}</span>
+                <span className="material-symbols-outlined text-sm">{selectionMode ? 'checklist' : 'select_check_box'}</span>
                 {selectionMode ? t('calendarios.multiSelectActive') : t('calendarios.multiSelect')}
               </button>
             )}
