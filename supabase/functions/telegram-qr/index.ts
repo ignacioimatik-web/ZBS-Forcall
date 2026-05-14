@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
+const TELEGRAM_BOT_USERNAME = Deno.env.get('TELEGRAM_BOT_USERNAME') || 'ZBSforcabot';
 const BASE_URL = Deno.env.get('BASE_URL') || 'https://zbs-forcall.vercel.app';
 
 serve(async (req) => {
@@ -49,7 +50,7 @@ serve(async (req) => {
     // Since we don't know the group yet, we provide a generic invite link approach
     // The actual QR will encode a URL that opens Telegram with a pre-filled message
 
-    const telegramDeepLink = `https://t.me/${TELEGRAM_BOT_TOKEN.split(':')[0]}?start=ZBS${userId}`;
+    const telegramDeepLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=ZBS${userId}`;
 
     // Alternative: generate a QR-compatible URL
     const qrUrl = `${BASE_URL}/api/telegram-callback?user_id=${userId}`;
@@ -58,7 +59,7 @@ serve(async (req) => {
       success: true,
       deep_link: telegramDeepLink,
       qr_url: qrUrl,
-      bot_username: TELEGRAM_BOT_TOKEN.split(':')[0],
+      bot_username: TELEGRAM_BOT_USERNAME,
       instructions: 'Escanea el QR o abre el enlace con Telegram para vincular tu cuenta',
     }), {
       status: 200,

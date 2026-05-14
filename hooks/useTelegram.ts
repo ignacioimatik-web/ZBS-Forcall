@@ -19,7 +19,7 @@ interface UseTelegramResult {
   isTelegramConfigured: boolean;
 }
 
-const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || '';
+const BOT_USERNAME = 'ZBSforcabot';
 
 export function useTelegram(): UseTelegramResult {
   const [linkedChats, setLinkedChats] = useState<TelegramChat[]>([]);
