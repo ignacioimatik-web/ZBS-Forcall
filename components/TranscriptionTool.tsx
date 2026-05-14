@@ -198,14 +198,19 @@ export const TranscriptionTool: React.FC = () => {
 
   const saveAsPDF = (record: TranscriptionRecord) => {
     const dateStr = new Date(record.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    const html = `
-      <div style="padding: 40px; font-family: 'Inter', sans-serif;">
-        <h1 style="font-size: 20px; font-weight: 900; color: #1f2937; margin-bottom: 4px;">${record.name}</h1>
-        <p style="font-size: 12px; color: #6b7280; margin-bottom: 24px;">${dateStr}</p>
-        <hr style="border: none; border-top: 2px solid #e5e7eb; margin-bottom: 24px;">
-        <p style="font-size: 14px; line-height: 1.8; color: #374151; white-space: pre-wrap;">${record.text}</p>
-      </div>
+    const div = document.createElement('div');
+    div.style.padding = '40px';
+    div.style.fontFamily = 'Inter, sans-serif';
+    div.innerHTML = `
+      <h1 style="font-size: 20px; font-weight: 900; color: #1f2937; margin-bottom: 4px;">${escapeHtml(record.name)}</h1>
+      <p style="font-size: 12px; color: #6b7280; margin-bottom: 24px;">${dateStr}</p>
+      <hr style="border: none; border-top: 2px solid #e5e7eb; margin-bottom: 24px;">
+      <p style="font-size: 14px; line-height: 1.8; color: #374151; white-space: pre-wrap;">${escapeHtml(record.text)}</p>
     `;
+    div.style.position = 'fixed';
+    div.style.left = '-9999px';
+    div.style.top = '-9999px';
+    document.body.appendChild(div);
     const name = `grabacion-${record.name.replace(/\s+/g, '_')}-${new Date(record.date).toISOString().slice(0, 10)}`;
     const opt = {
       margin: 10,
@@ -213,20 +218,25 @@ export const TranscriptionTool: React.FC = () => {
       html2canvas: { scale: 2 },
       jsPDF: { orientation: 'portrait' as const },
     };
-    html2pdf().set(opt).fromHtml(html).save();
+    html2pdf().set(opt).from(div).save().then(() => document.body.removeChild(div));
   };
 
   const saveCurrentPdf = () => {
     const text = transcription || interimText || '';
     if (!text.trim()) return;
-    const html = `
-      <div style="padding: 40px; font-family: 'Inter', sans-serif;">
-        <h1 style="font-size: 18px; font-weight: 900; color: #1f2937; margin-bottom: 4px;">${t('transcription.originalTranscript')}</h1>
-        <p style="font-size: 12px; color: #6b7280; margin-bottom: 24px;">${new Date().toLocaleDateString('es-ES')}</p>
-        <hr style="border: none; border-top: 2px solid #e5e7eb; margin-bottom: 24px;">
-        <p style="font-size: 14px; line-height: 1.8; color: #374151; white-space: pre-wrap;">${text}</p>
-      </div>
+    const div = document.createElement('div');
+    div.style.padding = '40px';
+    div.style.fontFamily = 'Inter, sans-serif';
+    div.innerHTML = `
+      <h1 style="font-size: 18px; font-weight: 900; color: #1f2937; margin-bottom: 4px;">${t('transcription.originalTranscript')}</h1>
+      <p style="font-size: 12px; color: #6b7280; margin-bottom: 24px;">${new Date().toLocaleDateString('es-ES')}</p>
+      <hr style="border: none; border-top: 2px solid #e5e7eb; margin-bottom: 24px;">
+      <p style="font-size: 14px; line-height: 1.8; color: #374151; white-space: pre-wrap;">${escapeHtml(text)}</p>
     `;
+    div.style.position = 'fixed';
+    div.style.left = '-9999px';
+    div.style.top = '-9999px';
+    document.body.appendChild(div);
     const name = `transcripcion-${new Date().toISOString().slice(0, 10)}`;
     const opt = {
       margin: 10,
@@ -234,7 +244,13 @@ export const TranscriptionTool: React.FC = () => {
       html2canvas: { scale: 2 },
       jsPDF: { orientation: 'portrait' as const },
     };
-    html2pdf().set(opt).fromHtml(html).save();
+    html2pdf().set(opt).from(div).save().then(() => document.body.removeChild(div));
+  };
+
+  const escapeHtml = (text: string) => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   };
 
   const sortedHistory = useMemo(() => [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [history]);
