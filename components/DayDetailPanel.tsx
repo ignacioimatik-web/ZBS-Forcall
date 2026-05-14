@@ -36,26 +36,6 @@ interface Assignment {
   personnelName?: string;
 }
 
-function getDayOverlaps(assignments: Assignment[]): string[] {
-  const overlaps: string[] = [];
-  const byPerson: Record<string, string[]> = {};
-
-  for (const a of assignments) {
-    if (!a.personnelName) continue;
-    if (!byPerson[a.personnelName]) byPerson[a.personnelName] = [];
-    byPerson[a.personnelName].push(a.kind);
-  }
-
-  for (const [person, kinds] of Object.entries(byPerson)) {
-    const unique = new Set(kinds);
-    if (unique.size > 1) {
-      overlaps.push(`${person} asignado a ${Array.from(unique).join(' y ')} el mismo día`);
-    }
-  }
-
-  return overlaps;
-}
-
 const sectionConfig: Record<string, { labelKey: string; icon: string }> = {
   guardia: { labelKey: 'dayDetail.sectionGuardia', icon: 'stethoscope' },
   libranza: { labelKey: 'dayDetail.sectionLibranza', icon: 'beach_access' },
@@ -117,7 +97,6 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
     grouped[key].push(a);
   }
 
-  const overlaps = getDayOverlaps(assignments);
   const orderedSections = ['guardia', 'libranza', 'dobla', 'vacacion'];
 
   return (
@@ -129,9 +108,6 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
             <div className="flex items-center gap-2 mt-1.5">
               {isTodaySelected && (
                 <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">{t('dayDetail.today')}</span>
-              )}
-              {overlaps.length > 0 && (
-                <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">{t('dayDetail.withIssues')}</span>
               )}
               {selectedProfessional !== 'all' && (
                 <div className="flex items-center gap-1.5 mt-1.5">
@@ -159,25 +135,6 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
       </div>
 
       <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
-        {overlaps.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="material-symbols-outlined text-red-600 text-lg">warning</span>
-              <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">{t('dayDetail.solapamientos')}</span>
-            </div>
-            {overlaps.map((c, i) => (
-              <p key={i} className="text-xs text-red-700 ml-7" dangerouslySetInnerHTML={{ __html: c }} />
-            ))}
-          </div>
-        )}
-
-        {overlaps.length === 0 && assignments.length > 0 && (
-          <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
-            <span className="material-symbols-outlined text-lg">check_circle</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider">{t('dayDetail.sinSolapamientos')}</span>
-          </div>
-        )}
-
         {/* Sections */}
         {orderedSections.map((key) => {
           const items = grouped[key];
