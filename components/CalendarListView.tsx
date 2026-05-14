@@ -51,10 +51,10 @@ function computeStatus(guardias: Guardia[], libranzas: Libranza[], doblas: Dobla
 
 function getStatusConfig(status: string, t: (key: string) => string) {
   switch (status) {
-    case 'completo': return { label: t('listView.complete'), className: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-    case 'hueco': return { label: t('listView.gap'), className: 'bg-orange-50 text-orange-700 border-orange-200' };
-    case 'conflicto': return { label: t('listView.conflict'), className: 'bg-red-50 text-red-700 border-red-200' };
-    default: return { label: t('listView.noData'), className: 'bg-gray-50 text-gray-400 border-gray-200' };
+    case 'completo': return { label: t('calendarios.listView.complete'), className: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    case 'hueco': return { label: t('calendarios.listView.gap'), className: 'bg-orange-50 text-orange-700 border-orange-200' };
+    case 'conflicto': return { label: t('calendarios.listView.conflict'), className: 'bg-red-50 text-red-700 border-red-200' };
+    default: return { label: t('calendarios.listView.noData'), className: 'bg-gray-50 text-gray-400 border-gray-200' };
   }
 }
 
