@@ -61,6 +61,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const activeSub = props.activeSub;
   const [bulkPersonnel, setBulkPersonnel] = useState<string | null>(null);
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
+  const [isBulkSaving, setIsBulkSaving] = useState(false);
   const { logs: auditLogs, addLog, deleteLog } = useAuditLogs();
   const [swapMode, setSwapMode] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -132,7 +133,8 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   };
 
   const handleSaveBulk = async () => {
-    if (!bulkPersonnel || bulkDates.length === 0 || !canManageActiveCategory) return;
+    if (!bulkPersonnel || bulkDates.length === 0 || !canManageActiveCategory || isBulkSaving) return;
+    setIsBulkSaving(true);
     const isNurse = nurses.includes(bulkPersonnel);
     const personnelType = isNurse ? 'enfermeria' : 'medica';
     const results = await Promise.allSettled(bulkDates.map(async date => {
@@ -148,7 +150,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
       ? `${t('calendarios.bulkSuccess')}: ${bulkPersonnel} (${bulkDates.length} ${t('calendarios.bulkSuccess')}) en ${activeSub}.`
       : `${t('calendarios.bulkError')}: ${bulkPersonnel} (${failed}/${bulkDates.length} ${t('calendarios.bulkError')}) en ${activeSub}.`,
       category: activeSub });
-    setBulkDates([]); setBulkPersonnel(null);
+    setBulkDates([]); setBulkPersonnel(null); setIsBulkSaving(false);
   };
 
     const handleSwapEvents = async (ev1: any, ev2: any) => {
@@ -450,20 +452,44 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             </select>
 
             {bulkPersonnel && (
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 whitespace-nowrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-800 rounded-xl border border-indigo-200 text-[10px] font-black uppercase tracking-widest">
+                  <span className="material-symbols-outlined text-sm">person</span>
+                  {bulkPersonnel}
+                  <button
+                    onClick={() => { setBulkPersonnel(null); setBulkDates([]); }}
+                    className="ml-1 p-0.5 rounded-full hover:bg-indigo-200 transition-colors"
+                    aria-label="Quitar selección"
+                  >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </span>
+                <span className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border whitespace-nowrap ${
+                  bulkDates.length === 0
+                    ? 'text-amber-700 bg-amber-50 border-amber-200'
+                    : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                }`}>
                   {bulkDates.length === 0
                     ? `${t('calendarios.tapDays')} ${bulkPersonnel}`
                     : `${bulkDates.length} ${t('calendarios.daysSelected')}`
                   }
                 </span>
                 {bulkDates.length > 0 && (
-                  <button
-                    onClick={handleSaveBulk}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-black transition-colors active:scale-95"
-                  >
-                    {t('calendarios.confirmAssignment')}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setBulkDates([])}
+                      className="px-3 py-1.5 bg-white text-gray-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-200 hover:bg-gray-50 transition-colors"
+                    >
+                      {t('common.clear')}
+                    </button>
+                    <button
+                      onClick={handleSaveBulk}
+                      disabled={isBulkSaving}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-black transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isBulkSaving ? t('common.saving') : t('calendarios.confirmAssignment')}
+                    </button>
+                  </>
                 )}
               </div>
             )}

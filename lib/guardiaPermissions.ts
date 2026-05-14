@@ -22,28 +22,22 @@ const matchesAny = (user: User | null, values: string[]) => {
 
 export function isMedicineCoordinator(user: User | null) {
   if (!user) return false;
-  // Verificación por nombre/id/email (legacy)
   if (matchesAny(user, ['elena', 'elena benages'])) return true;
-  // Verificación por rol y staffGroup (nuevo sistema)
-  if (user.role === 'Coordinador' && user.staffGroup === 'medico') return true;
+  if (user.role === 'Coordinador' && (!user.staffGroup || user.staffGroup === 'medico')) return true;
   return false;
 }
 
 export function isNursingCoordinator(user: User | null) {
   if (!user) return false;
-  // Verificación por nombre/id/email (legacy)
   if (matchesAny(user, ['xelo', 'xelo garcia', 'xelo garcía'])) return true;
-  // Verificación por rol y staffGroup (nuevo sistema)
-  if (user.role === 'Coordinador' && user.staffGroup === 'enfermeria') return true;
+  if (user.role === 'Coordinador' && (!user.staffGroup || user.staffGroup === 'enfermeria')) return true;
   return false;
 }
 
 export function isNursingPlanner(user: User | null) {
   if (!user) return false;
-  // Verificación por nombre/id/email (legacy)
   if (matchesAny(user, ['xelo', 'xelo garcia', 'xelo garcía'])) return true;
-  // Verificación por rol y staffGroup (nuevo sistema)
-  if (user.role === 'Coordinador' && user.staffGroup === 'enfermeria') return true;
+  if (user.role === 'Coordinador' && (!user.staffGroup || user.staffGroup === 'enfermeria')) return true;
   return false;
 }
 
