@@ -32,6 +32,15 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
   const isAdmin = user?.staffGroup == null;
   const tabs = useMemo(() => ['Unificado', 'Guardias', 'Chat', 'Dictado', 'Alertas'].filter(t => !isAdmin || (t !== 'Chat' && t !== 'Dictado')), [isAdmin]);
 
+  const roleLabel = user
+    ? user.role === 'Administrador' ? 'Admin'
+      : user.role === 'Coordinador' && user.staffGroup === 'medico' ? 'Coord. Medicina'
+      : user.role === 'Coordinador' && user.staffGroup === 'enfermeria' ? 'Coord. Enfermeria'
+      : user.role === 'Medico' ? 'Médico'
+      : user.role === 'enfermera' ? 'Enfermera'
+      : ''
+    : '';
+
   const pageTitle = t(tabLabels[activeTab] || 'header.unificado');
 
   return (
@@ -44,6 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <span className="material-symbols-outlined text-lg text-gray-400">person</span>
               <span className="font-medium">{userName}</span>
+              {roleLabel && <span className="text-[10px] font-bold text-forcall-600 bg-forcall-50 px-2 py-0.5 rounded-md uppercase tracking-wider">{roleLabel}</span>}
             </div>
           )}
           
