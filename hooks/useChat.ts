@@ -190,9 +190,7 @@ export function useChat(currentUserId?: string | null): UseChatResult {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      await fetch('/api/telegram-forward', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await supabase.functions.invoke('telegram-forward', {
         body: JSON.stringify({
           text,
           sender_name: senderName,

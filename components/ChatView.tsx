@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { useChat } from '../hooks/useChat';
+import { useTelegram } from '../hooks/useTelegram';
 import { useT } from '../lib/i18n';
 
 interface ChatViewProps {
@@ -22,6 +23,10 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const { linkedChats, generateQR, isTelegramConfigured } = useTelegram();
+  const [qrResult, setQrResult] = useState<{ qrUrl?: string; deepLink?: string } | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -244,6 +249,71 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
             <p className="text-xs text-gray-400 text-center py-4">{t('chat.noOtherUsers')}</p>
           )}
         </div>
+
+        {/* Telegram section */}
+        {isTelegramConfigured && (
+          <div className="border-t border-gray-200 bg-earth-50">
+            <div className="p-3 border-b border-gray-200 bg-earth-50">
+              <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                <span className="material-symbols-outlined text-sm">telegram</span>
+                Telegram
+              </h2>
+            </div>
+            <div className="p-3">
+              {linkedChats.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-1">{t('telegram.linkedGroups')}</p>
+                  {linkedChats.map(chat => (
+                    <div key={chat.id} className="flex items-center gap-2 py-1">
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      <span className="text-sm text-gray-700 truncate">{chat.group_name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={async () => {
+                  setQrLoading(true);
+                  const result = await generateQR();
+                  if (result.success) {
+                    setQrResult({ qrUrl: result.qrUrl, deepLink: result.deepLink });
+                  }
+                  setQrLoading(false);
+                }}
+                disabled={qrLoading}
+                className="w-full flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-sm">qr_code</span>
+                {qrLoading ? '...' : t('telegram.generateQR')}
+              </button>
+              {qrResult && (
+                <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200 space-y-2">
+                  <p className="text-xs text-gray-500">{t('telegram.scanQR')}</p>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrResult.deepLink || '')}`}
+                    alt="QR Code"
+                    className="w-36 h-36 mx-auto"
+                  />
+                  <p className="text-xs text-gray-500">{t('telegram.useLink')}</p>
+                  <a
+                    href={qrResult.deepLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-xs text-blue-600 break-all hover:underline"
+                  >
+                    {qrResult.deepLink}
+                  </a>
+                  <button
+                    onClick={() => setQrResult(null)}
+                    className="text-xs text-gray-400 hover:text-gray-600"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Chat Area */}
