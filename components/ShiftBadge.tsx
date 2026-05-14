@@ -10,7 +10,6 @@ const badgeConfig: Record<string, { label: string; className: string }> = {
   dobla: { label: 'R', className: 'bg-orange-600 text-white' },
   guardia_medica: { label: 'M', className: 'bg-blue-600 text-white' },
   guardia_enfermeria: { label: 'E', className: 'bg-rose-600 text-white' },
-  meeting: { label: 'MT', className: 'bg-sky-600 text-white' },
   vacacion: { label: 'VAC', className: 'bg-violet-600 text-white' },
 };
 

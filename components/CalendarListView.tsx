@@ -241,9 +241,6 @@ export const CalendarListView: React.FC<CalendarListViewProps> = ({
                 <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                   {t('calendarListView.vac')}
                 </th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  {t('calendarListView.reun')}
-                </th>
                 <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">
                   {t('calendarListView.status')}
                 </th>
@@ -349,19 +346,8 @@ const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaci
                              <span className="text-[9px] font-medium">{v.personnelName}</span>
                            </span>
                          ))}
-                       </div>
-                     </td>
-
-                    {/* Reunión */}
-                    <td className="px-3 py-2 border-b border-gray-100">
-                      <div className="flex flex-wrap gap-0.5">
-                        {row.meetings.map((m: Meeting, i: number) => (
-                          <span key={i} className="text-[10px] font-medium text-sky-700 bg-sky-50 border border-sky-100 rounded px-1 py-0.5">
-                            MT
-                          </span>
-                        ))}
-                      </div>
-                    </td>
+</div>
+                      </td>
 
 {/* Estado */}
                      <td className="px-3 py-2 border-b border-gray-100 text-center">
