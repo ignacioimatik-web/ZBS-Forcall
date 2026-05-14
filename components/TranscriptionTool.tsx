@@ -61,7 +61,7 @@ export const TranscriptionTool: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [recordingName, setRecordingName] = useState('');
   const [showHistory, setShowHistory] = useState(true);
-  const { records, isLoading, error, addRecord, deleteRecord } = useTranscriptionRecords();
+  const { records, isLoading, error, addRecord, deleteRecord, clearError } = useTranscriptionRecords();
 
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<number | null>(null);
@@ -170,13 +170,15 @@ export const TranscriptionTool: React.FC = () => {
 
   const chunksRef = useRef<Blob[]>([]);
 
-  const handleSaveToHistory = async () => {
-    if (!transcription.trim()) { setErrorMessage(t('transcription.emptyTranscript')); return; }
-    if (!recordingName.trim()) { setErrorMessage(t('transcription.enterName')); return; }
-    await addRecord({ name: recordingName.trim(), text: transcription.trim() });
-    setTranscription('');
-    setRecordingName('');
-  };
+const handleSaveToHistory = async () => {
+     if (!transcription.trim()) { setErrorMessage(t('transcription.emptyTranscript')); return; }
+     if (!recordingName.trim()) { setErrorMessage(t('transcription.enterName')); return; }
+     const ok = await addRecord({ name: recordingName.trim(), text: transcription.trim() });
+     if (ok) {
+       setTranscription('');
+       setRecordingName('');
+     }
+   };
 
   const handleDelete = async (id: string) => {
     await deleteRecord(id);
@@ -198,19 +200,19 @@ const saveCurrentPdf = () => {
 
   const sortedHistory = useMemo(() => [...records].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [records]);
 
-  if (error && !errorMessage) {
-    return (
-      <div className="max-w-4xl mx-auto space-y-6 pb-12">
-        <div className="bg-red-100 border border-red-300 text-red-800 rounded-2xl p-4 text-sm font-semibold flex items-center gap-2">
-          <span className="material-symbols-outlined">error</span>
-          <span>{error}</span>
-          <button onClick={() => setErrorMessage(null)} className="text-red-800 hover:text-red-900">
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
+if (error && !errorMessage) {
+     return (
+       <div className="max-w-4xl mx-auto space-y-6 pb-12">
+         <div className="bg-red-100 border border-red-300 text-red-800 rounded-2xl p-4 text-sm font-semibold flex items-center gap-2">
+           <span className="material-symbols-outlined">error</span>
+           <span>{error}</span>
+           <button onClick={() => clearError()} className="text-red-800 hover:text-red-900">
+             <span className="material-symbols-outlined">close</span>
+           </button>
+         </div>
+       </div>
+     );
+   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">

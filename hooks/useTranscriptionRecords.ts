@@ -9,9 +9,10 @@ interface UseTranscriptionRecordsResult {
   records: TranscriptionRecord[];
   isLoading: boolean;
   error: string | null;
-  addRecord: (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at' | 'user_id'>) => Promise<void>;
+  addRecord: (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at' | 'user_id'>) => Promise<boolean>;
   deleteRecord: (id: string) => Promise<boolean>;
   refresh: () => Promise<void>;
+  clearError: () => void;
 }
 
 export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
@@ -47,14 +48,14 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
     loadRecords();
   }, [loadRecords]);
 
-const addRecord = useCallback(async (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at' | 'user_id'>) => {
+const addRecord = useCallback(async (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at' | 'user_id'>): Promise<boolean> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setError('Usuario no autenticado');
-        return;
+        return false;
       }
-const { error: insertError } = await supabase
+      const { error: insertError } = await supabase
          .from('transcription_records')
          .insert({
            user_id: user.id,
@@ -65,13 +66,15 @@ const { error: insertError } = await supabase
       if (insertError) {
         console.error('Error adding transcription record:', insertError);
         setError(insertError.message);
-        return;
+        return false;
       }
 
       await loadRecords();
+      return true;
     } catch (err: any) {
       console.error('Unexpected error adding transcription record:', err);
       setError(err?.message || 'Error al guardar grabación');
+      return false;
     }
   }, [loadRecords]);
 
@@ -95,6 +98,10 @@ const { error: insertError } = await supabase
     }
   }, []);
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   return {
     records,
     isLoading,
@@ -102,5 +109,6 @@ const { error: insertError } = await supabase
     addRecord,
     deleteRecord,
     refresh: loadRecords,
+    clearError,
   };
 }
