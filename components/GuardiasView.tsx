@@ -1,9 +1,8 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useT } from '../lib/i18n';
 import { Guardia, User } from '../types';
+import { ShiftBadge } from './ShiftBadge';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
-import { NotificationToast } from './NotificationToast';
 import { getHolidayName } from '../utils';
 
 interface GuardiasViewProps {
@@ -23,7 +22,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
   const [activeFilter, setActiveFilter] = useState<FilterType>('Todas');
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     doctorName: '',
     nurseName: ''
@@ -31,26 +30,18 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
 
   const canEdit = currentUser?.role === 'Administrador' || currentUser?.role === 'Coordinador';
 
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const days = [];
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(new Date(year, month, i));
-    }
-    return days;
-  };
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const totalDays = new Date(year, month + 1, 0).getDate();
 
-  const getStartingDayIndex = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon...
-    return firstDay === 0 ? 6 : firstDay - 1; // Mon=0, Sun=6
-  };
+  const daysInMonth = useMemo(() => {
+    return Array.from({ length: totalDays }, (_, i) => new Date(year, month, i + 1));
+  }, [year, month, totalDays]);
 
-  const days = getDaysInMonth(currentMonth);
-  const startingEmptyCells = getStartingDayIndex(currentMonth);
+  const startingEmptyCells = useMemo(() => {
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    return firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+  }, [year, month]);
 
   const getGuardiasForDay = (date: Date) => {
     const dayGuardias = guardias.filter(
@@ -74,24 +65,22 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
   const handleDownloadGuardiasPDF = async () => {
     setIsDownloading(true);
     const entries: PDFCalendarData['entries'] = [];
-    const month = currentMonth.getMonth();
-    const year = currentMonth.getFullYear();
     guardias
       .filter(
-        g =>
+        (g) =>
           g.date.getMonth() === month && g.date.getFullYear() === year
       )
       .forEach(g => {
         entries.push({ date: g.date, personnel: [g.personnelName], type: g.type, kind: g.type === 'medica' ? 'M' : 'E' });
       });
     const data: PDFCalendarData = {
-      title: t('guardias.pdfTitle'),
-      subtitle: `${new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
+      title: 'Guardias Forcall',
+      subtitle: `${currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
       month,
       year,
       entries,
     };
-    const filename = `Calendario_Guardias_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
+    const filename = `Calendario_Guardias_Forcall_${currentMonth.toLocaleDateString('es-ES', { month: 'long' })}.pdf`;
     try {
       downloadCalendarPDF(data, filename);
       setDownloadMsg(t('guardias.pdfDownloaded'));
@@ -102,6 +91,14 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
       setIsDownloading(false);
     }
   };
+
+  const changeMonth = (offset: number) => {
+    const next = new Date(currentMonth);
+    next.setMonth(next.getMonth() + offset);
+    setCurrentMonth(next);
+  };
+
+  const filterOptions: FilterType[] = ['Todas', 'medica', 'enfermeria'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +114,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
 
       if (formData.nurseName.trim() !== '') {
         onAddGuardia({
-          id: (Date.now() + 1).toString(), 
+          id: (Date.now() + 1).toString(),
           date: selectedDay,
           type: 'enfermeria',
           personnelName: formData.nurseName,
@@ -128,199 +125,211 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
     }
   };
 
-  const changeMonth = (offset: number) => {
-    const newDate = new Date(currentMonth);
-    newDate.setMonth(newDate.getMonth() + offset);
-    setCurrentMonth(newDate);
-  };
-
-  const filterOptions: FilterType[] = ['Todas', 'medica', 'enfermeria'];
-
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-          <h2 className="text-xl font-black text-gray-900 tracking-tight">{t('guardias.monthly')}</h2>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
-            {canEdit ? t('guardias.shiftManagement') : t('guardias.queryView')}
-          </p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="flex bg-gray-100 p-1.5 rounded-xl border border-gray-200">
-            {filterOptions.map(option => (
-              <button
-                key={option}
-                onClick={() => setActiveFilter(option)}
-                className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${
-                  activeFilter === option 
-                    ? 'bg-white text-forcall-700 shadow-sm' 
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
-              >
-                {option === 'Todas' ? t('guardias.filterAll') : option === 'medica' ? t('guardias.filterMedical') : t('guardias.filterNursing')}
-              </button>
-            ))}
+      {/* Header */}
+      <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+              <span className="material-symbols-outlined text-gray-500">chevron_left</span>
+            </button>
+            <div className="flex flex-col items-center min-w-[120px] sm:min-w-[180px]">
+              <span className="text-sm md:text-base font-black text-gray-800 uppercase tracking-tighter text-center leading-none">
+                {currentMonth.toLocaleDateString('es-ES', { month: 'long' })}
+              </span>
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{year}</span>
+            </div>
+            <button onClick={() => changeMonth(1)} aria-label="Mes siguiente" className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+              <span className="material-symbols-outlined text-gray-500">chevron_right</span>
+            </button>
+            <button onClick={() => setCurrentMonth(new Date())} className="ml-1 px-3 py-1.5 bg-forcall-50 text-forcall-700 text-[9px] font-black uppercase tracking-widest border border-forcall-200 rounded-lg hover:bg-forcall-100 transition-colors">
+              {t('common.hoy')}
+            </button>
           </div>
 
-          <div className="flex items-center gap-4 border-l border-gray-100 pl-4">
-            <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <span className="material-symbols-outlined text-gray-400">chevron_left</span>
-            </button>
-            <span className="font-black text-gray-800 capitalize min-w-[140px] text-center text-sm tracking-widest">
-              {currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-            </span>
-            <button onClick={() => changeMonth(1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <span className="material-symbols-outlined text-gray-400">chevron_right</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Filtro tipo guardia */}
+            <div className="flex bg-gray-100 p-1.5 rounded-xl border border-gray-200">
+              {filterOptions.map(option => (
+                <button
+                  key={option}
+                  onClick={() => setActiveFilter(option)}
+                  className={`text-[10px] font-bold px-2.5 py-1 rounded-lg transition-colors ${
+                    activeFilter === option
+                      ? 'bg-white text-gray-800 shadow-sm border'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {option === 'Todas'
+                    ? t('guardias.filterAll')
+                    : option === 'medica'
+                    ? t('guardias.filterMedical')
+                    : t('guardias.filterNursing')}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleDownloadGuardiasPDF}
+              disabled={isDownloading}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-gray-800 active:scale-95 transition-all disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-sm">download</span>
+              {t('guardias.download')}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
-        <div className="grid grid-cols-7 bg-gray-900 border-b border-gray-900">
+      {/* Calendario grid */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        {/* Cabecera días */}
+        <div className="hidden md:grid md:grid-cols-7 bg-gray-50 border-b border-gray-200">
           {[
             t('guardias.dayMon'), t('guardias.dayTue'), t('guardias.dayWed'),
             t('guardias.dayThu'), t('guardias.dayFri'), t('guardias.daySat'), t('guardias.daySun')
-          ].map((d) => (
-            <div key={d} className="p-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+          ].map(d => (
+            <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider py-2.5 border-r border-gray-200 last:border-r-0">
               {d}
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 auto-rows-fr">
+
+        {/* Celdas */}
+        <div className="grid grid-cols-7 gap-0">
           {Array.from({ length: startingEmptyCells }).map((_, i) => (
-            <div key={`empty-${i}`} className="border-b border-r border-gray-50 bg-gray-50/20" />
+            <div key={`empty-${i}`} className="hidden md:block min-h-[120px] bg-gray-50/50 border-b border-r border-gray-100" />
           ))}
 
-          {days.map((date) => {
-             const dayGuardias = getGuardiasForDay(date);
-             const isToday = new Date().toDateString() === date.toDateString();
-             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-             const holidayName = getHolidayName(date);
-             const isFestivo = !!holidayName;
+          {daysInMonth.map((date, i) => {
+            const dayGuardias = getGuardiasForDay(date);
+            const isToday = new Date().toDateString() === date.toDateString();
+            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+            const holidayName = getHolidayName(date);
+            const isFestivo = !!holidayName;
+            const hasShifts = dayGuardias.length > 0;
 
-             return (
-               <div 
-                  key={date.toISOString()} 
-                  onClick={() => handleDayClick(date)}
-                  className={`min-h-[140px] p-2 border-b border-r border-gray-50 transition-all relative group 
-                    ${isWeekend ? 'bg-slate-50/50' : 'bg-white'}
-                    ${isFestivo ? 'bg-red-50/40' : ''}
-                    ${canEdit ? 'cursor-pointer hover:bg-forcall-50/30' : ''}`}
-               >
-                 <div className="flex justify-between items-start mb-2 p-1">
-                   <span className={`text-[11px] font-black w-7 h-7 flex items-center justify-center rounded-xl ${
-                      isToday ? 'bg-forcall-600 text-white shadow-lg' : 
-                      isFestivo ? 'text-red-600 font-black' : 
-                      isWeekend ? 'text-slate-400' : 'text-gray-400'
-                   }`}>
-                     {date.getDate()}
-                   </span>
-                   
-                   {isFestivo && (
-                     <div className="absolute top-2 right-2 flex flex-col items-end">
-                       <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-sm shadow-red-200"></span>
-                       <div className="absolute top-4 right-0 opacity-0 group-hover:opacity-100 transition-all duration-300 z-50 pointer-events-none">
-                          <div className="bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl shadow-2xl border border-white/10 whitespace-nowrap">
-                            {holidayName}
-                          </div>
-                       </div>
-                     </div>
-                   )}
-                 </div>
-                 
-                 <div className="space-y-1.5 px-1">
-                   {dayGuardias.map(g => (
-                     <div 
-                        key={g.id} 
-                        className={`text-[11px] font-black py-2 px-3 rounded-lg flex justify-between items-center group/item shadow-sm border ${
-                          g.type === 'medica' ? 'bg-blue-50 text-blue-900 border-blue-200' : 'bg-red-50 text-red-900 border-red-200'
-                        }`}
+            return (
+              <div
+                key={i}
+                onClick={() => handleDayClick(date)}
+                className={`flex flex-col p-3 border-b border-r border-gray-100 relative group md:min-h-[120px] bg-white transition-colors
+                  ${isToday ? 'bg-blue-50/40' : ''}
+                  ${isFestivo ? 'bg-red-50/20' : ''}
+                  ${isWeekend ? 'bg-gray-50/50' : ''}
+                  ${canEdit && !isWeekend ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+              >
+                {/* Número del día */}
+                <div className="flex items-center justify-between min-w-0 mb-1">
+                  <span className={`text-sm leading-none ${
+                    isToday
+                      ? 'bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-[11px]'
+                      : isFestivo
+                      ? 'text-red-500 font-semibold'
+                      : isWeekend
+                      ? 'text-gray-400'
+                      : 'text-gray-700'
+                  }`}>
+                    {date.getDate()}
+                  </span>
+                  {isFestivo && (
+                    <span className="material-symbols-outlined text-[10px] text-red-400" title={holidayName}>
+                      festival
+                    </span>
+                  )}
+                </div>
+
+                {/* Guardias con ShiftBadge */}
+                <div className="flex-1 space-y-1">
+                  {dayGuardias.length > 0 ? (
+                    dayGuardias.map(g => (
+                      <div
+                        key={g.id}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold truncate transition-all
+                          ${g.type === 'medica'
+                            ? 'bg-blue-50 text-blue-800 border border-blue-100'
+                            : 'bg-rose-50 text-rose-800 border border-rose-100'
+                          }`}
                       >
-                        <div className="truncate uppercase tracking-tighter">
-                           {g.personnelName}
-                        </div>
+                        <ShiftBadge kind="guardia" type={g.type} />
+                        <span className="truncate">{g.personnelName}</span>
                         {canEdit && (
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); onDeleteGuardia(g.id); }}
-                            className="opacity-0 group-hover/item:opacity-100 hover:text-red-600 transition-opacity"
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteGuardia(g.id);
+                            }}
+                            className="ml-auto opacity-0 group-hover:opacity-100 hover:text-red-600 transition-opacity shrink-0"
+                            aria-label="Eliminar guardia"
                           >
-                            <span className="material-symbols-outlined text-[14px]">close</span>
+                            <span className="material-symbols-outlined text-[12px]">close</span>
                           </button>
                         )}
-                     </div>
-                   ))}
-                 </div>
-               </div>
-             )
+                      </div>
+                    ))
+                  ) : (
+                    <span className={`text-[10px] italic truncate ${
+                      isWeekend ? 'text-gray-300' : 'text-gray-400'
+                    }`}>
+                      {hasShifts ? t('guardias.noShifts') : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
           })}
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-wrap gap-8 justify-center no-print">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-slate-100 rounded border border-gray-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendWeekend')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-red-500 rounded border border-red-600"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendHoliday')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-100 rounded border border-blue-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendGuardiaMedical')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-red-100 rounded border border-red-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendGuardiaNursing')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-orange-100 rounded border border-orange-200"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendLibranza')}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-stone-200 rounded border border-stone-300"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('guardias.legendRefuerzo')}</span>
-        </div>
-      </div>
-
+      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fade-in no-print">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm no-print">
           <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 animate-slide-in-up">
-            <h3 className="text-xl font-black text-gray-900 mb-6 tracking-tight">
+            <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
+              <span className="p-2 rounded-xl bg-forcall-600 text-white material-symbols-outlined">
+                add_circle
+              </span>
               {t('guardias.assignShift')}
             </h3>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="bg-forcall-50 p-4 rounded-2xl border border-forcall-100 mb-4">
-                <p className="text-[10px] font-black text-forcall-700 uppercase tracking-widest mb-1">{t('guardias.selectedDay')}</p>
-                <p className="font-bold text-forcall-900">{selectedDay?.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 text-center">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                  {t('guardias.selectedDay')}
+                </p>
+                <p className="font-black text-gray-800 text-lg uppercase tracking-tight">
+                  {selectedDay?.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </p>
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-blue-700 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">stethoscope</span> {t('guardias.medicalStaff')}
+                  <span className="material-symbols-outlined text-sm">stethoscope</span>
+                  {t('guardias.medicalStaff')}
                 </label>
                 <input
                   type="text"
                   value={formData.doctorName}
                   onChange={(e) => setFormData({ ...formData, doctorName: e.target.value })}
                   placeholder={t('guardias.doctorPlaceholder')}
-                  className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50 transition-all font-bold text-sm"
+                  className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-sm"
+                  autoComplete="off"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-red-700 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">vaccines</span> {t('guardias.nursingStaff')}
+                <label className="text-[10px] font-black text-rose-700 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">vaccines</span>
+                  {t('guardias.nursingStaff')}
                 </label>
                 <input
                   type="text"
                   value={formData.nurseName}
                   onChange={(e) => setFormData({ ...formData, nurseName: e.target.value })}
                   placeholder={t('guardias.nursePlaceholder')}
-                  className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-red-50 transition-all font-bold text-sm"
+                  className="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-rose-500 transition-all font-bold text-sm"
+                  autoComplete="off"
                 />
               </div>
 
@@ -343,6 +352,15 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
             </form>
           </div>
         </div>
+      )}
+
+      {/* Mensaje de descarga */}
+      {downloadMsg && (
+        <NotificationToast
+          message={downloadMsg}
+          type={downloadMsg.includes('Error') ? 'error' : 'success'}
+          onClose={() => setDownloadMsg(null)}
+        />
       )}
     </div>
   );
