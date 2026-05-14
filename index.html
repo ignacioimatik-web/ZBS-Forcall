@@ -108,192 +108,224 @@
       .animate-stagger > *:nth-child(14) { animation-delay: 0.78s; }
       .animate-stagger > *:nth-child(15) { animation-delay: 0.84s; }
 
-      /* ── Wave backgrounds ── */
-      .wave-container {
+      /* ── Background transition effects ── */
+      @keyframes eff-gradient {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      @keyframes eff-blob1 {
+        0%   { transform: translate(0,0) scale(1); }
+        33%  { transform: translate(6%,-4%) scale(1.08); }
+        66%  { transform: translate(-4%,3%) scale(0.92); }
+        100% { transform: translate(0,0) scale(1); }
+      }
+      @keyframes eff-blob2 {
+        0%   { transform: translate(0,0) scale(1); }
+        33%  { transform: translate(-5%,4%) scale(1.05); }
+        66%  { transform: translate(5%,-6%) scale(0.95); }
+        100% { transform: translate(0,0) scale(1); }
+      }
+      @keyframes eff-ring {
+        0%   { transform: scale(1); opacity: 0.15; }
+        50%  { transform: scale(1.25); opacity: 0.04; }
+        100% { transform: scale(1); opacity: 0.15; }
+      }
+      @keyframes eff-ring2 {
+        0%   { transform: scale(1); opacity: 0.1; }
+        50%  { transform: scale(1.15); opacity: 0.02; }
+        100% { transform: scale(1); opacity: 0.1; }
+      }
+      @keyframes eff-particle {
+        0%   { transform: translateY(0) translateX(0); opacity: 0; }
+        10%  { opacity: 0.6; }
+        90%  { opacity: 0.6; }
+        100% { transform: translateY(-110vh) translateX(15vw); opacity: 0; }
+      }
+      @keyframes eff-particle2 {
+        0%   { transform: translateY(0) translateX(0); opacity: 0; }
+        10%  { opacity: 0.5; }
+        90%  { opacity: 0.5; }
+        100% { transform: translateY(-110vh) translateX(-10vw); opacity: 0; }
+      }
+      @keyframes eff-glow {
+        0%   { opacity: 0.08; transform: scale(1); }
+        50%  { opacity: 0.18; transform: scale(1.05); }
+        100% { opacity: 0.08; transform: scale(1); }
+      }
+      @keyframes eff-aurora {
+        0%   { background-position: 0% 50%; transform: rotate(0deg) scale(1); }
+        33%  { background-position: 100% 0%; transform: rotate(2deg) scale(1.02); }
+        66%  { background-position: 50% 100%; transform: rotate(-1deg) scale(0.98); }
+        100% { background-position: 0% 50%; transform: rotate(0deg) scale(1); }
+      }
+      @keyframes eff-shimmer {
+        0%   { background-position: -200% 50%; }
+        100% { background-position: 200% 50%; }
+      }
+
+      .eff-bg {
         position: fixed;
         inset: 0;
         z-index: 0;
         pointer-events: none;
         overflow: hidden;
-      }
-
-      /* Subtle: gentle gradient drift */
-      @keyframes wave-drift {
-        0%   { background-position: 0% 50%; }
-        25%  { background-position: 100% 0%; }
-        50%  { background-position: 100% 100%; }
-        75%  { background-position: 0% 100%; }
-        100% { background-position: 0% 50%; }
-      }
-      .wave-subtle .wave-layer {
-        position: absolute;
-        inset: -50%;
-        background: linear-gradient(135deg, var(--wc1), var(--wc2), var(--wc3));
-        background-size: 200% 200%;
-        animation: wave-drift 25s ease-in-out infinite;
-        opacity: 0.12;
         transition: opacity 0.6s;
       }
-      .wave-subtle .wave-layer:nth-child(2) {
-        background: linear-gradient(225deg, var(--wc3), var(--wc1), var(--wc2));
-        background-size: 300% 300%;
-        animation: wave-drift 35s ease-in-out infinite reverse;
-        opacity: 0.08;
-      }
-      .wave-intensity-low .wave-layer { opacity: 0.06; }
-      body.wave-intensity-low .wave-layer:nth-child(2) { opacity: 0.04; }
-      .wave-intensity-high .wave-layer { opacity: 0.2; }
-      body.wave-intensity-high .wave-layer:nth-child(2) { opacity: 0.15; }
 
-      /* Dynamic: layered radial blobs */
-      @keyframes wave-blob {
-        0%   { transform: translate(0, 0) scale(1); }
-        33%  { transform: translate(8%, -6%) scale(1.05); }
-        66%  { transform: translate(-5%, 4%) scale(0.95); }
-        100% { transform: translate(0, 0) scale(1); }
+      .eff-content {
+        position: relative;
+        z-index: 1;
       }
-      @keyframes wave-blob2 {
-        0%   { transform: translate(0, 0) scale(1); }
-        33%  { transform: translate(-7%, 5%) scale(1.08); }
-        66%  { transform: translate(6%, -8%) scale(0.92); }
-        100% { transform: translate(0, 0) scale(1); }
+
+      /* ── Gradient ── */
+      .eff-gradient .eff-bg {
+        background: linear-gradient(135deg, var(--ec1), var(--ec2), var(--ec3));
+        background-size: 400% 400%;
+        animation: eff-gradient 20s ease infinite;
+        opacity: 0.12;
       }
-      @keyframes wave-blob3 {
-        0%   { transform: translate(0, 0) scale(1); }
-        50%  { transform: translate(5%, 5%) scale(1.1); }
-        100% { transform: translate(0, 0) scale(1); }
+      .eff-gradient .eff-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(225deg, var(--ec3), var(--ec1));
+        background-size: 300% 300%;
+        animation: eff-gradient 30s ease infinite reverse;
+        opacity: 0.5;
       }
-      .wave-dynamic .wave-layer {
+
+      /* ── Blobs ── */
+      .eff-blobs .eff-bg > div {
         position: absolute;
         border-radius: 50%;
         filter: blur(80px);
-        opacity: 0.1;
         transition: opacity 0.6s;
       }
-      body.wave-intensity-low .wave-dynamic .wave-layer { opacity: 0.05; }
-      body.wave-intensity-high .wave-dynamic .wave-layer { opacity: 0.18; }
-      .wave-dynamic .wave-layer:nth-child(1) {
-        width: 60%;
-        height: 60%;
-        top: -10%;
-        left: -10%;
-        background: var(--wc1);
-        animation: wave-blob 18s ease-in-out infinite;
+      .eff-blobs .eff-bg > div:nth-child(1) {
+        width: 55%; height: 55%; top: -15%; left: -10%;
+        background: var(--ec1);
+        animation: eff-blob1 18s ease-in-out infinite;
       }
-      .wave-dynamic .wave-layer:nth-child(2) {
-        width: 50%;
-        height: 50%;
-        bottom: -5%;
-        right: -5%;
-        background: var(--wc2);
-        animation: wave-blob2 22s ease-in-out infinite;
+      .eff-blobs .eff-bg > div:nth-child(2) {
+        width: 45%; height: 45%; bottom: -10%; right: -10%;
+        background: var(--ec2);
+        animation: eff-blob2 22s ease-in-out infinite;
       }
-      .wave-dynamic .wave-layer:nth-child(3) {
-        width: 40%;
-        height: 40%;
-        top: 40%;
-        left: 30%;
-        background: var(--wc3);
-        animation: wave-blob3 15s ease-in-out infinite;
+      .eff-blobs .eff-bg > div:nth-child(3) {
+        width: 35%; height: 35%; top: 35%; left: 30%;
+        background: var(--ec3);
+        animation: eff-blob1 15s ease-in-out infinite reverse;
       }
 
-      /* Radial: expanding circles */
-      @keyframes wave-expand {
-        0%   { transform: scale(1); opacity: 0.12; }
-        50%  { transform: scale(1.3); opacity: 0.05; }
-        100% { transform: scale(1); opacity: 0.12; }
-      }
-      @keyframes wave-expand2 {
-        0%   { transform: scale(1); opacity: 0.08; }
-        50%  { transform: scale(1.2); opacity: 0.03; }
-        100% { transform: scale(1); opacity: 0.08; }
-      }
-      .wave-radial .wave-layer {
+      /* ── Rings ── */
+      .eff-rings .eff-bg > div {
         position: absolute;
         border-radius: 50%;
         border: 2px solid;
         transition: all 0.6s;
       }
-      body.wave-intensity-low .wave-radial .wave-layer { opacity: 0.04; }
-      body.wave-intensity-high .wave-radial .wave-layer { opacity: 0.18; }
-      .wave-radial .wave-layer:nth-child(1) {
-        width: 80%;
-        height: 80%;
-        top: 10%;
-        left: 10%;
-        border-color: var(--wc1);
-        animation: wave-expand 8s ease-in-out infinite;
+      .eff-rings .eff-bg > div:nth-child(1) {
+        width: 75%; height: 75%; top: 12.5%; left: 12.5%;
+        border-color: var(--ec1);
+        animation: eff-ring 8s ease-in-out infinite;
       }
-      .wave-radial .wave-layer:nth-child(2) {
-        width: 60%;
-        height: 60%;
-        top: 20%;
-        left: 20%;
-        border-color: var(--wc2);
-        animation: wave-expand2 6s ease-in-out infinite reverse;
+      .eff-rings .eff-bg > div:nth-child(2) {
+        width: 55%; height: 55%; top: 22.5%; left: 22.5%;
+        border-color: var(--ec2);
+        animation: eff-ring2 6s ease-in-out infinite reverse;
       }
-      .wave-radial .wave-layer:nth-child(3) {
-        width: 95%;
-        height: 95%;
-        top: 2.5%;
-        left: 2.5%;
-        border-color: var(--wc3);
-        animation: wave-expand 10s ease-in-out infinite 2s;
+      .eff-rings .eff-bg > div:nth-child(3) {
+        width: 90%; height: 90%; top: 5%; left: 5%;
+        border-color: var(--ec3);
+        animation: eff-ring 10s ease-in-out infinite 2s;
       }
 
-      /* Particles: floating dots */
-      @keyframes wave-float1 {
-        0%   { transform: translateY(0) translateX(0); opacity: 0; }
-        10%  { opacity: 0.5; }
-        90%  { opacity: 0.5; }
-        100% { transform: translateY(-100vh) translateX(20vw); opacity: 0; }
-      }
-      @keyframes wave-float2 {
-        0%   { transform: translateY(0) translateX(0); opacity: 0; }
-        10%  { opacity: 0.4; }
-        90%  { opacity: 0.4; }
-        100% { transform: translateY(-100vh) translateX(-15vw); opacity: 0; }
-      }
-      .wave-particles .wave-layer {
+      /* ── Particles ── */
+      .eff-particles .eff-bg > div {
         position: absolute;
         border-radius: 50%;
         pointer-events: none;
       }
-      .wave-particles .wave-layer:nth-child(1) {
-        width: 6px; height: 6px;
-        bottom: -10%;
-        left: 20%;
-        background: var(--wc1);
-        animation: wave-float1 12s ease-in-out infinite;
+      .eff-particles .eff-bg > div:nth-child(1) {
+        width: 6px; height: 6px; bottom: -5%; left: 15%;
+        background: var(--ec1);
+        animation: eff-particle 14s ease-in-out infinite;
       }
-      .wave-particles .wave-layer:nth-child(2) {
-        width: 4px; height: 4px;
-        bottom: -10%;
-        left: 50%;
-        background: var(--wc2);
-        animation: wave-float2 16s ease-in-out infinite 2s;
+      .eff-particles .eff-bg > div:nth-child(2) {
+        width: 4px; height: 4px; bottom: -5%; left: 40%;
+        background: var(--ec2);
+        animation: eff-particle2 18s ease-in-out infinite 3s;
       }
-      .wave-particles .wave-layer:nth-child(3) {
-        width: 8px; height: 8px;
-        bottom: -10%;
-        left: 75%;
-        background: var(--wc3);
-        animation: wave-float1 14s ease-in-out infinite 4s;
+      .eff-particles .eff-bg > div:nth-child(3) {
+        width: 8px; height: 8px; bottom: -5%; left: 65%;
+        background: var(--ec3);
+        animation: eff-particle 16s ease-in-out infinite 5s;
       }
-      .wave-particles .wave-layer:nth-child(4) {
-        width: 5px; height: 5px;
-        bottom: -10%;
-        left: 35%;
-        background: var(--wc1);
-        animation: wave-float2 18s ease-in-out infinite 6s;
+      .eff-particles .eff-bg > div:nth-child(4) {
+        width: 5px; height: 5px; bottom: -5%; left: 85%;
+        background: var(--ec1);
+        animation: eff-particle2 20s ease-in-out infinite 2s;
       }
-      .wave-particles .wave-layer:nth-child(5) {
-        width: 7px; height: 7px;
-        bottom: -10%;
-        left: 60%;
-        background: var(--wc3);
-        animation: wave-float1 20s ease-in-out infinite 3s;
+      .eff-particles .eff-bg > div:nth-child(5) {
+        width: 7px; height: 7px; bottom: -5%; left: 50%;
+        background: var(--ec3);
+        animation: eff-particle 12s ease-in-out infinite 7s;
       }
+
+      /* ── Glow ── */
+      .eff-glow .eff-bg {
+        background: radial-gradient(circle at 50% 50%, var(--ec1) 0%, transparent 60%);
+      }
+      .eff-glow .eff-bg::after {
+        content: '';
+        position: absolute;
+        inset: -20%;
+        background: radial-gradient(circle at 50% 50%, var(--ec2) 0%, transparent 50%);
+        animation: eff-glow 6s ease-in-out infinite;
+        opacity: 0.5;
+      }
+
+      /* ── Aurora ── */
+      .eff-aurora .eff-bg {
+        background: linear-gradient(135deg, var(--ec1), var(--ec2), var(--ec3), var(--ec1));
+        background-size: 600% 600%;
+        animation: eff-aurora 25s ease-in-out infinite;
+        opacity: 0.1;
+      }
+      .eff-aurora .eff-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(45deg, transparent 30%, var(--ec2) 50%, transparent 70%);
+        background-size: 200% 200%;
+        animation: eff-shimmer 8s ease-in-out infinite;
+        opacity: 0.15;
+      }
+
+      /* ── Shimmer ── */
+      .eff-shimmer .eff-bg {
+        background: linear-gradient(135deg, var(--ec1), var(--ec2), var(--ec3), var(--ec2), var(--ec1));
+        background-size: 200% 100%;
+        animation: eff-shimmer 4s ease-in-out infinite;
+        opacity: 0.12;
+      }
+      .eff-shimmer .eff-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+        background-size: 200% 100%;
+        animation: eff-shimmer 3s ease-in-out infinite reverse;
+      }
+
+      /* ── Intensity modifiers ── */
+      body.eff-low .eff-bg,
+      body.eff-low .eff-bg > div { opacity: 0.04 !important; }
+      body.eff-low .eff-bg::after { opacity: 0.03 !important; }
+      body.eff-high .eff-bg,
+      body.eff-high .eff-bg > div { opacity: 0.22 !important; }
+      body.eff-high .eff-bg::after { opacity: 0.2 !important; }
 
 @media print {
          .no-print,

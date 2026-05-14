@@ -285,9 +285,14 @@ const App: React.FC = () => {
   const isAdminUser = user?.staffGroup == null;
 
   useEffect(() => {
-    document.body.classList.remove('wave-intensity-low', 'wave-intensity-medium', 'wave-intensity-high');
-    document.body.classList.add(`wave-intensity-${appSettings.intensity}`);
+    document.body.classList.remove('eff-low', 'eff-medium', 'eff-high');
+    document.body.classList.add(`eff-${appSettings.intensity}`);
   }, [appSettings.intensity]);
+
+  useEffect(() => {
+    document.body.classList.remove('eff-gradient', 'eff-blobs', 'eff-rings', 'eff-particles', 'eff-glow', 'eff-aurora', 'eff-shimmer', 'eff-none');
+    document.body.classList.add(`eff-${appSettings.effect}`);
+  }, [appSettings.effect]);
 
   const handleSettingsChange = useCallback((settings: AppSettings) => {
     setAppSettings(settings);
@@ -388,28 +393,24 @@ const App: React.FC = () => {
   const sc = COLOR_SCHEMES[appSettings.colorScheme];
   return (
     <div
-      className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in flex"
+      className="min-h-screen font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in flex"
       style={{
-        ['--wc1' as string]: sc.c1,
-        ['--wc2' as string]: sc.c2,
-        ['--wc3' as string]: sc.c3,
-        backgroundColor: appSettings.waveType === 'none' ? sc.bg : undefined,
+        ['--ec1' as string]: sc.c1,
+        ['--ec2' as string]: sc.c2,
+        ['--ec3' as string]: sc.c3,
+        backgroundColor: appSettings.effect === 'none' ? sc.bg : '#fafaf9',
       }}
     >
-      {appSettings.waveType !== 'none' && (
-        <div className={`wave-container wave-${appSettings.waveType}`}>
-          <div className="wave-layer" />
-          <div className="wave-layer" />
-          <div className="wave-layer" />
-          {appSettings.waveType === 'particles' && <><div className="wave-layer" /><div className="wave-layer" /></>}
+      {appSettings.effect !== 'none' && (
+        <div className="eff-bg">
+          <div />
+          <div />
+          <div />
+          {appSettings.effect === 'particles' && <><div /><div /></>}
         </div>
       )}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} guardiaSubCategory={guardiaSub} onGuardiaSubCategoryChange={setGuardiaSub} user={user} userGroup={appUserGroup} sidebarBg={sc.sidebar} />
-      <div className="flex-1 min-h-screen flex flex-col relative z-10" style={{
-        backgroundColor: appSettings.waveType !== 'none' ? 'rgba(255,255,255,0.88)' : undefined,
-        backdropFilter: appSettings.waveType !== 'none' ? 'blur(20px)' : undefined,
-        WebkitBackdropFilter: appSettings.waveType !== 'none' ? 'blur(20px)' : undefined,
-      }}>
+      <div className="flex-1 min-h-screen flex flex-col relative z-10 eff-content">
         <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} userName={user?.name} user={user} />
         {isDataLoading && (
           <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">

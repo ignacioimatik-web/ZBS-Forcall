@@ -1,9 +1,9 @@
-export type WaveType = 'none' | 'subtle' | 'dynamic' | 'radial' | 'particles';
+export type TransitionEffect = 'none' | 'gradient' | 'blobs' | 'rings' | 'particles' | 'glow' | 'aurora' | 'shimmer';
 export type ColorScheme = 'forcall' | 'ocean' | 'sunset' | 'forest' | 'night' | 'lavender';
 export type Intensity = 'low' | 'medium' | 'high';
 
 export interface AppSettings {
-  waveType: WaveType;
+  effect: TransitionEffect;
   colorScheme: ColorScheme;
   intensity: Intensity;
 }
@@ -11,7 +11,7 @@ export interface AppSettings {
 const STORAGE_KEY = 'zbs_app_settings';
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  waveType: 'subtle',
+  effect: 'gradient',
   colorScheme: 'forcall',
   intensity: 'medium',
 };
@@ -35,12 +35,26 @@ export const COLOR_SCHEMES: Record<ColorScheme, SchemeColors> = {
   lavender: { name: 'Lavanda', bg: '#faf5ff', sidebar: '#581c87', c1: '#c084fc', c2: '#a855f7', c3: '#9333ea', accent: '#a855f7' },
 };
 
-export const WAVE_LABELS: Record<WaveType, string> = {
-  none: 'Sin ondas',
-  subtle: 'Olas sutiles',
-  dynamic: 'Ondas dinámicas',
-  radial: 'Ondas radiales',
+export const EFFECT_LABELS: Record<TransitionEffect, string> = {
+  none: 'Sin efecto',
+  gradient: 'Gradiente fluido',
+  blobs: 'Morphing blobs',
+  rings: 'Anillos',
   particles: 'Partículas',
+  glow: 'Brillo sutil',
+  aurora: 'Aurora boreal',
+  shimmer: 'Destello metálico',
+};
+
+export const EFFECT_ICONS: Record<TransitionEffect, string> = {
+  none: 'block',
+  gradient: 'gradient',
+  blobs: 'blur_on',
+  rings: 'radio_button_checked',
+  particles: 'grain',
+  glow: 'flare',
+  aurora: 'auto_awesome',
+  shimmer: 'water_lux',
 };
 
 export function loadSettings(): AppSettings {
