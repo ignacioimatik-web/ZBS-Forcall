@@ -10,6 +10,7 @@ import { DayDetailPanel } from './DayDetailPanel';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 import { useT } from '../lib/i18n';
 import { validateMonth, getMonthValidationSummary, type DayValidationStatus } from '../lib/calendarValidation';
+import { useAuditLogs } from '../hooks/useAuditLogs';
 
 interface DashboardProps {
   meetings: Meeting[];
@@ -103,10 +104,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
   user,
 }) => {
   const { t } = useT();
+  const { logs: auditLogs } = useAuditLogs();
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'month' | 'list'>('month');
+
+  const permutaCount = useMemo(() => auditLogs.filter(l => l.type === 'PERMUTA').length, [auditLogs]);
 
   const isInMonth = useCallback((date: Date) => {
     return date.getMonth() === calendarMonth.getMonth() && date.getFullYear() === calendarMonth.getFullYear();
@@ -208,7 +212,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             totalDays={status.totalDays}
             coveredDays={status.coveredDays}
             gaps={status.gaps}
-            swapCount={status.conflicts}
+            swapCount={permutaCount}
           />
         </div>
 
