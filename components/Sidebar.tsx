@@ -15,7 +15,7 @@ interface SidebarProps {
 
 const tabLabels: Record<string, string> = {
   Unificado: 'header.unificado',
-  Guardias: 'header.guardias',
+  Turnos: 'header.turnos',
   IAassist: 'header.iaassist',
   Chat: 'header.chat',
   Dictado: 'header.dictado',
@@ -24,41 +24,48 @@ const tabLabels: Record<string, string> = {
 
 const tabIcons: Record<string, string> = {
   Unificado: 'dashboard',
-  Guardias: 'calendar_month',
+  Turnos: 'calendar_month',
   IAassist: 'auto_awesome',
   Chat: 'forum',
   Dictado: 'mic',
   Avisos: 'notifications_active',
 };
 
-const guardiaSubItems = [
-  { id: 'Medicina', labelKey: 'calendarios.medicina', icon: 'stethoscope' },
-  { id: 'enfermeria', labelKey: 'calendarios.enfermeria', icon: 'vaccines' },
-  { id: 'Libranzas', labelKey: 'calendarios.libranzas', icon: 'beach_access' },
-  { id: 'Refuerzo', labelKey: 'calendarios.refuerzo', icon: 'dynamic_feed' },
-  { id: 'Vacaciones', labelKey: 'calendarios.vacaciones', icon: 'flight' },
-];
-
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guardiaSubCategory, onGuardiaSubCategoryChange, user, userGroup, sidebarBg }) => {
   const { t } = useT();
   const isAdmin = user?.staffGroup == null;
   const isCoord = user?.role === 'Coordinador';
-  const tabs = useMemo(() => ['Unificado', 'Guardias', 'IAassist', 'Chat', 'Dictado', 'Avisos'].filter(t => {
-    if (isAdmin && (t === 'Chat' || t === 'Dictado' || t === 'IAassist')) return false;
-    if (t === 'IAassist' && !isCoord) return false;
-    return true;
-  }), [isAdmin, isCoord]);
+
+  const tabs = useMemo(() =>
+    ['Unificado', 'Turnos', 'IAassist', 'Chat', 'Dictado', 'Avisos'].filter(t => {
+      if (isAdmin && (t === 'Chat' || t === 'Dictado' || t === 'IAassist' || t === 'Turnos')) return false;
+      if (t === 'IAassist' && !isCoord) return false;
+      return true;
+    }),
+    [isAdmin, isCoord]
+  );
+
   const [guardiaExpanded, setGuardiaExpanded] = useState(false);
 
-  const filteredGuardiaSubItems = useMemo(() => {
-    if (userGroup === 'medico') return guardiaSubItems.filter(s => s.id !== 'enfermeria');
-    if (userGroup === 'enfermeria') return guardiaSubItems.filter(s => s.id !== 'Medicina');
-    return guardiaSubItems;
+  const guardiaSubItems = useMemo(() => {
+    const base: { id: string; labelKey: string; icon: string }[] = [];
+    if (userGroup === 'medico' || userGroup === 'both') {
+      base.push({ id: 'Medicina', labelKey: 'calendarios.guardiasM', icon: 'stethoscope' });
+    }
+    if (userGroup === 'enfermeria' || userGroup === 'both') {
+      base.push({ id: 'enfermeria', labelKey: 'calendarios.guardiasE', icon: 'vaccines' });
+    }
+    base.push(
+      { id: 'Libranzas', labelKey: 'calendarios.libranzas', icon: 'beach_access' },
+      { id: 'Refuerzo', labelKey: 'calendarios.refuerzo', icon: 'dynamic_feed' },
+      { id: 'Vacaciones', labelKey: 'calendarios.vacaciones', icon: 'flight' }
+    );
+    return base;
   }, [userGroup]);
 
   const handleGuardiaClick = () => {
-    if (activeTab !== 'Guardias') {
-      setActiveTab('Guardias');
+    if (activeTab !== 'Turnos') {
+      setActiveTab('Turnos');
       setGuardiaExpanded(true);
     } else {
       setGuardiaExpanded(prev => !prev);
@@ -67,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
 
   const handleSubClick = (sub: string) => {
     onGuardiaSubCategoryChange?.(sub);
-    setActiveTab('Guardias');
+    setActiveTab('Turnos');
   };
 
   return (
@@ -88,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
             <button
               role="tab"
               aria-selected={activeTab === tab}
-              onClick={tab === 'Guardias' ? handleGuardiaClick : () => setActiveTab(tab)}
+              onClick={tab === 'Turnos' ? handleGuardiaClick : () => setActiveTab(tab)}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeTab === tab
                   ? 'bg-white/10 text-white shadow-inner border border-white/10'
@@ -97,16 +104,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
             >
               <span className="material-symbols-outlined text-xl">{tabIcons[tab]}</span>
               <span className="flex-1 text-left">{t(tabLabels[tab])}</span>
-              {tab === 'Guardias' && (
+              {tab === 'Turnos' && (
                 <span className={`material-symbols-outlined text-base transition-transform ${guardiaExpanded ? 'rotate-180' : ''}`}>
                   expand_more
                 </span>
               )}
             </button>
 
-            {tab === 'Guardias' && guardiaExpanded && (
+            {tab === 'Turnos' && guardiaExpanded && (
               <div className="ml-2 mt-1 space-y-0.5">
-                {filteredGuardiaSubItems.map(sub => (
+                {guardiaSubItems.map(sub => (
                   <button
                     key={sub.id}
                     onClick={() => handleSubClick(sub.id)}

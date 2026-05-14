@@ -80,6 +80,10 @@ const App: React.FC = () => {
   useEffect(() => {
     if (user) {
       setGuardiaSub(appUserGroup === 'enfermeria' ? 'enfermeria' : 'Medicina');
+      // Reset to Unificado if current tab is Turnos and user is admin
+      if (activeTab === 'Turnos' && user.role === 'Administrador') {
+        setActiveTab('Unificado');
+      }
     }
   }, [user, appUserGroup]);
 
@@ -324,7 +328,7 @@ const App: React.FC = () => {
             user={user}
           />
         );
-      case 'Guardias':
+      case 'Turnos':
         return (
           <CalendariosView
             meetings={meetings}

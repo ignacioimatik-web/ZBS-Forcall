@@ -13,7 +13,7 @@ interface HeaderProps {
 
 const tabLabels: Record<string, string> = {
   Unificado: 'header.unificado',
-  Guardias: 'header.guardias',
+  Turnos: 'header.turnos',
   IAassist: 'header.iaassist',
   Chat: 'header.chat',
   Dictado: 'header.dictado',
@@ -22,7 +22,7 @@ const tabLabels: Record<string, string> = {
 
 const tabIcons: Record<string, string> = {
   Unificado: 'dashboard',
-  Guardias: 'calendar_month',
+  Turnos: 'calendar_month',
   IAassist: 'auto_awesome',
   Chat: 'forum',
   Dictado: 'mic',
@@ -33,11 +33,11 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
   const { t } = useT();
   const isAdmin = user?.staffGroup == null;
   const isCoord = user?.role === 'Coordinador';
-  const tabs = useMemo(() => ['Unificado', 'Guardias', 'IAassist', 'Chat', 'Dictado', 'Avisos'].filter(t => {
-    if (isAdmin && (t === 'Chat' || t === 'Dictado' || t === 'IAassist')) return false;
-    if (t === 'IAassist' && !isCoord) return false;
-    return true;
-  }), [isAdmin, isCoord]);
+const tabs = useMemo(() => ['Unificado', 'Turnos', 'IAassist', 'Chat', 'Dictado', 'Avisos'].filter(t => {
+     if (isAdmin && (t === 'Chat' || t === 'Dictado' || t === 'IAassist' || t === 'Turnos')) return false;
+     if (t === 'IAassist' && !isCoord) return false;
+     return true;
+   }), [isAdmin, isCoord]);
 
   const roleLabel = user
     ? user.role === 'Administrador' ? 'Admin'

@@ -19,13 +19,13 @@ const sections = [
       En la barra lateral izquierda (azul oscuro) encontrarás las secciones principales:
 
       • Unificado — Vista general del equipo con métricas y resumen del día.
-      • Guardias — Calendario detallado con subcategorías: Medicina, Enfermería, Libranzas, Refuerzo y Vacaciones.
+      • Turnos — Calendario detallado con subcategorías: Medicina, Enfermería, Libranzas, Refuerzo y Vacaciones.
       • Chat — comunicación con el equipo.
 • Dictado — Herramienta de transcripción por voz.
        • Avisos — Centro de notificaciones y avisos del sistema.
 
       Para acceder a una sección, haz clic en su nombre en la barra lateral.
-      En la sección Guardias, pulsa "Guardias" para desplegar las subcategorías y elige la que necesites.
+      En la sección Turnos, pulsa "Turnos" para desplegar las subcategorías y elige la que necesites.
     `,
   },
   {
@@ -45,7 +45,7 @@ const sections = [
   {
     id: 'guardias',
     icon: 'calendar_month',
-    title: 'Sección Guardias (Calendario)',
+    title: 'Sección Turnos (Calendario)',
     content: `
       Es la sección principal de la aplicación. Aquí puedes:
 
