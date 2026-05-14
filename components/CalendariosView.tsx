@@ -364,13 +364,16 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     return [];
   }, [bulkDates, activeSub, props.guardias, filteredLibranzas, filteredDoblas, filteredVacaciones]);
 
-  const metrics = [
-    { count: guardias.filter(g => g.type === 'medica').length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
-    { count: guardias.filter(g => g.type === 'enfermeria').length, label: t('dashboard.enf'), accentColor: 'bg-red-500' },
-    { count: libranzas.length, label: t('dashboard.lib'), accentColor: 'bg-green-500' },
-    { count: vacaciones.length, label: t('dashboard.vac'), accentColor: 'bg-purple-400' },
-    { count: doblas.length, label: t('dashboard.ref'), accentColor: 'bg-orange-500' },
-  ];
+const isInMonth = useCallback((date: Date) => {
+     return date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear();
+   }, [currentMonth]);
+
+   const metrics = useMemo(() => [
+     { count: guardias.filter(g => g.type === 'medica' && isInMonth(g.date)).length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
+     { count: guardias.filter(g => g.type === 'enfermeria' && isInMonth(g.date)).length, label: t('dashboard.enf'), accentColor: 'bg-red-500' },
+     { count: libranzas.filter(l => isInMonth(l.date)).length, label: t('dashboard.lib'), accentColor: 'bg-green-500' },
+     { count: vacaciones.filter(v => isInMonth(v.date)).length, label: t('dashboard.vac'), accentColor: 'bg-purple-400' },
+   ], [guardias, libranzas, vacaciones, currentMonth, isInMonth, t]);
 
   const statusSummary = useMemo(() => {
     const year = currentMonth.getFullYear();
