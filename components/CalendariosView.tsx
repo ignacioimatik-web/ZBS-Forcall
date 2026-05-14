@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { UnifiedCalendar } from './UnifiedCalendar';
 import { Meeting, User, Guardia, Libranza, Dobla, Vacacion, ManualHoliday, AuditLog } from '../types';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
@@ -7,6 +7,10 @@ import { NotificationToast } from './NotificationToast';
 import { canManageGuardiaCategory, canManagePlanningType, canManageVacaciones } from '../lib/guardiaPermissions';
 import { useAuditLogs } from '../hooks/useAuditLogs';
 import { useT } from '../lib/i18n';
+import { PageHeader } from './PageHeader';
+import { StatusSummary } from './StatusSummary';
+import { CalendarToolbar } from './CalendarToolbar';
+import { DayDetailPanel } from './DayDetailPanel';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { VERSION_STRING } from '../lib/version';
@@ -57,6 +61,8 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const { logs: auditLogs, addLog, deleteLog } = useAuditLogs();
   const [swapMode, setSwapMode] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
 
   const changeMonth = (offset: number) => {
     const newDate = new Date(currentMonth);
@@ -330,335 +336,397 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const filteredDoblas = useMemo(() => userGroup !== 'both' ? doblas.filter(d => d.type === userTypeFilter) : doblas, [doblas, userGroup]);
   const filteredVacaciones = useMemo(() => userGroup !== 'both' ? vacaciones.filter(v => v.type === userTypeFilter) : vacaciones, [vacaciones, userGroup]);
 
+  const metrics = [
+    { count: guardias.filter(g => g.type === 'medica').length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
+    { count: guardias.filter(g => g.type === 'enfermeria').length, label: t('dashboard.enf'), accentColor: 'bg-red-500' },
+    { count: libranzas.length, label: t('dashboard.lib'), accentColor: 'bg-green-500' },
+    { count: vacaciones.length, label: t('dashboard.vac'), accentColor: 'bg-purple-400' },
+    { count: doblas.length, label: t('dashboard.ref'), accentColor: 'bg-orange-500' },
+  ];
+
+  const statusSummary = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    const totalDays = new Date(year, m + 1, 0).getDate();
+    const coveredSet = new Set<string>();
+    const dayPersonnel: Record<string, string[]> = {};
+    const allEvents = [...guardias, ...libranzas, ...doblas, ...meetings];
+    for (const ev of allEvents) {
+      if (ev.date.getMonth() === m && ev.date.getFullYear() === year) {
+        coveredSet.add(ev.date.toDateString());
+        const key = ev.date.toDateString();
+        if (!dayPersonnel[key]) dayPersonnel[key] = [];
+        if (ev.personnelName) dayPersonnel[key].push(ev.personnelName);
+      }
+    }
+    let gaps = 0;
+    for (let day = 1; day <= totalDays; day++) {
+      const date = new Date(year, m, day);
+      const dow = date.getDay();
+      if (dow >= 1 && dow <= 5 && !coveredSet.has(date.toDateString())) gaps++;
+    }
+    let conflicts = 0;
+    for (const personnel of Object.values(dayPersonnel)) {
+      if (new Set(personnel).size !== personnel.length) conflicts++;
+    }
+    return { totalDays, coveredDays: coveredSet.size, gaps, conflicts };
+  }, [currentMonth, guardias, libranzas, doblas, meetings]);
+
+  const handleSelectDay = useCallback((date: Date) => {
+    setSelectedDate(prev => {
+      if (prev && prev.toDateString() === date.toDateString()) return null;
+      return date;
+    });
+  }, []);
+
   return (
-    <div className="flex flex-col gap-4 md:gap-8 animate-fade-in pb-16">
-      {/* Selector Categoría Superior con DEGRADADOS */}
-      <div className="flex overflow-x-auto gap-2 no-scrollbar px-4 pb-2 md:justify-center">
-        {subNav.map(item => (
-          <button 
-            key={item.id} 
-            onClick={() => { setActiveSub(item.id as 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'); setBulkPersonnel(null); setBulkDates([]); setSwapMode(false); }}
-            className={`flex items-center gap-3 px-6 py-4 rounded-2xl border transition-all whitespace-nowrap shadow-sm ${
-              activeSub === item.id 
-                ? `${item.activeClass} ring-4 shadow-xl scale-105 z-10 border-transparent` 
-                : 'bg-gray-100 text-gray-400 border-transparent hover:bg-gray-200/50'
-            }`}
-          >
-            <span className="material-symbols-outlined text-2xl">{item.icon}</span>
-            <span className="text-[12px] font-black uppercase tracking-widest">{item.label}</span>
-          </button>
-        ))}
-      </div>
+    <div className="animate-fade-in pb-12">
+      <PageHeader
+        title="Cuadrante de Guardias"
+        subtitle="Gesti&oacute;n y planificaci&oacute;n de equipos"
+        metrics={metrics}
+      />
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* PANEL DE HERRAMIENTAS - IZQUIERDA */}
-        <aside className="w-full lg:w-80 space-y-4 lg:order-1 no-print px-4 md:px-0">
-          <div className="bg-white rounded-[2rem] p-4 border border-gray-100 shadow-sm space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                <span className="material-symbols-outlined text-gray-400">chevron_left</span>
-              </button>
-              <span className="font-black text-gray-800 text-xs capitalize text-center">
-                {currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-              </span>
-              <button onClick={() => changeMonth(1)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                <span className="material-symbols-outlined text-gray-400">chevron_right</span>
-              </button>
-            </div>
-            <button 
-              onClick={handleDownloadActiveCalendar} 
-              className="w-full p-5 rounded-[2rem] bg-indigo-50 text-indigo-700 border-2 border-indigo-100 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-3 group hover:bg-indigo-100 hover:border-indigo-200"
-            >
-               <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">picture_as_pdf</span>
-               <div className="text-left">
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">{t('calendarios.downloadCalendar')}</span>
-                   <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">{activeSub} - {currentMonth.toLocaleDateString('es-ES', { month: 'long' })}</span>
-                </div>
-             </button>
-            </div>
-            
-            {/* BOTÓN PERSONALIZADO - SOLO MIS GUARDIAS */}
-            <div className="bg-emerald-50/50 rounded-[2rem] p-4 border-2 border-emerald-100">
-              <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[14px]">person</span>
-                {t('calendarios.onlyMyShifts')}
-              </p>
-              <button 
-                onClick={handleDownloadUserCalendar} 
-                className="w-full p-5 rounded-[1.5rem] bg-emerald-600 text-white shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3 group hover:bg-emerald-700"
-              >
-                 <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">calendar_today</span>
-                 <div className="text-left">
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">{t('calendarios.downloadMyCalendar')}</span>
-                   <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">Formato .ics (Apple/Google)</span>
-                 </div>
-              </button>
-            </div>
+      <div className="space-y-4">
+        <StatusSummary
+          totalDays={statusSummary.totalDays}
+          coveredDays={statusSummary.coveredDays}
+          gaps={statusSummary.gaps}
+          conflicts={statusSummary.conflicts}
+          pendingValidation={null}
+        />
 
-          {props.user?.role !== 'Administrador' && (
-            <button 
-              onClick={() => { setSwapMode(!swapMode); setBulkPersonnel(null); }} 
-              className={`w-full p-6 rounded-[2.5rem] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-4 border-2 ${swapMode ? 'bg-indigo-700 text-white border-indigo-900 ring-4 ring-indigo-500/20 animate-pulse' : 'bg-white text-indigo-700 border-indigo-50 hover:border-indigo-200 shadow-indigo-100/20 shadow-lg'}`}
+        {/* Category pills */}
+        <div className="flex overflow-x-auto gap-1.5 no-scrollbar pb-1">
+          {subNav.map(item => (
+            <button
+              key={item.id}
+              onClick={() => { setActiveSub(item.id as 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'); setBulkPersonnel(null); setBulkDates([]); setSwapMode(false); setSelectedDate(null); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap ${
+                activeSub === item.id
+                  ? 'bg-gray-900 text-white border-gray-900 shadow-sm'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
+              }`}
             >
-              <span className="material-symbols-outlined text-3xl">{swapMode ? 'sync_alt' : 'swap_calls'}</span>
-              <div className="text-left">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] block leading-none">{swapMode ? t('calendarios.swapActive') : t('calendarios.askSwap')}</span>
-                <span className="text-[9px] opacity-70 font-bold uppercase mt-1 block">{t('calendarios.tapTwoNames')}</span>
-              </div>
+              <span className="material-symbols-outlined text-sm">{item.icon}</span>
+              {item.label}
             </button>
-          )}
+          ))}
+        </div>
 
-          <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm space-y-4">
-            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[14px]">person_search</span>
-              {t('calendarios.management')} {activeSub}
-            </h4>
-            <select 
-              value={bulkPersonnel || ''} 
-              disabled={swapMode || !canManageActiveCategory} 
-              onChange={(e) => { setBulkPersonnel(e.target.value); setBulkDates([]); }} 
-              className="w-full px-6 py-5 bg-gray-50 border border-gray-100 rounded-[1.5rem] font-black text-xs uppercase focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-100"
+        <CalendarToolbar
+          currentMonth={currentMonth}
+          onPrevMonth={() => changeMonth(-1)}
+          onNextMonth={() => changeMonth(1)}
+          onToday={() => setCurrentMonth(new Date())}
+          onDownloadPDF={handleDownloadActiveCalendar}
+          downloadLabel={t('calendarios.downloadCalendar')}
+          onPrint={() => window.print()}
+        />
+
+        {/* Tools bar: swap mode, professional selector, bulk assign */}
+        <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-3 flex-wrap">
+            {props.user?.role !== 'Administrador' && (
+              <button
+                onClick={() => { setSwapMode(!swapMode); setBulkPersonnel(null); }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                  swapMode
+                    ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm animate-pulse'
+                    : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">{swapMode ? 'sync_alt' : 'swap_calls'}</span>
+                {swapMode ? t('calendarios.swapActive') : t('calendarios.askSwap')}
+              </button>
+            )}
+
+            <select
+              value={bulkPersonnel || ''}
+              disabled={swapMode || !canManageActiveCategory}
+              onChange={(e) => { setBulkPersonnel(e.target.value); setBulkDates([]); }}
+              className="flex-1 min-w-[140px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-100"
             >
               <option value="">{t('calendarios.selectProfessional')}</option>
               {currentPersonnel.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
-            {!canManageActiveCategory && isGuardiaCategory && (
-              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                {t('calendarios.coordOnlyGuardias')}
-              </div>
-            )}
-            {!canManageActiveCategory && isPlanningCategory && (
-              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                {t('calendarios.elenaXeloPlanning')}
-              </div>
-            )}
-            {!canManageActiveCategory && isVacacionesCategory && (
-              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                {t('calendarios.elenaXeloVacaciones')}
-              </div>
-            )}
+
             {bulkPersonnel && (
-              <div className="space-y-4 animate-slide-in-up">
-                <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 text-[10px] text-amber-900 font-bold leading-relaxed text-center shadow-inner">
-                  {bulkDates.length === 0 ? `${t('calendarios.tapDays')} ${bulkPersonnel}` : `${bulkDates.length} ${t('calendarios.daysSelected')}`}
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 whitespace-nowrap">
+                  {bulkDates.length === 0
+                    ? `${t('calendarios.tapDays')} ${bulkPersonnel}`
+                    : `${bulkDates.length} ${t('calendarios.daysSelected')}`
+                  }
+                </span>
                 {bulkDates.length > 0 && (
-                  <button 
-                    onClick={handleSaveBulk} 
-                    className="w-full py-5 bg-gray-900 text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest shadow-2xl active:scale-95 hover:bg-black transition-colors"
+                  <button
+                    onClick={handleSaveBulk}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-black transition-colors active:scale-95"
                   >
                     {t('calendarios.confirmAssignment')}
                   </button>
                 )}
               </div>
             )}
-          </div>
-        </aside>
 
-        {/* CALENDARIO - DERECHA */}
-        <main className="flex-1 lg:order-2">
-          {(activeSub === 'Libranzas' || activeSub === 'Refuerzo' || activeSub === 'Vacaciones') && userGroup !== 'both' && (
-            <div className="mb-4 px-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full">
-                {t('calendarios.showingOnly')} {userGroup === 'medico' ? t('calendarios.medicina') : t('calendarios.enfermeria')}
-              </span>
+            {props.user && (
+              <button
+                onClick={handleDownloadUserCalendar}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all"
+                title={t('calendarios.downloadMyCalendar')}
+              >
+                <span className="material-symbols-outlined text-sm">calendar_today</span>
+                ICS
+              </button>
+            )}
+          </div>
+
+          {!canManageActiveCategory && (
+            <div className="mt-2">
+              {isGuardiaCategory && (
+                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 text-[10px] text-amber-900 font-bold text-center">
+                  {t('calendarios.coordOnlyGuardias')}
+                </div>
+              )}
+              {isPlanningCategory && (
+                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 text-[10px] text-amber-900 font-bold text-center">
+                  {t('calendarios.elenaXeloPlanning')}
+                </div>
+              )}
+              {isVacacionesCategory && (
+                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 text-[10px] text-amber-900 font-bold text-center">
+                  {t('calendarios.elenaXeloVacaciones')}
+                </div>
+              )}
             </div>
           )}
-          <UnifiedCalendar
-            key={activeSub}
-            meetings={meetings}
-            guardias={guardias}
-            libranzas={filteredLibranzas}
-            doblas={filteredDoblas}
-            vacaciones={filteredVacaciones}
-            onAddGuardia={props.onAddGuardia}
-            onDeleteGuardia={props.onDeleteGuardia}
-            onAddLibranza={props.onAddLibranza}
-            onDeleteLibranza={props.onDeleteLibranza}
-            onAddDobla={props.onAddDobla}
-            onDeleteDobla={props.onDeleteDobla}
-            onAddVacacion={props.onAddVacacion}
-            onDeleteVacacion={props.onDeleteVacacion}
-            onSwapEvents={handleSwapEvents}
-            currentUser={props.user}
-            isReadOnly={!canManageActiveCategory && !isGuardiaCategory}
-            activeCategory={activeSub}
-            availablePersonnel={currentPersonnel.filter(Boolean)}
-            bulkMode={bulkPersonnel !== null}
-            selectedBulkDates={bulkDates}
-            onToggleBulkDate={toggleBulkDate}
-            swapMode={swapMode}
-            onCancelSwap={() => setSwapMode(false)}
-            currentMonth={currentMonth}
-            onMonthChange={setCurrentMonth}
-            id="calendario-principal"
-            getPersonnelType={(name) => nurses.includes(name) ? 'enfermeria' : 'medica'}
-            noteDates={noteDates}
-            onCellNoteClick={isPlanningCategory ? (date) => { setNoteModalDate(date); setNoteText(notes[date.toDateString()] || ''); } : undefined}
-          />
-        </main>
-      </div>
+        </div>
 
-      {isPlanningCategory && (
-        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden no-print">
-          <div className="p-6 md:p-8 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 text-white rounded-2xl shadow-lg ${canWriteNotes ? 'bg-amber-500' : 'bg-gray-400'}`}>
-                <span className="material-symbols-outlined">sticky_note_2</span>
+        {/* Main layout: calendar + day detail panel */}
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+          <div className="flex-1 min-w-0 -mx-4 md:mx-0">
+            {(activeSub === 'Libranzas' || activeSub === 'Refuerzo' || activeSub === 'Vacaciones') && userGroup !== 'both' && (
+              <div className="mb-4 px-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full">
+                  {t('calendarios.showingOnly')} {userGroup === 'medico' ? t('calendarios.medicina') : t('calendarios.enfermeria')}
+                </span>
               </div>
-              <div>
-                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{t('calendarios.notesOf')} {activeSub === 'Libranzas' ? t('calendarios.libranzas') : t('calendarios.refuerzo')}</h3>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
-                  {canWriteNotes ? t('calendarios.canWriteNotes') : t('calendarios.readOnlyNote')}
-                </p>
+            )}
+            <UnifiedCalendar
+              key={activeSub}
+              meetings={meetings}
+              guardias={guardias}
+              libranzas={filteredLibranzas}
+              doblas={filteredDoblas}
+              vacaciones={filteredVacaciones}
+              onAddGuardia={props.onAddGuardia}
+              onDeleteGuardia={props.onDeleteGuardia}
+              onAddLibranza={props.onAddLibranza}
+              onDeleteLibranza={props.onDeleteLibranza}
+              onAddDobla={props.onAddDobla}
+              onDeleteDobla={props.onDeleteDobla}
+              onAddVacacion={props.onAddVacacion}
+              onDeleteVacacion={props.onDeleteVacacion}
+              onSwapEvents={handleSwapEvents}
+              currentUser={props.user}
+              isReadOnly={!canManageActiveCategory && !isGuardiaCategory}
+              activeCategory={activeSub}
+              availablePersonnel={currentPersonnel.filter(Boolean)}
+              bulkMode={bulkPersonnel !== null}
+              selectedBulkDates={bulkDates}
+              onToggleBulkDate={toggleBulkDate}
+              swapMode={swapMode}
+              onCancelSwap={() => setSwapMode(false)}
+              currentMonth={currentMonth}
+              onMonthChange={setCurrentMonth}
+              id="calendario-principal"
+              getPersonnelType={(name) => nurses.includes(name) ? 'enfermeria' : 'medica'}
+              noteDates={noteDates}
+              onCellNoteClick={isPlanningCategory ? (date) => { setNoteModalDate(date); setNoteText(notes[date.toDateString()] || ''); } : undefined}
+              onSelectDay={handleSelectDay}
+              onProfessionalChange={setSelectedProfessional}
+            />
+          </div>
+
+          <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0">
+            <DayDetailPanel
+              selectedDate={selectedDate}
+              guardias={guardias}
+              libranzas={filteredLibranzas}
+              doblas={filteredDoblas}
+              vacaciones={filteredVacaciones}
+              meetings={meetings}
+              onClose={() => setSelectedDate(null)}
+              user={props.user}
+              selectedProfessional={selectedProfessional}
+              onClearProfessionalFilter={() => setSelectedProfessional('all')}
+            />
+          </div>
+        </div>
+
+        {/* Notes section for planning categories */}
+        {isPlanningCategory && (
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden no-print">
+            <div className="p-6 md:p-8 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 text-white rounded-2xl shadow-lg ${canWriteNotes ? 'bg-amber-500' : 'bg-gray-400'}`}>
+                  <span className="material-symbols-outlined">sticky_note_2</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{t('calendarios.notesOf')} {activeSub === 'Libranzas' ? t('calendarios.libranzas') : t('calendarios.refuerzo')}</h3>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
+                    {canWriteNotes ? t('calendarios.canWriteNotes') : t('calendarios.readOnlyNote')}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="p-4 space-y-2">
-            {noteDates.length === 0 ? (
-              <div className="text-center py-8 opacity-30 text-[10px] font-black uppercase tracking-widest">{t('calendarios.noNotesThisMonth')}</div>
-            ) : (
-              noteDates.sort().map(key => {
-                const date = new Date(key);
-                return (
-                  <div key={key} className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                    <div className="min-w-[80px]">
-                      <p className="text-[10px] font-black text-gray-500 uppercase">{date.toLocaleDateString('es-ES', { weekday: 'short' })}</p>
-                      <p className="text-lg font-black text-gray-800">{date.getDate()}</p>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      {canWriteNotes ? (
-                        <textarea
-                          value={notes[key] || ''}
-                          onChange={e => {
-                            const updated = { ...notes, [key]: e.target.value };
+            <div className="p-4 space-y-2">
+              {noteDates.length === 0 ? (
+                <div className="text-center py-8 opacity-30 text-[10px] font-black uppercase tracking-widest">{t('calendarios.noNotesThisMonth')}</div>
+              ) : (
+                noteDates.sort().map(key => {
+                  const date = new Date(key);
+                  return (
+                    <div key={key} className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                      <div className="min-w-[80px]">
+                        <p className="text-[10px] font-black text-gray-500 uppercase">{date.toLocaleDateString('es-ES', { weekday: 'short' })}</p>
+                        <p className="text-lg font-black text-gray-800">{date.getDate()}</p>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {canWriteNotes ? (
+                          <textarea
+                            value={notes[key] || ''}
+                            onChange={e => {
+                              const updated = { ...notes, [key]: e.target.value };
+                              setNotes(updated);
+                              localStorage.setItem('zbs_planning_notes', JSON.stringify(updated));
+                            }}
+                            rows={2}
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl font-bold text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+                          />
+                        ) : (
+                          <p className="text-sm font-bold text-gray-700 whitespace-pre-wrap">{notes[key]}</p>
+                        )}
+                      </div>
+                      {canWriteNotes && (
+                        <button
+                          onClick={() => {
+                            const updated = { ...notes };
+                            delete updated[key];
                             setNotes(updated);
                             localStorage.setItem('zbs_planning_notes', JSON.stringify(updated));
                           }}
-                          rows={2}
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl font-bold text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
-                        />
-                      ) : (
-                        <p className="text-sm font-bold text-gray-700 whitespace-pre-wrap">{notes[key]}</p>
+                          className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <span className="material-symbols-outlined text-lg">close</span>
+                        </button>
                       )}
                     </div>
-                    {canWriteNotes && (
-                      <button
-                        onClick={() => {
-                          const updated = { ...notes };
-                          delete updated[key];
-                          setNotes(updated);
-                          localStorage.setItem('zbs_planning_notes', JSON.stringify(updated));
-                        }}
-                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                      >
-                        <span className="material-symbols-outlined text-lg">close</span>
-                      </button>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
-
-      {noteModalDate && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm no-print" onClick={() => setNoteModalDate(null)}>
-          <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 animate-slide-in-up" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-black text-gray-900 mb-2 flex items-center gap-3">
-              <span className={`p-2 rounded-xl text-white ${canWriteNotes ? 'bg-amber-500' : 'bg-gray-400'} material-symbols-outlined`}>sticky_note_2</span>
-              {t('calendarios.noteOfDay')}
-            </h3>
-            <p className="text-sm font-bold text-gray-500 mb-5">
-              {noteModalDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
-            {canWriteNotes ? (
-              <textarea
-                value={noteText}
-                onChange={e => setNoteText(e.target.value)}
-                placeholder={t('calendarios.writeNote')}
-                rows={4}
-                className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none placeholder:text-gray-300"
-              />
-            ) : (
-              <div className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-sm text-gray-700 min-h-[80px]">
-                {noteText || t('calendarios.noNoteForDay')}
-              </div>
-            )}
-            <div className="flex gap-3 mt-5">
-              <button onClick={() => setNoteModalDate(null)} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-colors">
-                {canWriteNotes ? t('common.cancel') : t('common.close')}
-              </button>
-              {canWriteNotes && (
-                <button onClick={() => { if (noteModalDate) saveNote(noteModalDate, noteText); setNoteModalDate(null); }} className="flex-1 py-4 bg-amber-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-600 transition-all shadow-xl active:scale-95">
-                  {t('calendarios.saveNote')}
-                </button>
+                  );
+                })
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Registro de Permutas */}
-      <div id="registro-permutas-container" className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden mt-8">
-        <div className="p-6 md:p-8 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
-           <div className="flex items-center gap-4">
-             <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg"><span className="material-symbols-outlined">history</span></div>
-             <div><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{t('calendarios.swapHistory')}</h3><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Control ZBS Forcall</p></div>
-           </div>
-           <button onClick={handleDownloadRegistry} className="px-6 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 no-print shadow-lg active:scale-95"><span className="material-symbols-outlined text-sm">picture_as_pdf</span> {t('calendarios.downloadPdf')}</button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/50">
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.date')}</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.category')}</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.exchange')}</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.days')}</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right">{t('calendarios.authorized')}</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {permutaHistory.length > 0 ? (
-                permutaHistory.map(log => {
-                  const ts = safeFormatDate(log.timestamp);
-                  const d1 = log.details ? safeDayLabel(log.details.date1) : '-';
-                  const d2 = log.details ? safeDayLabel(log.details.date2) : '-';
-                  return (
-                  <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-5"><div className="flex flex-col"><span className="text-sm font-black text-gray-800">{ts}</span></div></td>
-                    <td className="px-6 py-5"><span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${log.category === 'Medicina' ? 'bg-blue-50 text-blue-700 border-blue-100' : log.category === 'enfermeria' ? 'bg-red-50 text-red-700 border-red-100' : log.category === 'Libranzas' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>{log.category}</span></td>
-                    <td className="px-6 py-5"><div className="flex items-center gap-3"><span className="text-sm font-black text-indigo-700">{log.details?.from}</span><span className="material-symbols-outlined text-gray-300 text-sm">sync_alt</span><span className="text-sm font-black text-indigo-700">{log.details?.to}</span></div></td>
-                    <td className="px-6 py-5"><div className="flex gap-2"><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{d1}</span><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{d2}</span></div></td>
-                    <td className="px-6 py-5 text-right"><span className="text-xs font-black text-gray-600 uppercase tracking-tighter">{log.user}</span></td>
-                    <td className="px-6 py-5 text-right">
-                      {canManageActiveCategory && props.onUndoSwap && (
-                        <button
-                          onClick={async () => {
-                            if (!confirm(t('calendarios.undoSwap'))) return;
-                            const ok = await props.onUndoSwap!(log);
-                            if (ok) deleteLog(log.id);
-                          }}
-                          className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition-all active:scale-95"
-                        >
-                          {t('calendarios.undo')}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                  );
-                }))
-              : (
-                <tr><td colSpan={6} className="px-6 py-12 text-center opacity-30 text-[10px] font-black uppercase tracking-widest">{t('common.registros')}</td></tr>
+        {noteModalDate && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm no-print" onClick={() => setNoteModalDate(null)}>
+            <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 animate-slide-in-up" onClick={e => e.stopPropagation()}>
+              <h3 className="text-xl font-black text-gray-900 mb-2 flex items-center gap-3">
+                <span className={`p-2 rounded-xl text-white ${canWriteNotes ? 'bg-amber-500' : 'bg-gray-400'} material-symbols-outlined`}>sticky_note_2</span>
+                {t('calendarios.noteOfDay')}
+              </h3>
+              <p className="text-sm font-bold text-gray-500 mb-5">
+                {noteModalDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+              {canWriteNotes ? (
+                <textarea
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
+                  placeholder={t('calendarios.writeNote')}
+                  rows={4}
+                  className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none placeholder:text-gray-300"
+                />
+              ) : (
+                <div className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-sm text-gray-700 min-h-[80px]">
+                  {noteText || t('calendarios.noNoteForDay')}
+                </div>
               )}
-            </tbody>
-          </table>
+              <div className="flex gap-3 mt-5">
+                <button onClick={() => setNoteModalDate(null)} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-colors">
+                  {canWriteNotes ? t('common.cancel') : t('common.close')}
+                </button>
+                {canWriteNotes && (
+                  <button onClick={() => { if (noteModalDate) saveNote(noteModalDate, noteText); setNoteModalDate(null); }} className="flex-1 py-4 bg-amber-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-600 transition-all shadow-xl active:scale-95">
+                    {t('calendarios.saveNote')}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Registro de Permutas */}
+        <div id="registro-permutas-container" className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+          <div className="p-6 md:p-8 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+             <div className="flex items-center gap-4">
+               <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg"><span className="material-symbols-outlined">history</span></div>
+               <div><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{t('calendarios.swapHistory')}</h3><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Control ZBS Forcall</p></div>
+             </div>
+             <button onClick={handleDownloadRegistry} className="px-6 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 no-print shadow-lg active:scale-95"><span className="material-symbols-outlined text-sm">picture_as_pdf</span> {t('calendarios.downloadPdf')}</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/50">
+                  <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.date')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.category')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.exchange')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b">{t('calendarios.days')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right">{t('calendarios.authorized')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b text-right"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {permutaHistory.length > 0 ? (
+                  permutaHistory.map(log => {
+                    const ts = safeFormatDate(log.timestamp);
+                    const d1 = log.details ? safeDayLabel(log.details.date1) : '-';
+                    const d2 = log.details ? safeDayLabel(log.details.date2) : '-';
+                    return (
+                    <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-5"><div className="flex flex-col"><span className="text-sm font-black text-gray-800">{ts}</span></div></td>
+                      <td className="px-6 py-5"><span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${log.category === 'Medicina' ? 'bg-blue-50 text-blue-700 border-blue-100' : log.category === 'enfermeria' ? 'bg-red-50 text-red-700 border-red-100' : log.category === 'Libranzas' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>{log.category}</span></td>
+                      <td className="px-6 py-5"><div className="flex items-center gap-3"><span className="text-sm font-black text-indigo-700">{log.details?.from}</span><span className="material-symbols-outlined text-gray-300 text-sm">sync_alt</span><span className="text-sm font-black text-indigo-700">{log.details?.to}</span></div></td>
+                      <td className="px-6 py-5"><div className="flex gap-2"><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{d1}</span><span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">{d2}</span></div></td>
+                      <td className="px-6 py-5 text-right"><span className="text-xs font-black text-gray-600 uppercase tracking-tighter">{log.user}</span></td>
+                      <td className="px-6 py-5 text-right">
+                        {canManageActiveCategory && props.onUndoSwap && (
+                          <button
+                            onClick={async () => {
+                              if (!confirm(t('calendarios.undoSwap'))) return;
+                              const ok = await props.onUndoSwap!(log);
+                              if (ok) deleteLog(log.id);
+                            }}
+                            className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition-all active:scale-95"
+                          >
+                            {t('calendarios.undo')}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                    );
+                  }))
+                : (
+                  <tr><td colSpan={6} className="px-6 py-12 text-center opacity-30 text-[10px] font-black uppercase tracking-widest">{t('common.registros')}</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+        {downloadMsg && <NotificationToast message={downloadMsg} onClose={() => setDownloadMsg(null)} />}
       </div>
-      {downloadMsg && <NotificationToast message={downloadMsg} onClose={() => setDownloadMsg(null)} />}
     </div>
   );
 };
