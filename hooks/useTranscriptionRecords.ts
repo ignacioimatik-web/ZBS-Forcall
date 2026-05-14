@@ -23,9 +23,17 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
   const loadRecords = useCallback(async () => {
     try {
       setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setRecords([]);
+        setError(null);
+        setIsLoading(false);
+        return;
+      }
       const { data, error: fetchError } = await supabase
         .from('transcription_records')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (fetchError) {
@@ -56,12 +64,12 @@ const addRecord = useCallback(async (record: Omit<TranscriptionRecordInsert, 'id
         return false;
       }
       const { error: insertError } = await supabase
-         .from('transcription_records')
-         .insert({
-           user_id: user.id,
-           name: record.name,
-           text: record.text,
-         } as any);
+        .from('transcription_records')
+        .insert({
+          user_id: user.id,
+          name: record.name,
+          text: record.text,
+        } as any);
 
       if (insertError) {
         console.error('Error adding transcription record:', insertError);
