@@ -91,7 +91,7 @@ pdf: 'PDF',
   statusSummary: {
     complete: 'Cobertura completa',
     gaps: 'Huecos',
-    swaps: 'Cambios G',
+    swaps: 'Cambios de guardia',
   },
   calendarios: {
     medicina: 'Medicina',

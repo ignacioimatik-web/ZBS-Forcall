@@ -91,7 +91,7 @@ pdf: 'PDF',
   statusSummary: {
     complete: 'Cobertura completa',
     gaps: 'Butts',
-    swaps: 'Canvis G',
+    swaps: 'Canvis de guàrdia',
   },
   calendarios: {
     medicina: 'Medicina',
