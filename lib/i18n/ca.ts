@@ -109,7 +109,7 @@ pdf: 'PDF',
      listView: {
        complete: 'Complet',
        gap: 'Buit',
-       conflict: 'Conflicte',
+        conflict: 'Avisos',
        noData: 'Sense dades',
      },
      validation: {

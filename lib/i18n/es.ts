@@ -108,7 +108,7 @@ pdf: 'PDF',
      listView: {
        complete: 'Completo',
        gap: 'Hueco',
-       conflict: 'Conflicto',
+        conflict: 'Avisos',
        noData: 'Sin datos',
      },
      validation: {
