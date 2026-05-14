@@ -210,23 +210,25 @@ export function validateDay(
   );
   issues.push(...coverageIssues);
 
-  // Determine overall severity
-  const hasError = issues.some(i => i.severity === 'error');
-  const hasWarning = issues.some(i => i.severity === 'warning');
-  // eslint-disable-next-line no-nested-ternary
-  const severity: ValidationSeverity = hasError
-    ? 'error'
-    : hasWarning
-    ? 'warning'
-    : 'ok';
+// Determine overall severity
+   const hasError = issues.some(i => i.severity === 'error');
+   const hasWarning = issues.some(i => i.severity === 'warning');
+   // eslint-disable-next-line no-nested-ternary
+   const severity: ValidationSeverity = hasError
+     ? 'error'
+     : hasWarning
+     ? 'warning'
+     : 'ok';
 
-  return {
-    date: dateStr,
-    severity,
-    issues,
-    isAssigned,
-    hasWarning,
-    isComplete: severity === 'ok',
+   const isAssigned = operational.length > 0 || absences.length > 0;
+
+   return {
+     date: dateStr,
+     severity,
+     issues,
+     isAssigned,
+     hasWarning,
+     isComplete: severity === 'ok',
   };
 }
 
