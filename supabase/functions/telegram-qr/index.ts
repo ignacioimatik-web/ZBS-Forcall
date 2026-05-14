@@ -20,8 +20,15 @@ serve(async (req) => {
   }
 
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('user_id');
+    let userId: string | null = null;
+
+    if (req.method === 'POST') {
+      const body = await req.json();
+      userId = body.user_id;
+    } else {
+      const { searchParams } = new URL(req.url);
+      userId = searchParams.get('user_id');
+    }
 
     if (!userId) {
       return new Response(JSON.stringify({ error: 'Missing user_id' }), {
@@ -42,18 +49,9 @@ serve(async (req) => {
       });
     }
 
-    // Generate unique deep link code for this user
-    const code = `zbs${userId.slice(0, 8)}`;
-
-    // Create Telegram deep link via bot API
-    const botUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/createForumTopicInviteLink`;
-    // Since we don't know the group yet, we provide a generic invite link approach
-    // The actual QR will encode a URL that opens Telegram with a pre-filled message
-
     const telegramDeepLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=ZBS${userId}`;
 
-    // Alternative: generate a QR-compatible URL
-    const qrUrl = `${BASE_URL}/api/telegram-callback?user_id=${userId}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(telegramDeepLink)}`;
 
     return new Response(JSON.stringify({
       success: true,

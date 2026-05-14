@@ -255,7 +255,7 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
           <div className="border-t border-gray-200 bg-earth-50">
             <div className="p-3 border-b border-gray-200 bg-earth-50">
               <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm">telegram</span>
+                <span className="material-symbols-outlined text-sm">send</span>
                 Telegram
               </h2>
             </div>
@@ -290,7 +290,7 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
                 <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200 space-y-2">
                   <p className="text-xs text-gray-500">{t('telegram.scanQR')}</p>
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrResult.deepLink || '')}`}
+                    src={qrResult.qrUrl || ''}
                     alt="QR Code"
                     className="w-36 h-36 mx-auto"
                   />
