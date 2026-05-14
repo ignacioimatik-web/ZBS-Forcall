@@ -524,6 +524,16 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           </div>
 
           <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0 lg:sticky lg:top-20 lg:self-start space-y-3">
+            <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-2 shadow-sm">
+              <div className="flex items-center justify-center gap-2">
+                <span className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-black text-white bg-blue-600">M</span>
+                <span className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-black text-white bg-rose-600">E</span>
+                <span className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-black text-white bg-emerald-600">L</span>
+                <span className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-black text-white bg-orange-600">R</span>
+                <span className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-black text-white bg-violet-600">V</span>
+                <span className="w-5 h-5 rounded flex items-center justify-center text-[7px] font-black text-white bg-sky-600">MT</span>
+              </div>
+            </div>
             <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-3 shadow-sm">
               <div className="flex flex-col gap-2">
                 <button onClick={() => setCurrentMonth(new Date())} className="w-full px-4 py-2 bg-forcall-50 text-forcall-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-forcall-200 hover:bg-forcall-100 transition-all">
@@ -617,17 +627,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
               onClearProfessionalFilter={() => setSelectedProfessional('all')}
             />
           </div>
-        </div>
-
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
-          <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t('legend.title')}:</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-blue-600" /> {t('legend.medicina')}</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-rose-600" /> {t('legend.enfermeria')}</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-emerald-600" /> {t('legend.libranza')}</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-orange-600" /> {t('legend.refuerzo')}</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-violet-600" /> {t('legend.vacaciones')}</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-sky-600" /> {t('legend.reunion')}</span>
         </div>
 
         {/* Notes section for planning categories */}
