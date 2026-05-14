@@ -535,7 +535,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
-                  <span className="material-symbols-outlined text-sm text-emerald-600">select_checked</span>
+                  <span className="material-symbols-outlined text-sm text-emerald-600">select_check_box</span>
                   {`${bulkDates.length} ${t('calendarios.daysSelected')}`}
                 </span>
               )}
