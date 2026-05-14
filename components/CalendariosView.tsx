@@ -66,7 +66,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const { logs: auditLogs, addLog, deleteLog } = useAuditLogs();
   const [swapMode, setSwapMode] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
 
   const doctors = ["Elena Benages", "Delia Mestre", "Frank Castillo", "Fernando Sierra", "Jorge Ramón", "Ilie Popov", "Externo/a Medicina"];
