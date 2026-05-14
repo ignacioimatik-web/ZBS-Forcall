@@ -63,6 +63,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const [bulkDates, setBulkDates] = useState<Date[]>([]);
   const [isBulkSaving, setIsBulkSaving] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
+  const [bulkDeleteTarget, setBulkDeleteTarget] = useState<number | null>(null);
   const { logs: auditLogs, addLog, deleteLog } = useAuditLogs();
   const [swapMode, setSwapMode] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -152,6 +153,25 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
       : `${t('calendarios.bulkError')}: ${bulkPersonnel} (${failed}/${bulkDates.length} ${t('calendarios.bulkError')}) en ${activeSub}.`,
       category: activeSub });
     setBulkDates([]); setBulkPersonnel(null); setIsBulkSaving(false);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!canManageActiveCategory || bulkDeleteTarget === null || bulkDeleteTarget <= 0) return;
+    const dateSet = new Set(bulkDates.map(d => d.toDateString()));
+    if (activeSub === 'Medicina' || activeSub === 'enfermeria') {
+      props.guardias.filter(g => {
+        if (activeSub === 'Medicina') return g.type === 'medica' && dateSet.has(g.date.toDateString());
+        return g.type === 'enfermeria' && dateSet.has(g.date.toDateString());
+      }).forEach(g => props.onDeleteGuardia(g.id));
+    } else if (activeSub === 'Libranzas') {
+      filteredLibranzas.filter(l => dateSet.has(l.date.toDateString())).forEach(l => props.onDeleteLibranza(l.id));
+    } else if (activeSub === 'Refuerzo') {
+      filteredDoblas.filter(d => dateSet.has(d.date.toDateString())).forEach(d => props.onDeleteDobla(d.id));
+    } else if (activeSub === 'Vacaciones') {
+      filteredVacaciones.filter(v => dateSet.has(v.date.toDateString())).forEach(v => props.onDeleteVacacion(v.id));
+    }
+    setBulkDeleteTarget(null);
+    setBulkDates([]);
   };
 
     const handleSwapEvents = async (ev1: any, ev2: any) => {
@@ -339,6 +359,17 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const filteredLibranzas = useMemo(() => userGroup !== 'both' ? libranzas.filter(l => l.type === userTypeFilter) : libranzas, [libranzas, userGroup]);
   const filteredDoblas = useMemo(() => userGroup !== 'both' ? doblas.filter(d => d.type === userTypeFilter) : doblas, [doblas, userGroup]);
   const filteredVacaciones = useMemo(() => userGroup !== 'both' ? vacaciones.filter(v => v.type === userTypeFilter) : vacaciones, [vacaciones, userGroup]);
+
+  const bulkDeletableEvents = useMemo(() => {
+    if (bulkDates.length === 0) return [];
+    const dateSet = new Set(bulkDates.map(d => d.toDateString()));
+    if (activeSub === 'Medicina') return props.guardias.filter(g => g.type === 'medica' && dateSet.has(g.date.toDateString()));
+    if (activeSub === 'enfermeria') return props.guardias.filter(g => g.type === 'enfermeria' && dateSet.has(g.date.toDateString()));
+    if (activeSub === 'Libranzas') return filteredLibranzas.filter(l => dateSet.has(l.date.toDateString()));
+    if (activeSub === 'Refuerzo') return filteredDoblas.filter(d => dateSet.has(d.date.toDateString()));
+    if (activeSub === 'Vacaciones') return filteredVacaciones.filter(v => dateSet.has(v.date.toDateString()));
+    return [];
+  }, [bulkDates, activeSub, props.guardias, filteredLibranzas, filteredDoblas, filteredVacaciones]);
 
   const metrics = [
     { count: guardias.filter(g => g.type === 'medica').length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
@@ -528,6 +559,16 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                   >
                     {isBulkSaving ? t('common.saving') : t('calendarios.confirmAssignment')}
                   </button>
+
+                  {bulkDeletableEvents.length > 0 && (
+                    <button
+                      onClick={() => setBulkDeleteTarget(bulkDeletableEvents.length)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-red-700 transition-colors active:scale-95 flex items-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-sm">delete</span>
+                      {t('calendarios.bulkDelete')} ({bulkDeletableEvents.length})
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -776,6 +817,14 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             setUndoTarget(null);
           }}
           onCancel={() => setUndoTarget(null)}
+        />
+        <ConfirmationModal
+          isOpen={bulkDeleteTarget !== null}
+          title={t('calendarios.bulkDeleteTitle')}
+          message={`${t('calendarios.bulkDeleteConfirm')} (${bulkDeleteTarget})`}
+          confirmLabel={t('calendarios.bulkDelete')}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setBulkDeleteTarget(null)}
         />
       </div>
       )}
