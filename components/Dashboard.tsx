@@ -190,14 +190,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="animate-fade-in pb-12">
-      <PageHeader
-        title="Cuadrante unificado"
-        subtitle="Gesti&oacute;n centralizada de equipos"
-        metrics={metrics}
-      />
+      <div className="print-hide">
+        <PageHeader
+          title="Cuadrante unificado"
+          subtitle="Gesti&oacute;n centralizada de equipos"
+          metrics={metrics}
+        />
+      </div>
 
       <div className="space-y-4">
-        <StatusSummary
+        <div className="print-hide">
+          <StatusSummary
           totalDays={status.totalDays}
           coveredDays={status.coveredDays}
           gaps={status.gaps}
@@ -205,27 +208,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
           pendingValidation={null}
           validationErrors={validation.errors}
           validationWarnings={validation.warnings}
-        />
+          />
+        </div>
 
-        <CalendarToolbar
-          currentMonth={calendarMonth}
-          onPrevMonth={() => changeMonth(-1)}
-          onNextMonth={() => changeMonth(1)}
-          onToday={() => setCalendarMonth(new Date())}
-          onDownloadPDF={handleDownloadActiveCalendar}
-          downloadLabel={t('dashboard.downloadCalendar')}
-          viewMode={viewMode}
-          onViewModeChange={(mode) => {
-            setViewMode(mode);
-            // Reset selection when switching views
-            setSelectedDate(null);
-          }}
-          onPrint={handlePrint}
-        />
+        <div className="print-hide">
+          <CalendarToolbar
+            currentMonth={calendarMonth}
+            onPrevMonth={() => changeMonth(-1)}
+            onNextMonth={() => changeMonth(1)}
+            onToday={() => setCalendarMonth(new Date())}
+            onDownloadPDF={handleDownloadActiveCalendar}
+            downloadLabel={t('dashboard.downloadCalendar')}
+            viewMode={viewMode}
+            onViewModeChange={(mode) => {
+              setViewMode(mode);
+              // Reset selection when switching views
+              setSelectedDate(null);
+            }}
+            onPrint={handlePrint}
+          />
+        </div>
 
         <div className="print-day-only">
           {viewMode === 'month' ? (
-            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+            <div className="print-hide flex flex-col lg:flex-row gap-4 lg:gap-6">
               <div className="flex-1 min-w-0 -mx-4 md:mx-0">
                 <UnifiedCalendar
                   id="dashboard-calendar"
