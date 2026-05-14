@@ -50,7 +50,7 @@ common: {
     clearData: 'Problemes d\'accés? Netejar dades del lloc',
 medicina: 'Medicina',
      enfermeria: 'Infermeria',
-     guardiasM: 'Guardies M.',
+     guardiasM: 'Guardies',
      guardiasE: 'Guardies E.',
      libranzas: 'Lliurança',
     refuerzo: 'Reforç',

@@ -98,7 +98,7 @@ pdf: 'PDF',
 calendarios: {
      medicina: 'Medicina',
      enfermeria: 'Enfermeria',
-     guardiaM: 'Guardias M.',
+     guardiaM: 'Guardias',
      guardiaE: 'Guardias E.',
      libranzas: 'Libranzas',
     refuerzo: 'Refuerzo',
