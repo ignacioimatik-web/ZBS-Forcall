@@ -82,7 +82,7 @@ serve(async (req) => {
     const { error: insertMsgError } = await supabase
       .from('chat_messages')
       .insert({
-        channel_id: 'telegram',
+        channel_id: 'general',
         text: text,
         sender_id: senderId || 'telegram',
         sender_name: senderNameFinal,
