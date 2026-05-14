@@ -128,7 +128,7 @@ export const AvisosView: React.FC<AvisosViewProps> = ({ currentUser }) => {
         <div className="p-4 bg-gradient-to-r from-earth-900 to-earth-800 text-white flex justify-between items-center shadow-md no-print">
            <div className="flex items-center gap-3">
              <div className="p-2 bg-white/10 rounded-lg">
-                <span className="material-symbols-outlined">campaign</span>
+                <span className="material-symbols-outlined">notifications_active</span>
              </div>
              <div>
                 <h3 className="font-bold">{t('avisos.center')}</h3>

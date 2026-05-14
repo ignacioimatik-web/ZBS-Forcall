@@ -299,7 +299,7 @@ export const AlertasView: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
         <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-            <span className="material-symbols-outlined text-3xl text-forcall-600">campaign</span>
+            <span className="material-symbols-outlined text-3xl text-forcall-600">notifications_active</span>
             {t('alertas.alertsAndStatus')}
           </h1>
           <p className="text-sm text-gray-500 font-medium mt-0.5">{t('alertas.emergencyEdition')}</p>

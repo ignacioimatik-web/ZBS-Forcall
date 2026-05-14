@@ -21,8 +21,8 @@ const sections = [
       • Unificado — Vista general del equipo con métricas y resumen del día.
       • Guardias — Calendario detallado con subcategorías: Medicina, Enfermería, Libranzas, Refuerzo y Vacaciones.
       • Chat — comunicación con el equipo.
-      • Dictado — Herramienta de transcripción por voz.
-      • Alertas — Centro de notificaciones y alertas del sistema.
+• Dictado — Herramienta de transcripción por voz.
+       • Avisos — Centro de notificaciones y avisos del sistema.
 
       Para acceder a una sección, haz clic en su nombre en la barra lateral.
       En la sección Guardias, pulsa "Guardias" para desplegar las subcategorías y elige la que necesites.
@@ -119,20 +119,20 @@ const sections = [
       Esta herramienta es útil para tomar notas rápidas sin escribir.
     `,
   },
-  {
-    id: 'alertas',
-    icon: 'campaign',
-    title: 'Alertas y notificaciones',
-    content: `
-      El centro de Alertas te mantiene informado de eventos importantes:
+{
+     id: 'avisos',
+     icon: 'notifications',
+     title: 'Avisos y notificaciones',
+     content: `
+       El centro de Avisos te mantiene informado de eventos importantes:
 
-      • Cambios en la planificación de guardias.
-      • Permutas realizadas por otros miembros del equipo.
-      • Recordatorios de próximos eventos.
+       • Cambios en la planificación de guardias.
+       • Permutas realizadas por otros miembros del equipo.
+       • Recordatorios de próximos eventos.
 
-      Las alertas aparecen también como notificaciones temporales en la parte superior de la pantalla.
-    `,
-  },
+       Los avisos aparecen también como notificaciones temporales en la parte superior de la pantalla.
+     `,
+   },
   {
     id: 'faq',
     icon: 'help_outline',

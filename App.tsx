@@ -370,7 +370,7 @@ const App: React.FC = () => {
       case 'Dictado':
         if (isAdminUser) return null;
         return <TranscriptionTool />;
-      case 'Alertas':
+      case 'Avisos':
         return <AlertasView />;
       case 'Configuracion':
         return <SettingsView settings={appSettings} onSettingsChange={handleSettingsChange} />;

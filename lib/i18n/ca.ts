@@ -62,7 +62,7 @@ common: {
     guardias: 'Guàrdies',
     chat: 'Xat',
     dictado: 'Dictat',
-     alertas: 'Alertes',
+     avisos: 'Avisos',
      iaassist: 'IAassist',
     roleAdmin: 'Admin',
     roleCoordMed: 'Coord. Medicina',
