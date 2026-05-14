@@ -171,7 +171,7 @@ const conflicts = getDayConflicts(assignments);
            </div>
          )}
 
-          {/* Sin incidencias (hay asignaciones y todo está bien) */}
+          {/* Sense conflictes (hi ha assignacions i tot està bé) */}
           {conflicts.length === 0 && assignments.length > 0 && (
             <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
               <span className="material-symbols-outlined text-lg">check_circle</span>
