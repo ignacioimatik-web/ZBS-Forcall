@@ -2,7 +2,7 @@ import React from 'react';
 import { Meeting, Guardia, Libranza, Dobla, Vacacion } from '../types';
 import { ShiftBadge } from './ShiftBadge';
 import { useT } from '../lib/i18n';
-import { validateDay, type DayValidationStatus } from '../lib/calendarValidation';
+
 
 interface DayDetailPanelProps {
   selectedDate: Date | null;
@@ -120,15 +120,6 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
 
 const conflicts = getDayConflicts(assignments);
    const orderedSections = ['guardia', 'libranza', 'dobla', 'vacacion', 'meeting'];
-
-   const validation: DayValidationStatus = validateDay(
-     selectedDate,
-     guardias, libranzas, doblas, vacaciones, meetings
-   );
-
-   const validationIssues = validation.issues.filter(i => i.professionals && i.professionals.length > 0);
-   const hasValidationIssues = validationIssues.length > 0;
-
   return (
     <aside className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden lg:sticky lg:top-20" aria-label={`Detalle del día: ${formatDate(selectedDate)}`}>
       <div className="p-4 border-b border-gray-100">
@@ -181,33 +172,8 @@ const conflicts = getDayConflicts(assignments);
            </div>
          )}
 
-{/* Validación - Detección automática */}
-          {hasValidationIssues && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="material-symbols-outlined text-amber-600 text-lg">error_outline</span>
-                <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">
-                  {t('validation.issues')} ({validationIssues.length}/{validation.issues.length})
-                </span>
-              </div>
-              <ul className="space-y-0.5 ml-7">
-                {validationIssues.map((issue, i) => (
-                  <li key={i} className="text-[10px] text-amber-800 leading-snug">
-                    <span className="material-symbols-outlined text-[10px] align-middle mr-0.5">
-                      {issue.severity === 'error' ? 'warning' : 'error_outline'}
-                    </span>
-                    {issue.message}
-                    {issue.professionals && issue.professionals.length > 0 && (
-                      <span className="font-medium text-amber-900"> ({issue.professionals.join(', ')})</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
           {/* Sin incidencias (hay asignaciones y todo está bien) */}
-          {conflicts.length === 0 && !hasValidationIssues && assignments.length > 0 && (
+          {conflicts.length === 0 && assignments.length > 0 && (
             <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
               <span className="material-symbols-outlined text-lg">check_circle</span>
               <span className="text-[10px] font-bold uppercase tracking-wider">{t('dayDetail.noIncidents')}</span>
