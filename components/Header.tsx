@@ -1,12 +1,14 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useT } from '../lib/i18n';
+import type { User } from '../types';
 
 interface HeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onLogout: () => void;
   userName?: string;
+  user: User | null;
 }
 
 const tabLabels: Record<string, string> = {
@@ -25,9 +27,10 @@ const tabIcons: Record<string, string> = {
   Alertas: 'campaign',
 };
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogout, userName }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogout, userName, user }) => {
   const { t } = useT();
-  const tabs = ['Unificado', 'Guardias', 'Chat', 'Dictado', 'Alertas'];
+  const isAdmin = user?.staffGroup == null;
+  const tabs = useMemo(() => ['Unificado', 'Guardias', 'Chat', 'Dictado', 'Alertas'].filter(t => !isAdmin || (t !== 'Chat' && t !== 'Dictado')), [isAdmin]);
 
   const pageTitle = t(tabLabels[activeTab] || 'header.unificado');
 

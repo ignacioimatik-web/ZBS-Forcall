@@ -271,6 +271,8 @@ const App: React.FC = () => {
     if (!ok) setNotification(t('app.doblaSaveError'));
   }, [user, doblas, addDobla, updateDobla]);
 
+  const isAdminUser = user?.staffGroup == null;
+
   const renderContent = () => {
     switch (activeTab) {
       case 'Unificado':
@@ -318,8 +320,10 @@ const App: React.FC = () => {
           />
         );
       case 'Chat':
+        if (isAdminUser) return null;
         return <ChatView currentUser={user} />;
       case 'Dictado':
+        if (isAdminUser) return null;
         return <TranscriptionTool />;
       case 'Alertas':
         return <AlertasView />;
@@ -345,9 +349,9 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} guardiaSubCategory={guardiaSub} onGuardiaSubCategoryChange={setGuardiaSub} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} guardiaSubCategory={guardiaSub} onGuardiaSubCategoryChange={setGuardiaSub} user={user} />
       <div className="md:pl-60 min-h-screen flex flex-col">
-        <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} userName={user?.name} />
+        <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} userName={user?.name} user={user} />
         {isDataLoading && (
           <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">
             <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>

@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { VERSION_STRING } from '../lib/version';
 import { useT } from '../lib/i18n';
+import type { User } from '../types';
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   guardiaSubCategory?: string;
   onGuardiaSubCategoryChange?: (sub: string) => void;
+  user: User | null;
 }
 
 const tabLabels: Record<string, string> = {
@@ -33,9 +35,10 @@ const guardiaSubItems = [
   { id: 'Vacaciones', labelKey: 'calendarios.vacaciones', icon: 'flight' },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guardiaSubCategory, onGuardiaSubCategoryChange }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guardiaSubCategory, onGuardiaSubCategoryChange, user }) => {
   const { t } = useT();
-  const tabs = ['Unificado', 'Guardias', 'Chat', 'Dictado', 'Alertas'];
+  const isAdmin = user?.staffGroup == null;
+  const tabs = useMemo(() => ['Unificado', 'Guardias', 'Chat', 'Dictado', 'Alertas'].filter(t => !isAdmin || (t !== 'Chat' && t !== 'Dictado')), [isAdmin]);
   const [guardiaExpanded, setGuardiaExpanded] = useState(false);
 
   const handleGuardiaClick = () => {
