@@ -16,14 +16,14 @@ export const USERS: LocalUser[] = [
   { id: 'fernando', name: 'Fernando Sierra', email: 'fernando.zbsforcall@gmail.com', role: 'Medico', category: 'Medicina' },
   { id: 'jorge', name: 'Jorge Ramón', email: 'jorge.zbsforcall@gmail.com', role: 'Medico', category: 'Medicina' },
   { id: 'ilie', name: 'Ilie Popov', email: 'ilie.zbsforcall@gmail.com', role: 'Medico', category: 'Medicina' },
-  { id: 'externo_med', name: 'Externo/a', email: 'externo_med.zbsforcall@gmail.com', role: 'Medico', category: 'Medicina' },
+  { id: 'externo_med', name: 'Externo/a Medicina', email: 'externo_med.zbsforcall@gmail.com', role: 'Medico', category: 'Medicina' },
   // enfermeria
   { id: 'xelo', name: 'Xelo García', email: 'xelo.zbsforcall@gmail.com', role: 'Coordinador', category: 'enfermeria' },
   { id: 'yolanda_lainez', name: 'Yolanda Lainez', email: 'yolanda_lainez.zbsforcall@gmail.com', role: 'enfermera', category: 'enfermeria' },
   { id: 'maite', name: 'Maite Beltrán', email: 'maite.zbsforcall@gmail.com', role: 'enfermera', category: 'enfermeria' },
   { id: 'yolanda_garcia', name: 'Yolanda García', email: 'yolanda_garcia.zbsforcall@gmail.com', role: 'enfermera', category: 'enfermeria' },
   { id: 'rosa', name: 'Rosa Carbó', email: 'rosa.zbsforcall@gmail.com', role: 'enfermera', category: 'enfermeria' },
-  { id: 'externo_enf', name: 'Externo/a', email: 'externo_enf.zbsforcall@gmail.com', role: 'enfermera', category: 'enfermeria' },
+  { id: 'externo_enf', name: 'Externo/a Enfermeria', email: 'externo_enf.zbsforcall@gmail.com', role: 'enfermera', category: 'enfermeria' },
   // Administrativos
   { id: 'joan', name: 'Joan', email: 'joan.zbsforcall@gmail.com', role: 'Administrador', category: 'Administrativos' },
 ];

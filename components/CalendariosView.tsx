@@ -69,8 +69,8 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     setCurrentMonth(newDate);
   };
 
-  const doctors = ["Elena Benages", "Delia Mestre", "Frank Castillo", "Fernando Sierra", "Jorge Ramón", "Ilie Popov", "Externo/a"];
-  const nurses = ["Xelo García", "Yolanda Lainez", "Maite Beltrán", "Yolanda García", "Rosa Carbó", "Externo/a"];
+  const doctors = ["Elena Benages", "Delia Mestre", "Frank Castillo", "Fernando Sierra", "Jorge Ramón", "Ilie Popov", "Externo/a Medicina"];
+  const nurses = ["Xelo García", "Yolanda Lainez", "Maite Beltrán", "Yolanda García", "Rosa Carbó", "Externo/a Enfermeria"];
   const planningPersonnel =
     canManagePlanningType(props.user, 'medica') && canManagePlanningType(props.user, 'enfermeria')
       ? [...doctors, ...nurses]
