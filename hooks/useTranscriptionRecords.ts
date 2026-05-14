@@ -20,52 +20,9 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
-  const retryCountRef = useRef(0);
 
   useEffect(() => {
     return () => { mountedRef.current = false; };
-  }, []);
-
-  const fetchWithAuth = useCallback(async (): Promise<TranscriptionRecord[] | null> => {
-    // Primero intentar getSession (rápido, usa caché local)
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-
-    if (!mountedRef.current) return null;
-
-    let userId = sessionData?.session?.user?.id;
-
-    // Si no hay userId en la sesión, intentar getUser (refresca el token si es necesario)
-    if (!userId) {
-      try {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          console.error('[TranscriptionRecords] getUser error:', userError.message);
-          return null;
-        }
-        userId = userData?.user?.id;
-      } catch (e: any) {
-        console.error('[TranscriptionRecords] getUser exception:', e.message);
-        return null;
-      }
-    }
-
-    if (!userId) {
-      console.error('[TranscriptionRecords] Still no userId after getUser + getSession');
-      return null;
-    }
-
-    // Hacer la query con autenticación explícita
-    const { data, error: fetchError } = await supabase
-      .from('transcription_records')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (fetchError) {
-      console.error('[TranscriptionRecords] Query error:', fetchError.message, fetchError.details);
-      return null;
-    }
-
-    return data || [];
   }, []);
 
   const loadRecords = useCallback(async () => {
@@ -75,39 +32,56 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
     setError(null);
 
     const timeoutId = setTimeout(() => {
-      if (mountedRef.current && isLoading) {
-        console.warn('[TranscriptionRecords] Timeout after 15s');
+      if (mountedRef.current) {
+        setError('La conexión está tardando demasiado.');
         setIsLoading(false);
       }
-    }, 15000);
+    }, 10000);
 
     try {
-      const data = await fetchWithAuth();
+      // Query directa — Supabase maneja auth automáticamente con RLS
+      const { data, error: fetchError } = await supabase
+        .from('transcription_records')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       clearTimeout(timeoutId);
       if (!mountedRef.current) return;
 
-      if (data === null) {
-        // Fallo de autenticación — reintentar máximo 3 veces
-        if (retryCountRef.current < 3) {
-          retryCountRef.current += 1;
-          console.log(`[TranscriptionRecords] Retry ${retryCountRef.current}/3...`);
-          setTimeout(() => loadRecords(), 1000 * retryCountRef.current);
+      if (fetchError) {
+        // Si es error de RLS (403), los datos están protegidos correctamente
+        // pero el usuario puede necesitar refrescar sesión
+        if (fetchError.code === '42501' || fetchError.code === '403') {
+          try {
+            await supabase.auth.refreshSession();
+            const { data: retryData, error: retryError } = await supabase
+              .from('transcription_records')
+              .select('*')
+              .order('created_at', { ascending: false });
+
+            if (retryError) {
+              setError('Error al cargar: ' + retryError.message);
+            } else {
+              setRecords(retryData || []);
+              setError(null);
+            }
+          } catch {
+            setError('Sesión expirada. Recarga la página.');
+            setRecords([]);
+          }
         } else {
-          setError('No se pudo conectar. Recarga la página.');
-          setRecords([]);
+          setError('Error al cargar: ' + fetchError.message);
         }
         return;
       }
 
-      retryCountRef.current = 0; // Resetear contador de reintentos
-      console.log(`[TranscriptionRecords] Fetched ${data.length || 0} records`);
-      setRecords(data as TranscriptionRecord[]);
+      console.log('[TranscriptionRecords] Fetched', data?.length || 0, 'records');
+      setRecords(data || []);
       setError(null);
     } catch (err: any) {
       clearTimeout(timeoutId);
       if (!mountedRef.current) return;
-      console.error('[TranscriptionRecords] Unexpected error:', err);
+      console.error('[TranscriptionRecords] Error:', err);
       setError(err?.message || 'Error al cargar historial');
       setRecords([]);
     } finally {
@@ -116,43 +90,31 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
         setIsLoading(false);
       }
     }
-  }, [fetchWithAuth]);
+  }, []);
 
   useEffect(() => {
     loadRecords();
-
-    // Recargar cuando la pestaña vuelve a ser visible
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible' && mountedRef.current) {
-        console.log('[TranscriptionRecords] Tab visible, refreshing...');
-        retryCountRef.current = 0;
-        loadRecords();
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [loadRecords]);
 
   const addRecord = useCallback(async (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at' | 'user_id'>): Promise<boolean> => {
     if (!mountedRef.current) return false;
 
     try {
-      let userId = '';
-
-      const { data: sessionData } = await supabase.auth.getSession();
-      userId = sessionData?.session?.user?.id || '';
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      let userId = userData?.user?.id || '';
 
       if (!userId) {
-        const { data: userData } = await supabase.auth.getUser();
-        userId = userData?.user?.id || '';
+        await supabase.auth.refreshSession();
+        const { data: refreshed } = await supabase.auth.getUser();
+        userId = refreshed.user?.id || '';
       }
 
       if (!userId) {
-        if (mountedRef.current) setError('Sesión expirada. Vuelve a iniciar sesión.');
+        setError('Sesión expirada.');
         return false;
       }
 
-      const { error: insertError, data: insertedData } = await supabase
+      const { data: insertedData, error: insertError } = await supabase
         .from('transcription_records')
         .insert({
           user_id: userId,
@@ -163,19 +125,16 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
         .single();
 
       if (insertError) {
-        console.error('[TranscriptionRecords] Insert error:', insertError.message);
-        if (mountedRef.current) setError('Error al guardar: ' + insertError.message);
+        setError('Error al guardar: ' + insertError.message);
         return false;
       }
 
-      if (mountedRef.current) {
-        setRecords(prev => [insertedData as TranscriptionRecord, ...prev]);
-        setError(null);
-      }
+      setRecords(prev => [insertedData as TranscriptionRecord, ...prev]);
+      setError(null);
       return true;
     } catch (err: any) {
       console.error('[TranscriptionRecords] Add error:', err);
-      if (mountedRef.current) setError(err?.message || 'Error al guardar grabación');
+      setError(err?.message || 'Error al guardar');
       return false;
     }
   }, []);
@@ -188,31 +147,19 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
         .eq('id', id);
 
       if (deleteError) {
-        console.error('[TranscriptionRecords] Delete error:', deleteError.message);
+        setError('Error al eliminar: ' + deleteError.message);
         return false;
       }
 
-      if (mountedRef.current) {
-        setRecords(prev => prev.filter(r => r.id !== id));
-      }
+      setRecords(prev => prev.filter(r => r.id !== id));
       return true;
     } catch (err: any) {
-      console.error('[TranscriptionRecords] Delete error:', err);
+      setError(err?.message || 'Error al eliminar');
       return false;
     }
   }, []);
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+  const clearError = useCallback(() => setError(null), []);
 
-  return {
-    records,
-    isLoading,
-    error,
-    addRecord,
-    deleteRecord,
-    refresh: loadRecords,
-    clearError,
-  };
+  return { records, isLoading, error, addRecord, deleteRecord, refresh: loadRecords, clearError };
 }
