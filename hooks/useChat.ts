@@ -184,6 +184,26 @@ export function useChat(currentUserId?: string | null): UseChatResult {
     };
   }, [uid, getChannelKey, addMessage, removeMessage]);
 
+  // Reenvío a Telegram (no bloquea la UI)
+  const forwardToTelegram = useCallback(async (text: string, senderName: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await fetch('/api/telegram-forward', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          sender_name: senderName,
+          user_id: user.id,
+        }),
+      });
+    } catch (err) {
+      console.error('Telegram forward failed:', err);
+    }
+  }, []);
+
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || text.length > 2000) return;
     const { data, error } = await supabase.from('chat_messages').insert({
@@ -194,8 +214,11 @@ export function useChat(currentUserId?: string | null): UseChatResult {
       console.error('Error enviando mensaje:', error.message);
       return;
     }
-    if (data?.[0]) addMessage(TEAM_KEY, mapRow(data[0]));
-  }, [addMessage]);
+    if (data?.[0]) {
+      addMessage(TEAM_KEY, mapRow(data[0]));
+      forwardToTelegram(text.trim(), data[0].sender_name || 'Equipo');
+    }
+  }, [addMessage, forwardToTelegram]);
 
   const sendPrivateMessage = useCallback(async (receiverId: string, text: string) => {
     if (!text.trim() || text.length > 2000 || !uid) return;

@@ -20,7 +20,7 @@ const sections = [
 
       • Unificado — Vista general del equipo con métricas y resumen del día.
       • Turnos — Calendario detallado con subcategorías: Medicina, Enfermería, Libranzas, Refuerzo y Vacaciones.
-      • Chat — comunicación con el equipo.
+      • Mensajes — comunicación con el equipo (vinculable con Telegram).
 • Dictado — Herramienta de transcripción por voz.
        • Avisos — Centro de notificaciones y avisos del sistema.
 
@@ -93,9 +93,9 @@ const sections = [
     `,
   },
   {
-    id: 'chat',
-    icon: 'forum',
-    title: 'Chat del equipo',
+id: 'chat',
+     icon: 'forum',
+     title: 'Mensajes del equipo',
     content: `
       La sección de Chat permite la comunicación entre los miembros del equipo.
 
