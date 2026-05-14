@@ -4,6 +4,8 @@ import { Guardia, User } from '../types';
 import { ShiftBadge } from './ShiftBadge';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 import { getHolidayName } from '../utils';
+import { ConfirmationModal } from './ConfirmationModal';
+import { NotificationToast } from './NotificationToast';
 
 interface GuardiasViewProps {
   guardias: Guardia[];
@@ -22,6 +24,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
   const [activeFilter, setActiveFilter] = useState<FilterType>('Todas');
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Guardia | null>(null);
 
   const [formData, setFormData] = useState({
     doctorName: '',
@@ -254,17 +257,17 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                        >
                          <ShiftBadge kind="guardia" type={g.type} />
                          <span className="whitespace-nowrap">{g.personnelName}</span>
-                         {canEdit && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteGuardia(g.id);
-                            }}
-                            className="ml-auto opacity-0 group-hover:opacity-100 hover:text-red-600 transition-opacity shrink-0"
-                            aria-label="Eliminar guardia"
-                          >
-                            <span className="material-symbols-outlined text-[12px]">close</span>
-                          </button>
+                          {canEdit && (
+                           <button
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               setDeleteTarget(g);
+                             }}
+                             className="ml-auto opacity-0 group-hover:opacity-100 hover:text-red-600 transition-opacity shrink-0"
+                             aria-label="Eliminar guardia"
+                           >
+                             <span className="material-symbols-outlined text-[12px]">close</span>
+                           </button>
                         )}
                       </div>
                     ))
@@ -362,6 +365,19 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
           onClose={() => setDownloadMsg(null)}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={!!deleteTarget}
+        title={t('guardias.deleteShift')}
+        message={deleteTarget ? `${t('guardias.deleteConfirm')} ${deleteTarget.personnelName}?` : ''}
+        confirmLabel={t('common.delete')}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          onDeleteGuardia(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

@@ -57,7 +57,10 @@ const App: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('Unificado');
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
-  const [notification, setNotification] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setNotification({ message, type });
+  }, []);
   const [guardiaSub, setGuardiaSub] = useState<'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones'>('Medicina');
 
   const appUserGroup = useMemo(() => {
@@ -112,7 +115,7 @@ const App: React.FC = () => {
   const handleLogout = useCallback(async (reason?: string) => {
     await signOut();
     setActiveTab('Unificado');
-    if (reason) setNotification(reason);
+    if (reason) notify(reason);
   }, [signOut]);
 
   const handleUpsertSession = useCallback(async (session: Meeting) => {
@@ -126,51 +129,50 @@ const App: React.FC = () => {
 
   const handleUpsertGuardia = useCallback(async (guardia: Guardia) => {
     if (!canManageGuardiaType(user, guardia.type)) {
-      setNotification(getGuardiaPermissionMessage(guardia.type, t));
+      notify(getGuardiaPermissionMessage(guardia.type, t), 'error');
       return false;
     }
     const existing = guardias.find(g => g.id === guardia.id);
-    if (existing) {
-      await updateGuardia(guardia);
-    } else {
-      await addGuardia(guardia);
-    }
-    return true;
+    const ok = existing ? await updateGuardia(guardia) : await addGuardia(guardia);
+    if (ok) notify(t('app.guardiaSaved'), 'success');
+    return ok;
   }, [user, guardias, addGuardia, updateGuardia]);
 
   const handleDeleteGuardia = useCallback(async (id: string) => {
     const existing = guardias.find(g => g.id === id);
     if (!existing) return false;
     if (!canManageGuardiaType(user, existing.type)) {
-      setNotification(getGuardiaPermissionMessage(existing.type, t));
+      notify(getGuardiaPermissionMessage(existing.type, t), 'error');
       return false;
     }
-    return await deleteGuardia(id);
+    const ok = await deleteGuardia(id);
+    if (ok) notify(t('app.guardiaDeleted'), 'success');
+    return ok;
   }, [user, guardias, deleteGuardia]);
 
   const handleSwapGuardias = useCallback(async (event1: Guardia & { _kind?: string }, event2: Guardia & { _kind?: string }) => {
     if (!user) {
-      setNotification(t('app.mustLoginSwap'));
+      notify(t('app.mustLoginSwap'), 'error');
       return false;
     }
     if (event1?._kind !== 'guardia' || event2?._kind !== 'guardia') {
-      setNotification(t('app.onlyGuardiaSwap'));
+      notify(t('app.onlyGuardiaSwap'), 'error');
       return false;
     }
     if (event1.type !== event2.type) {
-      setNotification(t('app.cannotCrossSwap'));
+      notify(t('app.cannotCrossSwap'), 'error');
       return false;
     }
     if (user.role === 'Administrador') {
-      setNotification(t('app.adminNoSwap'));
+      notify(t('app.adminNoSwap'), 'error');
       return false;
     }
     if (user.role === 'Medico' && event1.type !== 'medica') {
-      setNotification(t('app.onlyMedicinaSwap'));
+      notify(t('app.onlyMedicinaSwap'), 'error');
       return false;
     }
     if (user.role === 'enfermera' && event1.type !== 'enfermeria') {
-      setNotification(t('app.onlyEnfermeriaSwap'));
+      notify(t('app.onlyEnfermeriaSwap'), 'error');
       return false;
     }
     // Intercambiar personnelName mediante actualización en sitio
@@ -199,9 +201,10 @@ const App: React.FC = () => {
     // El trigger de BD (audit_logs) ya registra el cambio como 'CAMBIO'.
     // Recargar logs manualmente para que se vea pronto.
     if (success1 && success2) {
+      notify(t('app.swapDone'), 'success');
       return true;
     } else {
-      setNotification(t('app.swapError'));
+      notify(t('app.swapError'), 'error');
       return false;
     }
   }, [user, updateGuardia]);
@@ -222,7 +225,7 @@ const App: React.FC = () => {
     );
 
     if (!guardiaA || !guardiaB) {
-      setNotification(t('app.undoNotFound'));
+      notify(t('app.undoNotFound'), 'error');
       return false;
     }
 
@@ -233,42 +236,45 @@ const App: React.FC = () => {
     const ok2 = await updateGuardia(updateB);
 
     if (ok1 && ok2) {
-      setNotification(t('app.swapUndone'));
+      notify(t('app.swapUndone'), 'success');
       return true;
     }
-    setNotification(t('app.undoError'));
+    notify(t('app.undoError'), 'error');
     return false;
   }, [user, guardias, updateGuardia]);
 
   const handleUpsertLibranza = useCallback(async (libranza: Libranza) => {
     if (!canManagePlanningType(user, libranza.type)) {
-      setNotification(t('app.noPermissionLibranza'));
+      notify(t('app.noPermissionLibranza'), 'error');
       return;
     }
     const existing = libranzas.find(l => l.id === libranza.id);
     const ok = existing ? await updateLibranza(libranza) : await addLibranza(libranza);
-    if (!ok) setNotification(t('app.libranzaSaveError'));
+    if (ok) notify(t('app.libranzaSaved'), 'success');
+    else notify(t('app.libranzaSaveError'), 'error');
   }, [user, libranzas, addLibranza, updateLibranza]);
 
   const handleDeleteVacacion = useCallback(async (id: string) => {
     const existing = vacaciones.find(v => v.id === id);
     if (!existing) return;
     if (!canManageVacaciones(user, existing.type)) {
-      setNotification(t('app.noPermissionVacacion'));
+      notify(t('app.noPermissionVacacion'), 'error');
       return;
     }
     const ok = await deleteVacacion(id);
-    if (!ok) setNotification(t('app.vacacionDeleteError'));
+    if (ok) notify(t('app.vacacionDeleted'), 'success');
+    else notify(t('app.vacacionDeleteError'), 'error');
   }, [user, vacaciones, deleteVacacion]);
 
   const handleUpsertDobla = useCallback(async (dobla: Dobla) => {
     if (!canManagePlanningType(user, dobla.type)) {
-      setNotification(t('app.noPermissionDobla'));
+      notify(t('app.noPermissionDobla'), 'error');
       return;
     }
     const existing = doblas.find(d => d.id === dobla.id);
     const ok = existing ? await updateDobla(dobla) : await addDobla(dobla);
-    if (!ok) setNotification(t('app.doblaSaveError'));
+    if (ok) notify(t('app.doblaSaved'), 'success');
+    else notify(t('app.doblaSaveError'), 'error');
   }, [user, doblas, addDobla, updateDobla]);
 
   const isAdminUser = user?.staffGroup == null;
@@ -364,7 +370,7 @@ const App: React.FC = () => {
         </main>
         <Footer />
       </div>
-      {notification && <NotificationToast message={notification} onClose={() => setNotification(null)} />}
+      {notification && <NotificationToast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
     </div>
   );
 };

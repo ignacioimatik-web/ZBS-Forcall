@@ -8,6 +8,7 @@ interface CalendarToolbarProps {
   onToday: () => void;
   onDownloadPDF?: () => void;
   downloadLabel?: string;
+  isDownloading?: boolean;
   viewMode?: 'month' | 'list';
   onViewModeChange?: (mode: 'month' | 'list') => void;
   onPrint?: () => void;
@@ -20,6 +21,7 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
   onToday,
   onDownloadPDF,
   downloadLabel,
+  isDownloading,
   viewMode = 'month',
   onViewModeChange,
   onPrint,
@@ -64,10 +66,11 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
         {onDownloadPDF && (
           <button
             onClick={onDownloadPDF}
-            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-gray-900 text-white rounded-xl text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-gray-800 active:scale-95 transition-all"
+            disabled={isDownloading}
+            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-gray-900 text-white rounded-xl text-[8px] sm:text-[9px] font-black uppercase tracking-widest shadow-sm hover:bg-gray-800 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined text-sm">download</span>
-            <span className="hidden sm:inline">{downloadLabel || t('common.pdf')}</span>
+            <span className="material-symbols-outlined text-sm">{isDownloading ? 'hourglass_top' : 'download'}</span>
+            <span className="hidden sm:inline">{isDownloading ? t('common.downloading') : (downloadLabel || t('common.pdf'))}</span>
           </button>
         )}
         {onPrint && (

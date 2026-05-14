@@ -251,6 +251,15 @@ const startingEmptyCells = useMemo(() => {
     setIsModalOpen(false);
   };
 
+  const filteredMonthEvents = useMemo(() => {
+    if (selectedProfessional === 'all') return null;
+    const m = currentMonth.getMonth();
+    const y = currentMonth.getFullYear();
+    const all = [...guardias, ...libranzas, ...doblas, ...vacaciones] as { personnelName: string; date: Date }[];
+    return all.filter(ev => ev.personnelName === selectedProfessional && ev.date.getMonth() === m && ev.date.getFullYear() === y);
+  }, [selectedProfessional, currentMonth, guardias, libranzas, doblas, vacaciones]);
+  const hasFilterNoResults = selectedProfessional !== 'all' && filteredMonthEvents && filteredMonthEvents.length === 0;
+
   const changeMonth = (offset: number) => {
     const next = new Date(currentMonth);
     next.setMonth(currentMonth.getMonth() + offset);
@@ -310,6 +319,12 @@ const startingEmptyCells = useMemo(() => {
           <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider py-2.5 border-r border-gray-200 last:border-r-0">{d}</div>
         ))}
       </div>
+      {hasFilterNoResults && (
+        <div className="flex items-center justify-center gap-2 py-6 text-gray-400">
+          <span className="material-symbols-outlined text-lg">info</span>
+          <span className="text-sm font-medium">No hay asignaciones de {selectedProfessional} en este mes.</span>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-7 gap-3 md:gap-0">
 
         {Array.from({ length: startingEmptyCells }).map((_, i) => (

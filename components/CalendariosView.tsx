@@ -11,6 +11,9 @@ import { PageHeader } from './PageHeader';
 import { StatusSummary } from './StatusSummary';
 import { CalendarToolbar } from './CalendarToolbar';
 import { DayDetailPanel } from './DayDetailPanel';
+import { LoadingSkeleton } from './LoadingSkeleton';
+import { EmptyState } from './EmptyState';
+import { ConfirmationModal } from './ConfirmationModal';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { VERSION_STRING } from '../lib/version';
@@ -27,6 +30,7 @@ interface CalendariosViewProps {
   user: User | null;
   activeSub: 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones';
   onSubCategoryChange: (sub: 'Medicina' | 'enfermeria' | 'Libranzas' | 'Refuerzo' | 'Vacaciones') => void;
+  isDataLoading?: boolean;
 }
 
 function safeFormatDate(value: any): string {
@@ -195,7 +199,9 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     downloadICS(icsContent, `mis-guardias-${userName}.ics`);
   };
 
-  const handleDownloadRegistry = () => {
+  const [isDownloadingRegistry, setIsDownloadingRegistry] = useState(false);
+  const handleDownloadRegistry = async () => {
+    setIsDownloadingRegistry(true);
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
     
@@ -236,7 +242,13 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     doc.text(`${VERSION_STRING} — Registro de Permutas`, 10, doc.internal.pageSize.getHeight() - 7);
     doc.text(`Página 1 de 1`, pageW - 10, doc.internal.pageSize.getHeight() - 7, { align: 'right' });
 
-    doc.save(`Registro_Permutas_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`);
+    try {
+      doc.save(`Registro_Permutas_Forcall_${new Date().toLocaleDateString('es-ES', { month: 'long' })}.pdf`);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDownloadingRegistry(false);
+    }
   };
 
   const [isDownloading, setIsDownloading] = useState(false);
@@ -287,6 +299,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     }
   };
 
+  const [undoTarget, setUndoTarget] = useState<AuditLog | null>(null);
   const permutaHistory = useMemo(() => auditLogs.filter(log => log.type === 'PERMUTA'), [auditLogs]);
 
   const canWriteNotes = props.user?.name === 'Xelo García' || props.user?.name === 'Elena Benages';
@@ -360,6 +373,14 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
     return { totalDays, coveredDays: coveredSet.size, gaps, conflicts };
   }, [currentMonth, guardias, libranzas, doblas, meetings]);
 
+  const isLoading = props.isDataLoading && guardias.length === 0 && libranzas.length === 0;
+  const currentMonthEvents = useMemo(() => {
+    const m = currentMonth.getMonth();
+    const y = currentMonth.getFullYear();
+    return [...guardias, ...libranzas, ...doblas, ...vacaciones].filter(e => e.date.getMonth() === m && e.date.getFullYear() === y);
+  }, [currentMonth, guardias, libranzas, doblas, vacaciones]);
+  const isMonthEmpty = !isLoading && currentMonthEvents.length === 0;
+
   const handleSelectDay = useCallback((date: Date) => {
     setSelectedDate(prev => {
       if (prev && prev.toDateString() === date.toDateString()) return null;
@@ -375,6 +396,21 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
         metrics={metrics}
       />
 
+      {isLoading ? (
+        <div className="space-y-4">
+          <LoadingSkeleton variant="metrics" />
+          <LoadingSkeleton variant="toolbar" />
+          <LoadingSkeleton variant="calendar" />
+        </div>
+      ) : isMonthEmpty ? (
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+          <EmptyState
+            icon="calendar_month"
+            title="No hay asignaciones en este mes"
+            action={{ label: t('common.hoy'), onClick: () => setCurrentMonth(new Date()) }}
+          />
+        </div>
+      ) : (
       <div className="space-y-4">
         <StatusSummary
           totalDays={statusSummary.totalDays}
@@ -390,6 +426,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           onNextMonth={() => changeMonth(1)}
           onToday={() => setCurrentMonth(new Date())}
           onDownloadPDF={handleDownloadActiveCalendar}
+          isDownloading={isDownloading}
           downloadLabel={t('calendarios.downloadCalendar')}
         />
 
@@ -654,7 +691,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-lg"><span className="material-symbols-outlined">history</span></div>
                <div><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{t('calendarios.swapHistory')}</h3><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Control ZBS Forcall</p></div>
              </div>
-             <button onClick={handleDownloadRegistry} className="px-6 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 no-print shadow-lg active:scale-95"><span className="material-symbols-outlined text-sm">picture_as_pdf</span> {t('calendarios.downloadPdf')}</button>
+             <button onClick={handleDownloadRegistry} disabled={isDownloadingRegistry} className="px-6 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 no-print shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"><span className="material-symbols-outlined text-sm">{isDownloadingRegistry ? 'hourglass_top' : 'picture_as_pdf'}</span> {isDownloadingRegistry ? t('calendarios.downloading') : t('calendarios.downloadPdf')}</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -684,11 +721,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                       <td className="px-6 py-5 text-right">
                         {canManageActiveCategory && props.onUndoSwap && (
                           <button
-                            onClick={async () => {
-                              if (!confirm(t('calendarios.undoSwap'))) return;
-                              const ok = await props.onUndoSwap!(log);
-                              if (ok) deleteLog(log.id);
-                            }}
+                            onClick={() => setUndoTarget(log)}
                             className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition-all active:scale-95"
                           >
                             {t('calendarios.undo')}
@@ -706,7 +739,21 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           </div>
         </div>
         {downloadMsg && <NotificationToast message={downloadMsg} onClose={() => setDownloadMsg(null)} />}
+        <ConfirmationModal
+          isOpen={!!undoTarget}
+          title={t('calendarios.undoSwap')}
+          message={t('calendarios.undoSwapConfirm')}
+          confirmLabel={t('calendarios.undo')}
+          onConfirm={async () => {
+            if (!undoTarget) return;
+            const ok = await props.onUndoSwap!(undoTarget);
+            if (ok) deleteLog(undoTarget.id);
+            setUndoTarget(null);
+          }}
+          onCancel={() => setUndoTarget(null)}
+        />
       </div>
+      )}
     </div>
   );
 };
