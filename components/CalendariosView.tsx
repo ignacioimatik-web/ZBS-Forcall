@@ -522,17 +522,23 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
 
         {/* Assignment bar: visible when selection mode is active */}
         {selectionMode && (
-          <div className={`bg-white border rounded-2xl px-3 sm:px-4 py-3 shadow-sm transition-all ${
-            bulkDates.length > 0 ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-200'
+          <div className={`border rounded-2xl px-3 sm:px-4 py-3 shadow-sm transition-all ${
+            bulkDates.length > 0
+              ? 'bg-emerald-50/30 border-emerald-200'
+              : 'border-dashed border-emerald-300 bg-emerald-50/60'
           }`}>
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
-                <span className="material-symbols-outlined text-sm">select_checked</span>
-                {bulkDates.length === 0
-                  ? t('calendarios.tapDaysMulti')
-                  : `${bulkDates.length} ${t('calendarios.daysSelected')}`
-                }
-              </span>
+              {bulkDates.length === 0 ? (
+                <span className="inline-flex items-center gap-2 w-full sm:w-auto">
+                  <span className="material-symbols-outlined text-emerald-500 animate-bounce">pan_tool</span>
+                  <span className="text-xs font-bold text-emerald-700">{t('calendarios.tapDaysMulti')}</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
+                  <span className="material-symbols-outlined text-sm text-emerald-600">select_checked</span>
+                  {`${bulkDates.length} ${t('calendarios.daysSelected')}`}
+                </span>
+              )}
 
               {bulkDates.length > 0 && (
                 <>
