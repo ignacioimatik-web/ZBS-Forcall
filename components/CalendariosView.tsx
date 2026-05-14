@@ -456,29 +456,16 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           downloadLabel={t('calendarios.downloadCalendar')}
         />
 
-        {/* Assignment bar: visible when selection mode is active */}
-        {selectionMode && (
-          <div className={`border rounded-2xl px-3 sm:px-4 py-3 shadow-sm transition-all ${
-            bulkDates.length > 0
-              ? 'bg-emerald-50/30 border-emerald-200'
-              : 'border-dashed border-emerald-300 bg-emerald-50/60'
-          }`}>
+        {/* Assignment bar: visible when selection mode is active with days selected */}
+        {selectionMode && bulkDates.length > 0 && (
+          <div className="border rounded-2xl px-3 sm:px-4 py-3 shadow-sm transition-all bg-emerald-50/30 border-emerald-200">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              {bulkDates.length === 0 ? (
-                <span className="inline-flex items-center gap-2 w-full sm:w-auto">
-                  <span className="material-symbols-outlined text-emerald-500 animate-bounce">pan_tool</span>
-                  <span className="text-xs font-bold text-emerald-700">{t('calendarios.tapDaysMulti')}</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
-                  <span className="material-symbols-outlined text-sm text-emerald-600">select_check_box</span>
-                  {`${bulkDates.length} ${t('calendarios.daysSelected')}`}
-                </span>
-              )}
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
+                <span className="material-symbols-outlined text-sm text-emerald-600">select_check_box</span>
+                {`${bulkDates.length} ${t('calendarios.daysSelected')}`}
+              </span>
 
-              {bulkDates.length > 0 && (
-                <>
-                  <select
+              <select
                     value={bulkPersonnel || ''}
                     onChange={(e) => setBulkPersonnel(e.target.value || null)}
                     className="flex-1 sm:flex-none sm:min-w-[160px] px-4 py-2 bg-white border border-gray-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-50"
@@ -511,9 +498,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                       {t('calendarios.bulkDelete')} ({bulkDeletableEvents.length})
                     </button>
                   )}
-                </>
-              )}
-            </div>
+                </div>
           </div>
         )}
 
@@ -592,6 +577,13 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
                     <span className="material-symbols-outlined text-sm">{selectionMode ? 'checklist' : 'select_check_box'}</span>
                     {selectionMode ? t('calendarios.multiSelectActive') : t('calendarios.multiSelect')}
                   </button>
+                )}
+
+                {selectionMode && bulkDates.length === 0 && (
+                  <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50/60 border border-dashed border-emerald-300">
+                    <span className="material-symbols-outlined text-emerald-500 animate-bounce text-sm">pan_tool</span>
+                    <span className="text-[10px] font-bold text-emerald-700">{t('calendarios.tapDaysMulti')}</span>
+                  </span>
                 )}
 
                 {props.user && (
