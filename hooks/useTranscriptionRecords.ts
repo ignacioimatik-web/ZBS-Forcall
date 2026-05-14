@@ -19,52 +19,26 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
   const [records, setRecords] = useState<TranscriptionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
   const loadRef = useRef(false);
 
-  const loadRecords = useCallback(async () => {
-    if (loadRef.current) return;
-    loadRef.current = true;
-    setIsLoading(true);
+  // Track mount state to prevent setting state on unmounted component
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
+  const fetchRecords = useCallback(async () => {
+    if (!mountedRef.current) return;
     try {
-      // Verify session exists
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error('[TranscriptionRecords] Session error:', sessionError.message);
-        setError('Error de sesión: ' + sessionError.message);
-        return;
-      }
-
-      const session = sessionData?.session;
-      if (!session?.user?.id) {
-        console.error('[TranscriptionRecords] No authenticated user');
-        setRecords([]);
-        setError(null);
-        return;
-      }
-
-      // Refresh token if near expiry (<5 min)
-      const expiresAt = session.expires_at || 0;
-      const now = Date.now() / 1000;
-      let userId = session.user.id;
-
-      if (expiresAt - now < 300) {
-        console.log('[TranscriptionRecords] Refreshing token...');
-        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-        if (refreshError) {
-          console.error('[TranscriptionRecords] Token refresh failed:', refreshError.message);
-          setError('Sesión expirada. Vuelve a iniciar sesión.');
-          setRecords([]);
-          return;
-        }
-        userId = refreshed.session?.user?.id || userId;
-      }
-
-      // Fetch ALL records (shared library, no user filter)
       const { data, error: fetchError } = await supabase
         .from('transcription_records')
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (!mountedRef.current) return;
 
       if (fetchError) {
         console.error('[TranscriptionRecords] Error loading:', fetchError.message);
@@ -76,26 +50,89 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
       setRecords(data || []);
       setError(null);
     } catch (err: any) {
-      console.error('[TranscriptionRecords] Load error:', err);
-      setError(err?.message || 'Error al cargar historial de grabaciones');
-    } finally {
-      setIsLoading(false);
-      loadRef.current = false;
+      console.error('[TranscriptionRecords] Unexpected error:', err);
+      if (mountedRef.current) {
+        setError(err?.message || 'Error al cargar historial');
+      }
     }
   }, []);
+
+  const loadRecords = useCallback(async () => {
+    if (loadRef.current) return;
+    loadRef.current = true;
+    setIsLoading(true);
+
+    try {
+      // Verify session exists
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('[TranscriptionRecords] Session error:', sessionError.message);
+        if (mountedRef.current) {
+          setError('Error de sesión: ' + sessionError.message);
+        }
+        return;
+      }
+
+      const session = sessionData?.session;
+      if (!session?.user?.id) {
+        console.error('[TranscriptionRecords] No authenticated user');
+        if (mountedRef.current) {
+          setRecords([]);
+          setError(null);
+        }
+        return;
+      }
+
+      // Refresh token if near expiry (<5 min)
+      const expiresAt = session.expires_at || 0;
+      const now = Date.now() / 1000;
+      if (expiresAt - now < 300) {
+        console.log('[TranscriptionRecords] Refreshing token...');
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.error('[TranscriptionRecords] Token refresh failed:', refreshError.message);
+          if (mountedRef.current) {
+            setError('Sesión expirada. Vuelve a iniciar sesión.');
+            setRecords([]);
+          }
+          return;
+        }
+        if (!refreshed.session?.user?.id) {
+          if (mountedRef.current) {
+            setError('Sesión expirada. Vuelve a iniciar sesión.');
+            setRecords([]);
+          }
+          return;
+        }
+      }
+
+      await fetchRecords();
+    } catch (err: any) {
+      console.error('[TranscriptionRecords] Load error:', err);
+      if (mountedRef.current) {
+        setError(err?.message || 'Error al cargar historial de grabaciones');
+      }
+    } finally {
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
+      loadRef.current = false;
+    }
+  }, [fetchRecords]);
 
   useEffect(() => {
     loadRecords();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[TranscriptionRecords] Auth event:', event, 'userId:', session?.user?.id);
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        await loadRecords();
+
+      // Only reload on SIGN_IN or USER_UPDATED — NOT on TOKEN_REFRESHED to avoid loops
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        loadRef.current = false; // Reset to allow reload
+        loadRecords();
       }
-      if (event === 'SIGNED_OUT') {
-        setRecords([]);
-        setError(null);
-      }
+      // NOTE: Do NOT clear records on SIGNED_OUT from subscription
+      // It can fire during token refresh and wipe data incorrectly
     });
 
     return () => { subscription.unsubscribe(); };
@@ -106,7 +143,7 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
         console.error('[TranscriptionRecords] addRecord session error:', sessionError.message);
-        setError('Error de sesión al guardar.');
+        if (mountedRef.current) setError('Error de sesión al guardar.');
         return false;
       }
 
@@ -114,12 +151,11 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
       let userId = session?.user?.id;
 
       if (!userId) {
-        console.error('[TranscriptionRecords] addRecord: no userId');
-        // Try refreshing
+        console.error('[TranscriptionRecords] addRecord: no userId, refreshing...');
         const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
         userId = refreshed.session?.user?.id || '';
         if (!userId) {
-          setError('Usuario no autenticado. Vuelve a iniciar sesión.');
+          if (mountedRef.current) setError('Usuario no autenticado. Vuelve a iniciar sesión.');
           return false;
         }
       }
@@ -136,18 +172,20 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
 
       if (insertError) {
         console.error('[TranscriptionRecords] Insert error:', insertError.message, insertError.details);
-        setError('Error al guardar: ' + insertError.message);
+        if (mountedRef.current) setError('Error al guardar: ' + insertError.message);
         return false;
       }
 
       const newRecord = insertedData as TranscriptionRecord;
       console.log('[TranscriptionRecords] Record inserted:', newRecord.id);
-      setRecords(prev => [newRecord, ...prev]);
-      setError(null);
+      if (mountedRef.current) {
+        setRecords(prev => [newRecord, ...prev]);
+        setError(null);
+      }
       return true;
     } catch (err: any) {
       console.error('[TranscriptionRecords] Add error:', err);
-      setError(err?.message || 'Error al guardar grabación');
+      if (mountedRef.current) setError(err?.message || 'Error al guardar grabación');
       return false;
     }
   }, []);
@@ -164,7 +202,9 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
         return false;
       }
 
-      setRecords(prev => prev.filter(r => r.id !== id));
+      if (mountedRef.current) {
+        setRecords(prev => prev.filter(r => r.id !== id));
+      }
       return true;
     } catch (err: any) {
       console.error('[TranscriptionRecords] Delete unexpected error:', err);
@@ -173,7 +213,7 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
   }, []);
 
   const clearError = useCallback(() => {
- setError(null);
+    setError(null);
   }, []);
 
   return {
