@@ -229,10 +229,31 @@ export interface Database {
           presentation_url?: string | null;
           summary?: string | null;
           proposals?: Json;
-          updated_at?: string;
-        };
-      };
-      calendarios: {
+updated_at?: string;
+         };
+       };
+       transcription_records: {
+         Row: {
+           id: string;
+           user_id: string;
+           name: string;
+           text: string;
+           created_at: string;
+         };
+         Insert: {
+           id?: string;
+           user_id: string;
+           name: string;
+           text: string;
+           created_at?: string;
+         };
+         Update: {
+           id?: string;
+           name?: string;
+           text?: string;
+         };
+       };
+       calendarios: {
         Row: {
           id: string;
           name: string;
