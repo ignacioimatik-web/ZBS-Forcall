@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
   };
 
   return (
-    <aside className="hidden md:flex md:flex-col fixed left-0 top-0 h-screen w-60 bg-forcall-900 z-50 shadow-xl">
+    <aside className="hidden md:flex md:flex-col min-h-screen w-60 bg-forcall-900 z-50 shadow-xl">
       <div className="p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-3xl text-earth-100">landscape</span>
