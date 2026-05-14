@@ -296,16 +296,16 @@ export const AlertasView: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
-      <div className="bg-gradient-to-r from-red-700 via-red-600 to-orange-700 rounded-3xl p-6 text-white shadow-lg flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] opacity-80">{t('alertas.emergencyEdition')}</p>
-          <h2 className="text-2xl md:text-3xl font-black flex items-center gap-2 mt-2">
-            <span className="material-symbols-outlined text-3xl">campaign</span>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+            <span className="material-symbols-outlined text-3xl text-forcall-600">campaign</span>
             {t('alertas.alertsAndStatus')}
-          </h2>
+          </h1>
+          <p className="text-sm text-gray-500 font-medium mt-0.5">{t('alertas.emergencyEdition')}</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={fetchCivilProtectionStatus} disabled={civilProtectionLoading} className="bg-white text-red-700 hover:bg-red-50 px-4 py-2 rounded-2xl text-xs font-black transition-all border border-white/30 flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+          <button onClick={fetchCivilProtectionStatus} disabled={civilProtectionLoading} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-forcall-600 hover:bg-forcall-50 border border-gray-200 bg-white transition-all">
             <span className={`material-symbols-outlined text-lg ${civilProtectionLoading ? 'animate-spin' : ''}`}>refresh</span>
             {t('alertas.civilProtection')}
           </button>
@@ -314,8 +314,8 @@ export const AlertasView: React.FC = () => {
 
       <div className="grid grid-cols-1 2xl:grid-cols-12 gap-6 items-start">
         <section className="2xl:col-span-8 space-y-6">
-          <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 bg-stone-50 border-b border-gray-100 flex items-center justify-between gap-4">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('alertas.cover')}</p>
                 <h3 className="text-lg font-black text-gray-900 mt-1">{t('alertas.officialCivilProtection')}</h3>
@@ -421,14 +421,14 @@ export const AlertasView: React.FC = () => {
         </section>
 
         <aside className="2xl:col-span-4 space-y-6">
-          <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('alertas.teletype')}</p>
               <h3 className="text-lg font-black text-gray-900 mt-1">{t('alertas.operationalNotes')}</h3>
             </div>
             <div className="p-4 space-y-2">
               {protocols.map(p => (
-                <div key={p.id} className="bg-white p-4 rounded-3xl border-l-4 border-l-sky-500 shadow-sm border border-gray-200">
+                <div key={p.id} className="bg-white p-4 rounded-xl border-l-4 border-l-sky-500 shadow-sm border border-gray-200">
                   <h4 className="text-[10px] font-black text-gray-800 uppercase mb-1 tracking-widest flex items-center gap-2">
                     <span className="material-symbols-outlined text-sky-500 text-sm">{p.icon}</span>
                     {p.title}
@@ -439,7 +439,7 @@ export const AlertasView: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-100">
               <h3 className="font-black text-gray-800 text-xs uppercase tracking-widest flex items-center gap-2">
                 <span className="material-symbols-outlined text-red-600">emergency</span> {t('alertas.emergencies')}
@@ -473,8 +473,8 @@ export const AlertasView: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 bg-stone-50 border-b border-gray-100">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('alertas.socialNetwork')}</p>
               <h3 className="text-lg font-black text-gray-900 mt-1">@VOSTcvalenciana</h3>
             </div>
@@ -515,13 +515,13 @@ export const AlertasView: React.FC = () => {
       </div>
 
       <div className="space-y-6">
-        <div className="bg-emerald-600 text-white p-5 rounded-3xl shadow-md border border-white/10 flex flex-col md:flex-row items-center gap-4">
-          <span className="material-symbols-outlined text-4xl">check_circle</span>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col md:flex-row items-center gap-4">
+          <span className="material-symbols-outlined text-4xl text-emerald-600">check_circle</span>
           <div className="flex-1">
-            <h3 className="font-black uppercase text-sm tracking-widest">{t('alertas.roadStatus')}</h3>
-            <p className="text-sm opacity-90 font-medium">Condiciones favorables para la actividad asistencial.</p>
+            <h3 className="font-black uppercase text-sm tracking-widest text-gray-900">{t('alertas.roadStatus')}</h3>
+            <p className="text-sm text-gray-600 font-medium">Condiciones favorables para la actividad asistencial.</p>
           </div>
-          <a href="https://etraffic.dgt.es" target="_blank" rel="noreferrer" className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-[10px] uppercase tracking-widest border border-white/20">{t('alertas.consultDGT')}</a>
+          <a href="https://etraffic.dgt.es" target="_blank" rel="noreferrer" className="px-4 py-2 bg-gray-900 text-white rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-black transition-all">{t('alertas.consultDGT')}</a>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -546,7 +546,7 @@ export const AlertasView: React.FC = () => {
               {currentWeather.map(p => {
                 const s = getIconStyle(p.condition);
                 return (
-                  <div key={p.id} className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+                  <div key={p.id} className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm flex items-center gap-4">
                     <div className={`p-4 rounded-2xl ${s.bg} ${s.color}`}>
                       <span className="material-symbols-outlined text-2xl">{s.icon}</span>
                     </div>
@@ -562,7 +562,7 @@ export const AlertasView: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <div className="bg-sky-50 rounded-3xl p-6 border border-sky-100">
+            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
               <h3 className="text-[10px] font-black text-sky-800 uppercase tracking-widest mb-4">{t('alertas.forecast5Days')}</h3>
               <div className="space-y-3">
                 {forecast.map((f, i) => (
