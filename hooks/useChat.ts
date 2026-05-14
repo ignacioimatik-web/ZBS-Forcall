@@ -44,22 +44,40 @@ function dmChannelKey(myId: string, otherId: string): string {
   return [myId, otherId].sort().join('_');
 }
 
+// Cache global: sobrevive al desmontaje del componente
+let cachedProfiles: Profile[] = [];
+let cacheTimestamp = 0;
+const PROFILE_CACHE_TTL = 300000; // 5 minutos
+
 export function useChat(currentUserId?: string | null): UseChatResult {
   const uid = currentUserId || null;
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>(cachedProfiles);
   const [messagesByChannel, setMessagesByChannel] = useState<Record<string, ChatMessage[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const mountedRef = useRef(true);
   const profileRetries = useRef(0);
 
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const loadProfiles = useCallback(async () => {
-    const { data } = await supabase.from('profiles').select('*').eq('is_active', true).order('full_name');
-    if (data && data.length > 0) {
-      setProfiles(data);
-      profileRetries.current = 0;
-    } else if (profileRetries.current < 3) {
-      profileRetries.current++;
-      setTimeout(loadProfiles, 1000 * profileRetries.current);
+    try {
+      const { data } = await supabase.from('profiles').select('*').eq('is_active', true).order('full_name');
+      if (data && data.length > 0) {
+        cachedProfiles = data;
+        cacheTimestamp = Date.now();
+        if (mountedRef.current) {
+          setProfiles(data);
+          profileRetries.current = 0;
+        }
+      } else if (profileRetries.current < 3) {
+        profileRetries.current++;
+        setTimeout(loadProfiles, 1000 * profileRetries.current);
+      }
+    } catch (err) {
+      console.error('Error loading profiles:', err);
     }
   }, []);
 
@@ -122,14 +140,23 @@ export function useChat(currentUserId?: string | null): UseChatResult {
     }
   }, [uid, getChannelKey]);
 
+  // Cargar perfiles (con caché)
   useEffect(() => {
-    loadProfiles();
+    const cacheFresh = (Date.now() - cacheTimestamp) < PROFILE_CACHE_TTL;
+    if (cacheFresh && cachedProfiles.length > 0) {
+      setProfiles(cachedProfiles);
+      profileRetries.current = 0;
+    } else {
+      loadProfiles();
+    }
   }, [loadProfiles]);
 
+  // Cargar mensajes cuando hay usuario
   useEffect(() => {
     if (uid) loadAllMessages();
   }, [uid, loadAllMessages]);
 
+  // Suscripción en tiempo real
   useEffect(() => {
     if (!uid) return;
 
@@ -162,7 +189,7 @@ export function useChat(currentUserId?: string | null): UseChatResult {
     const { data, error } = await supabase.from('chat_messages').insert({
       channel_id: TEAM_KEY,
       text: text.trim(),
-    }).select();
+    } as any).select();
     if (error) {
       console.error('Error enviando mensaje:', error.message);
       return;
@@ -176,7 +203,7 @@ export function useChat(currentUserId?: string | null): UseChatResult {
       channel_id: 'dm',
       text: text.trim(),
       receiver_id: receiverId,
-    }).select();
+    } as any).select();
     if (error) {
       console.error('Error enviando mensaje privado:', error.message);
       return;
@@ -228,7 +255,7 @@ export function useChat(currentUserId?: string | null): UseChatResult {
     };
     if (receiverId) insertData.receiver_id = receiverId;
 
-    const { data, error } = await supabase.from('chat_messages').insert(insertData).select();
+    const { data, error } = await supabase.from('chat_messages').insert(insertData as any).select();
     if (error) {
       console.error('Error enviando imagen:', error.message);
       return;
@@ -251,7 +278,7 @@ export function useChat(currentUserId?: string | null): UseChatResult {
     };
     if (receiverId) insertData.receiver_id = receiverId;
 
-    const { data, error } = await supabase.from('chat_messages').insert(insertData).select();
+    const { data, error } = await supabase.from('chat_messages').insert(insertData as any).select();
     if (error) {
       console.error('Error enviando audio:', error.message);
       return;
