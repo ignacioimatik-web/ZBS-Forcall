@@ -231,7 +231,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         <div className="print-day-only">
           {viewMode === 'month' ? (
-            <div className="print-hide flex flex-col lg:flex-row gap-4 lg:gap-6">
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
               <div className="flex-1 min-w-0 -mx-4 md:mx-0">
                 <UnifiedCalendar
                   id="dashboard-calendar"
