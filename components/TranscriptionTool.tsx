@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useT } from '../lib/i18n';
-
-declare var html2pdf: any;
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 interface TranscriptionRecord {
   id: string;
@@ -9,41 +9,6 @@ interface TranscriptionRecord {
   date: string;
   text: string;
 }
-
-const escapeHtml = (text: string) => {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-};
-
-const generatePdfHtml = (title: string, dateStr: string, text: string) => `
-  <div style="padding: 40px; font-family: 'Inter', sans-serif; max-width: 210mm;">
-    <h1 style="font-size: 20px; font-weight: 900; color: #1f2937; margin-bottom: 4px;">${escapeHtml(title)}</h1>
-    <p style="font-size: 12px; color: #6b7280; margin-bottom: 24px;">${dateStr}</p>
-    <hr style="border: none; border-top: 2px solid #e5e7eb; margin-bottom: 24px;">
-    <p style="font-size: 14px; line-height: 1.8; color: #374151; white-space: pre-wrap;">${escapeHtml(text)}</p>
-  </div>
-`;
-
-const savePdfFromHtml = (html: string, filename: string) => {
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  const child = div.firstElementChild as HTMLElement;
-  child.style.position = 'fixed';
-  child.style.top = '0';
-  child.style.left = '0';
-  child.style.visibility = 'hidden';
-  child.style.width = '210mm';
-  document.body.appendChild(child);
-
-  const opt = {
-    margin: 10,
-    filename,
-    html2canvas: { scale: 2 },
-    jsPDF: { orientation: 'portrait' as const },
-  };
-  html2pdf().set(opt).from(child).save().then(() => document.body.removeChild(child));
-};
 
 export const TranscriptionTool: React.FC = () => {
   const { t } = useT();
@@ -95,7 +60,6 @@ export const TranscriptionTool: React.FC = () => {
     setErrorMessage(null);
     setInterimText('');
     setTranscription('');
-    setRecordingName('');
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -192,16 +156,12 @@ export const TranscriptionTool: React.FC = () => {
   };
 
   const stopRecording = () => {
-    try { recognitionRef.current?.stop(); } catch {}
-    try { mediaRecorderRef.current?.stop(); } catch {}
-  };
-
-  const handleFinishRecording = () => {
-    // Guardar texto interino en la transcripción antes de limpiar
+    // Conservar texto interino
     if (interimText.trim()) {
       setTranscription((prev) => prev + interimText);
     }
-    stopRecording();
+    try { recognitionRef.current?.stop(); } catch {}
+    try { mediaRecorderRef.current?.stop(); } catch {}
     setIsRecording(false);
     setInterimText('');
     if (timerRef.current) {
@@ -210,7 +170,7 @@ export const TranscriptionTool: React.FC = () => {
     }
   };
 
-  const saveToHistory = () => {
+  const handleSaveToHistory = () => {
     if (!transcription.trim()) {
       setErrorMessage(t('transcription.emptyTranscript'));
       return;
@@ -235,19 +195,85 @@ export const TranscriptionTool: React.FC = () => {
   };
 
   const saveAsPDF = (record: TranscriptionRecord) => {
-    const dateStr = new Date(record.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    const name = `grabacion-${record.name.replace(/\s+/g, '_')}-${new Date(record.date).toISOString().slice(0, 10)}`;
-    const html = generatePdfHtml(record.name, dateStr, record.text);
-    savePdfFromHtml(html, `${name}.pdf`);
+    try {
+      const dateStr = new Date(record.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      const usableW = pageW - margin * 2;
+
+      // Título
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(31, 41, 55);
+      doc.text(record.name, margin, 20);
+
+      // Fecha
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(107, 114, 128);
+      doc.text(dateStr, margin, 28);
+
+      // Línea separadora
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.5);
+      doc.line(margin, 34, pageW - margin, 34);
+
+      // Texto
+      const fontSize = 12;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(55, 65, 81);
+
+      const lines = doc.splitTextToSize(record.text, usableW);
+      doc.text(lines, margin, 40);
+
+      const name = `grabacion-${record.name.replace(/\s+/g, '_')}-${new Date(record.date).toISOString().slice(0, 10)}`;
+      doc.save(`${name}.pdf`);
+    } catch (e) {
+      console.error('Error generando PDF:', e);
+      setErrorMessage(t('transcription.pdfError'));
+    }
   };
 
   const saveCurrentPdf = () => {
     const text = transcription || interimText || '';
     if (!text.trim()) return;
-    const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    const name = `transcripcion-${new Date().toISOString().slice(0, 10)}`;
-    const html = generatePdfHtml(t('transcription.originalTranscript'), dateStr, text);
-    savePdfFromHtml(html, `${name}.pdf`);
+    try {
+      const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      const usableW = pageW - margin * 2;
+
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(31, 41, 55);
+      doc.text(t('transcription.originalTranscript'), margin, 20);
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(107, 114, 128);
+      doc.text(dateStr, margin, 28);
+
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.5);
+      doc.line(margin, 34, pageW - margin, 34);
+
+      const fontSize = 12;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(55, 65, 81);
+
+      const lines = doc.splitTextToSize(text, usableW);
+      doc.text(lines, margin, 40);
+
+      const name = `transcripcion-${new Date().toISOString().slice(0, 10)}`;
+      doc.save(`${name}.pdf`);
+    } catch (e) {
+      console.error('Error generando PDF:', e);
+      setErrorMessage(t('transcription.pdfError'));
+    }
   };
 
   const sortedHistory = useMemo(() => [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [history]);
@@ -276,46 +302,64 @@ export const TranscriptionTool: React.FC = () => {
           <span className="text-xs font-mono font-black text-gray-500 bg-white border border-gray-200 rounded-xl px-3.5 py-2 shadow-sm">
             {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
           </span>
-          <button
-            onClick={isRecording ? handleFinishRecording : startRecording}
-            className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm border transition-all ${
-              isRecording ? 'bg-red-500 border-red-500 text-white animate-pulse' : 'bg-white border-gray-200 text-forcall-600 hover:bg-forcall-50 hover:border-forcall-300'
-            }`}
-            title={isRecording ? t('transcription.stop') : t('transcription.start')}
-          >
-            <span className="material-symbols-outlined text-2xl">{isRecording ? 'stop' : 'mic'}</span>
-          </button>
+          {!isRecording ? (
+            <button
+              onClick={startRecording}
+              className="flex items-center justify-center gap-2 w-12 h-12 rounded-xl bg-forcall-600 text-white shadow-sm border border-forcall-700 hover:bg-forcall-700 transition-all active:scale-95"
+              title={t('transcription.start')}
+            >
+              <span className="material-symbols-outlined text-2xl">mic</span>
+            </button>
+          ) : (
+            <button
+              onClick={stopRecording}
+              className="flex items-center justify-center gap-2 w-12 h-12 rounded-xl bg-red-500 text-white border-red-600 animate-pulse shadow-sm hover:bg-red-600 transition-all active:scale-95"
+              title={t('transcription.stop')}
+            >
+              <span className="material-symbols-outlined text-2xl">stop</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {isRecording && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+      {/* Al terminar grabación: campo de nombre y botones */}
+      {!isRecording && transcription.trim() && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 flex items-center gap-3">
           <input
             type="text"
             value={recordingName}
             onChange={(e) => setRecordingName(e.target.value)}
             placeholder={t('transcription.recordingName')}
-            className="flex-1 px-4 py-2 bg-white border border-amber-200 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder:text-amber-300"
+            className="flex-1 px-4 py-2 bg-white border border-emerald-200 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 placeholder:text-emerald-300"
           />
           <button
-            onClick={saveToHistory}
-            disabled={!transcription.trim() || !recordingName.trim()}
+            onClick={handleSaveToHistory}
+            disabled={!recordingName.trim()}
             className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-black active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {t('transcription.finishRecording')}
+            {t('transcription.saveToHistory')}
+          </button>
+          <button
+            onClick={() => { setTranscription(''); setRecordingName(''); }}
+            className="px-3 py-1.5 bg-white text-gray-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-200 hover:bg-gray-50 transition-colors"
+          >
+            {t('common.clear')}
           </button>
         </div>
       )}
 
+      {/* Transcripción actual */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-[400px]">
         <div className="px-5 py-3 border-b border-gray-100 flex justify-between items-center no-print">
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('transcription.originalTranscript')}</span>
-          <button
-            onClick={saveCurrentPdf}
-            className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[10px] font-black uppercase tracking-wider"
-          >
-            {t('transcription.savePdf')}
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={saveCurrentPdf}
+              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[10px] font-black uppercase tracking-wider"
+            >
+              {t('transcription.savePdf')}
+            </button>
+          </div>
         </div>
         <div id="trans-area" className="p-6 flex-1 overflow-y-auto">
           <textarea

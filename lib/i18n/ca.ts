@@ -261,6 +261,8 @@ common: {
     start: 'Iniciar gravació',
     historyTitle: 'Historial de gravacions',
     noRecordings: 'No hi ha gravacions guardades',
+    saveToHistory: 'Guardar a historial',
+    pdfError: 'Error al generar el PDF',
     notSupported: 'El teu navegador no suporta dictat per veu. Usa Chrome, Edge o Safari.',
     micDenied: 'Permís de micròfon denegat. Permet l\'accés en la configuració del navegador.',
     noSpeech: 'No es va detectar veu. Acosta\'t al micròfon i parla clarament.',
