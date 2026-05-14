@@ -5,6 +5,11 @@ import type { Database } from '../lib/database.types';
 type TranscriptionRecord = Database['public']['Tables']['transcription_records']['Row'];
 type TranscriptionRecordInsert = Database['public']['Tables']['transcription_records']['Insert'];
 
+// Cache global: sobrevive al desmontaje del componente
+let cachedRecords: TranscriptionRecord[] = [];
+let cacheTimestamp = 0;
+const CACHE_TTL = 120000; // 2 minutos
+
 interface UseTranscriptionRecordsResult {
   records: TranscriptionRecord[];
   isLoading: boolean;
@@ -15,77 +20,112 @@ interface UseTranscriptionRecordsResult {
   clearError: () => void;
 }
 
+let isRefreshingSession = false;
+
 export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
   const [records, setRecords] = useState<TranscriptionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  const loadCountRef = useRef(0);
 
   useEffect(() => {
     return () => { mountedRef.current = false; };
   }, []);
 
-  const loadRecords = useCallback(async () => {
+  const loadRecords = useCallback(async (forceRefresh: boolean = false) => {
     if (!mountedRef.current) return;
 
-    setIsLoading(true);
+    const currentLoad = ++loadCountRef.current;
+
+    // Mostrar caché inmediatamente si está fresca (salto instantáneo)
+    const cacheFresh = (Date.now() - cacheTimestamp) < CACHE_TTL;
+    if (cacheFresh && cachedRecords.length > 0 && !forceRefresh) {
+      setRecords(cachedRecords);
+      setIsLoading(false);
+      setError(null);
+    }
+
+    // Solo mostrar "cargando" en la primera carga real
+    if (cachedRecords.length === 0 || forceRefresh) {
+      setIsLoading(true);
+    }
     setError(null);
 
     const timeoutId = setTimeout(() => {
-      if (mountedRef.current) {
+      if (mountedRef.current && loadCountRef.current === currentLoad) {
         setError('La conexión está tardando demasiado.');
         setIsLoading(false);
       }
-    }, 10000);
+    }, 8000);
 
     try {
-      // Query directa — Supabase maneja auth automáticamente con RLS
+      // Asegurar auto-refresh activo (es idempotent)
+      supabase.auth.startAutoRefresh();
+
+      // Obtener sesión actual
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (!mountedRef.current || loadCountRef.current !== currentLoad) {
+        clearTimeout(timeoutId);
+        return;
+      }
+
+      if (sessionError || !session?.user?.id) {
+        if (!isRefreshingSession) {
+          isRefreshingSession = true;
+          try {
+            const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError || !refreshed.session?.user?.id) {
+              setError('Sesión expirada. Vuelve a iniciar sesión.');
+              setIsLoading(false);
+              return;
+            }
+          } catch {
+            setError('Error de conexión. Recarga la página.');
+            setIsLoading(false);
+            return;
+          } finally {
+            isRefreshingSession = false;
+          }
+        } else {
+          // Otro proceso está refrescando, esperar un poco
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+
+      // Consultar datos
       const { data, error: fetchError } = await supabase
         .from('transcription_records')
         .select('*')
         .order('created_at', { ascending: false });
 
       clearTimeout(timeoutId);
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || loadCountRef.current !== currentLoad) return;
 
       if (fetchError) {
-        // Si es error de RLS (403), los datos están protegidos correctamente
-        // pero el usuario puede necesitar refrescar sesión
-        if (fetchError.code === '42501' || fetchError.code === '403') {
-          try {
-            await supabase.auth.refreshSession();
-            const { data: retryData, error: retryError } = await supabase
-              .from('transcription_records')
-              .select('*')
-              .order('created_at', { ascending: false });
-
-            if (retryError) {
-              setError('Error al cargar: ' + retryError.message);
-            } else {
-              setRecords(retryData || []);
-              setError(null);
-            }
-          } catch {
-            setError('Sesión expirada. Recarga la página.');
-            setRecords([]);
-          }
-        } else {
-          setError('Error al cargar: ' + fetchError.message);
+        console.error('[TranscriptionRecords] Query error:', fetchError.message, fetchError.details);
+        // No borrar caché si hay error de red
+        setError('Error al cargar: ' + fetchError.message);
+        if (cachedRecords.length > 0) {
+          // Mantener datos en caché como fallback
+          setIsLoading(false);
         }
         return;
       }
 
-      console.log('[TranscriptionRecords] Fetched', data?.length || 0, 'records');
-      setRecords(data || []);
+      cachedRecords = data || [];
+      cacheTimestamp = Date.now();
+      setRecords(cachedRecords);
       setError(null);
+      console.log(`[TranscriptionRecords] Loaded ${cachedRecords.length} records`);
     } catch (err: any) {
       clearTimeout(timeoutId);
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || loadCountRef.current !== currentLoad) return;
       console.error('[TranscriptionRecords] Error:', err);
       setError(err?.message || 'Error al cargar historial');
-      setRecords([]);
     } finally {
-      if (mountedRef.current) {
+      if (mountedRef.current && loadCountRef.current === currentLoad) {
         clearTimeout(timeoutId);
         setIsLoading(false);
       }
@@ -94,19 +134,17 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
 
   useEffect(() => {
     loadRecords();
+    // NO detener auto-refresh al desmontar — es global y necesario
   }, [loadRecords]);
 
   const addRecord = useCallback(async (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at' | 'user_id'>): Promise<boolean> => {
-    if (!mountedRef.current) return false;
-
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      let userId = userData?.user?.id || '';
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      let userId = user?.id || '';
 
       if (!userId) {
-        await supabase.auth.refreshSession();
-        const { data: refreshed } = await supabase.auth.getUser();
-        userId = refreshed.user?.id || '';
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        userId = refreshed.session?.user?.id || '';
       }
 
       if (!userId) {
@@ -114,13 +152,9 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
         return false;
       }
 
-      const { data: insertedData, error: insertError } = await supabase
+      const { error: insertError, data: insertedData } = await supabase
         .from('transcription_records')
-        .insert({
-          user_id: userId,
-          name: record.name,
-          text: record.text,
-        } as any)
+        .insert({ user_id: userId, name: record.name, text: record.text } as any)
         .select()
         .single();
 
@@ -129,11 +163,14 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
         return false;
       }
 
-      setRecords(prev => [insertedData as TranscriptionRecord, ...prev]);
+      // Actualizar caché local
+      const newRecord = insertedData as TranscriptionRecord;
+      cachedRecords = [newRecord, ...cachedRecords];
+      cacheTimestamp = Date.now();
+      setRecords(cachedRecords);
       setError(null);
       return true;
     } catch (err: any) {
-      console.error('[TranscriptionRecords] Add error:', err);
       setError(err?.message || 'Error al guardar');
       return false;
     }
@@ -151,7 +188,9 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
         return false;
       }
 
-      setRecords(prev => prev.filter(r => r.id !== id));
+      cachedRecords = cachedRecords.filter(r => r.id !== id);
+      cacheTimestamp = Date.now();
+      setRecords(cachedRecords);
       return true;
     } catch (err: any) {
       setError(err?.message || 'Error al eliminar');
