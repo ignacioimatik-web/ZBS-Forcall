@@ -37,15 +37,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ meetings }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
-      <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-        <h2 className="font-bold text-lg text-gray-800">{t('calendarView.title')}</h2>
-        <div className="flex gap-2 text-xs">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> {t('calendarView.legendTeam')}</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> {t('calendarView.legendMedicine')}</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-pink-500"></span> {t('calendarView.legendNursing')}</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500"></span> {t('calendarView.legendClinical')}</span>
-        </div>
-      </div>
+<div className="p-4 border-b border-gray-200 flex justify-between items-center">
+         <h2 className="font-bold text-lg text-gray-800">{t('calendarView.title')}</h2>
+       </div>
       
       <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
         {weekDays.map(d => (
