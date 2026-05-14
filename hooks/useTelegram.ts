@@ -127,14 +127,10 @@ export function useTelegram(): UseTelegramResult {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return { success: false, error: 'No autenticado' };
 
-      // Call the edge function to generate QR
-      const { data, error } = await supabase.functions.invoke('telegram-qr', {
-        body: { user_id: user.id },
-      });
+      const deepLink = `https://t.me/${BOT_USERNAME}?start=ZBS${user.id}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(deepLink)}`;
 
-      if (error) return { success: false, error: error.message };
-
-      return { success: true, qrUrl: data.qr_url, deepLink: data.deep_link };
+      return { success: true, qrUrl, deepLink };
     } catch (err: any) {
       return { success: false, error: err.message };
     }
