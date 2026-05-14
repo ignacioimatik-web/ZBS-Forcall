@@ -456,50 +456,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           downloadLabel={t('calendarios.downloadCalendar')}
         />
 
-        {/* Tools bar: swap mode, multi-select, export */}
-        <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            {props.user?.role !== 'Administrador' && (
-              <button
-                onClick={() => { setSwapMode(!swapMode); if (!swapMode) setSelectionMode(false); }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                  swapMode
-                    ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm animate-pulse'
-                    : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'
-                }`}
-              >
-                <span className="material-symbols-outlined text-sm">{swapMode ? 'sync_alt' : 'swap_calls'}</span>
-                {swapMode ? t('calendarios.swapActive') : t('calendarios.askSwap')}
-              </button>
-            )}
-
-            {canManageActiveCategory && (
-              <button
-                onClick={() => { setSelectionMode(!selectionMode); if (!selectionMode) { setSwapMode(false); setBulkPersonnel(null); } }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                  selectionMode
-                    ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm animate-pulse'
-                    : 'bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50'
-                }`}
-              >
-                <span className="material-symbols-outlined text-sm">{selectionMode ? 'checklist' : 'select_check_box'}</span>
-                {selectionMode ? t('calendarios.multiSelectActive') : t('calendarios.multiSelect')}
-              </button>
-            )}
-
-            {props.user && (
-              <button
-                onClick={handleDownloadUserCalendar}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all"
-                title={t('calendarios.downloadMyCalendar')}
-              >
-                <span className="material-symbols-outlined text-sm">calendar_today</span>
-                ICS
-              </button>
-            )}
-          </div>
-        </div>
-
         {/* Assignment bar: visible when selection mode is active */}
         {selectionMode && (
           <div className={`border rounded-2xl px-3 sm:px-4 py-3 shadow-sm transition-all ${
@@ -608,6 +564,48 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           </div>
 
           <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0 lg:sticky lg:top-20 lg:self-start space-y-3">
+            <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-3 shadow-sm">
+              <div className="flex flex-col gap-2">
+                {props.user?.role !== 'Administrador' && (
+                  <button
+                    onClick={() => { setSwapMode(!swapMode); if (!swapMode) setSelectionMode(false); }}
+                    className={`flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                      swapMode
+                        ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm animate-pulse'
+                        : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-sm">{swapMode ? 'sync_alt' : 'swap_calls'}</span>
+                    {swapMode ? t('calendarios.swapActive') : t('calendarios.askSwap')}
+                  </button>
+                )}
+
+                {canManageActiveCategory && (
+                  <button
+                    onClick={() => { setSelectionMode(!selectionMode); if (!selectionMode) { setSwapMode(false); setBulkPersonnel(null); } }}
+                    className={`flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                      selectionMode
+                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm animate-pulse'
+                        : 'bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-sm">{selectionMode ? 'checklist' : 'select_check_box'}</span>
+                    {selectionMode ? t('calendarios.multiSelectActive') : t('calendarios.multiSelect')}
+                  </button>
+                )}
+
+                {props.user && (
+                  <button
+                    onClick={handleDownloadUserCalendar}
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all"
+                    title={t('calendarios.downloadMyCalendar')}
+                  >
+                    <span className="material-symbols-outlined text-sm">calendar_today</span>
+                    ICS
+                  </button>
+                )}
+              </div>
+            </div>
             {!canManageActiveCategory && (
               <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-3 shadow-sm">
                 {isGuardiaCategory && (
