@@ -108,13 +108,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'month' | 'list'>('month');
 
-  const metrics = [
-    { count: guardias.filter(g => g.type === 'medica').length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
-    { count: guardias.filter(g => g.type === 'enfermeria').length, label: t('dashboard.enf'), accentColor: 'bg-red-500' },
-    { count: libranzas.length, label: t('dashboard.lib'), accentColor: 'bg-green-500' },
-    { count: vacaciones.length, label: t('dashboard.vac'), accentColor: 'bg-purple-400' },
-    { count: doblas.length, label: t('dashboard.ref'), accentColor: 'bg-orange-500' },
-  ];
+  const isInMonth = useCallback((date: Date) => {
+    return date.getMonth() === calendarMonth.getMonth() && date.getFullYear() === calendarMonth.getFullYear();
+  }, [calendarMonth]);
+
+  const monthMetrics = useMemo(() => [
+    { count: guardias.filter(g => g.type === 'medica' && isInMonth(g.date)).length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
+    { count: guardias.filter(g => g.type === 'enfermeria' && isInMonth(g.date)).length, label: t('dashboard.enf'), accentColor: 'bg-red-500' },
+    { count: libranzas.filter(l => isInMonth(l.date)).length, label: t('dashboard.lib'), accentColor: 'bg-green-500' },
+    { count: vacaciones.filter(v => isInMonth(v.date)).length, label: t('dashboard.vac'), accentColor: 'bg-purple-400' },
+    { count: doblas.filter(d => isInMonth(d.date)).length, label: t('dashboard.ref'), accentColor: 'bg-orange-500' },
+  ], [guardias, libranzas, vacaciones, doblas, isInMonth, t]);
 
   const validation = useMemo(
     () => getMonthValidationSummary(validateMonth(calendarMonth, guardias, libranzas, doblas, vacaciones, meetings)),
@@ -194,7 +198,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <PageHeader
           title="Cuadrante unificado"
           subtitle="Gesti&oacute;n centralizada de equipos"
-          metrics={metrics}
+          metrics={monthMetrics}
         />
       </div>
 
