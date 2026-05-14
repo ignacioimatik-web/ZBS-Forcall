@@ -113,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
           <span className="material-symbols-outlined text-xl">settings</span>
           <span>Configuraci&oacute;n</span>
         </button>
-        <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-forcall-300 hover:text-white hover:bg-white/5 transition-all cursor-default">
+        <button onClick={() => setActiveTab('Ayuda')} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-forcall-300 hover:text-white hover:bg-white/5 transition-all">
           <span className="material-symbols-outlined text-xl">help</span>
           <span>Ayuda</span>
         </button>

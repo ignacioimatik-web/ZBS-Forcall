@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { VERSION_STRING } from '../lib/version';
 import { useT } from '../lib/i18n';
 
 interface HeaderProps {
@@ -44,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
               <span className="font-medium">{userName}</span>
             </div>
           )}
-          <span className="text-[9px] text-gray-300 font-medium">{VERSION_STRING}</span>
+          
           <button
             onClick={onLogout}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all"
@@ -63,7 +62,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogou
             <span className="material-symbols-outlined text-2xl text-earth-100">landscape</span>
             <div>
               <h1 className="font-bold text-base tracking-tight">{t('header.appName')}</h1>
-              <p className="text-[9px] text-forcall-100 opacity-80 leading-none">{VERSION_STRING}</p>
             </div>
           </div>
           <button 

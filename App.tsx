@@ -9,6 +9,7 @@ import { AlertasView } from './components/AlertasView';
 import { ChatView } from './components/ChatView';
 import { Footer } from './components/Footer';
 import { TranscriptionTool } from './components/TranscriptionTool';
+import { HelpView } from './components/HelpView';
 import { ManualHoliday, Vacacion, Meeting, Guardia, Libranza, Dobla, AuditLog } from './types';
 import { useAuth } from './hooks/useAuth';
 import { useGuardias } from './hooks/useGuardias';
@@ -322,6 +323,8 @@ const App: React.FC = () => {
         return <TranscriptionTool />;
       case 'Alertas':
         return <AlertasView />;
+      case 'Ayuda':
+        return <HelpView />;
       default:
         return null;
     }
