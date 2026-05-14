@@ -161,25 +161,25 @@ export const CalendarListView: React.FC<CalendarListViewProps> = ({
                   {t('common.day') || 'Día'}
                 </th>
                 <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  Medicina
+                  {t('calendarListView.medicina')}
                 </th>
                 <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  Enfermería
+                  {t('calendarListView.enfermeria')}
                 </th>
                 <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  Libranzas
+                  {t('calendarListView.libranzas')}
                 </th>
                 <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  Refuerzos
+                  {t('calendarListView.refuerzos')}
                 </th>
                 <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  VAC
+                  {t('calendarListView.vac')}
                 </th>
                 <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  Reun.
+                  {t('calendarListView.reun')}
                 </th>
                 <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">
-                  Estado
+                  {t('calendarListView.status')}
                 </th>
               </tr>
             </thead>
@@ -300,7 +300,7 @@ const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaci
 {/* Estado */}
                      <td className="px-3 py-2 border-b border-gray-100 text-center">
                        {(function() {
-                         if (validation.hasConflict) return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 leading-none">Conflicto</span>;
+                          if (validation.hasConflict) return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 leading-none">{t('calendarListView.conflictBadge')}</span>;
                          if (validation.hasWarning) return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 leading-none">{statusConfig.label}</span>;
                          return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none ${statusConfig.className}`}>{statusConfig.label}</span>;
                        })()}

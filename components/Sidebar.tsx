@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
           <span className="material-symbols-outlined text-3xl text-earth-100">landscape</span>
           <div>
             <h1 className="font-bold text-lg text-white tracking-tight leading-none">ZBS Forcall</h1>
-            <p className="text-[10px] text-forcall-300 font-medium mt-0.5">Gesti&oacute;n de Equipos</p>
+            <p className="text-[10px] text-forcall-300 font-medium mt-0.5">{t('sidebar.subtitle')}</p>
           </div>
         </div>
       </div>
@@ -114,11 +114,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
       <div className="p-3 border-t border-white/10 space-y-1">
         <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-forcall-300 hover:text-white hover:bg-white/5 transition-all cursor-default">
           <span className="material-symbols-outlined text-xl">settings</span>
-          <span>Configuraci&oacute;n</span>
+          <span>{t('sidebar.configuracion')}</span>
         </button>
         <button onClick={() => setActiveTab('Ayuda')} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-forcall-300 hover:text-white hover:bg-white/5 transition-all">
           <span className="material-symbols-outlined text-xl">help</span>
-          <span>Ayuda</span>
+          <span>{t('sidebar.ayuda')}</span>
         </button>
         <div className="px-4 pt-2">
           <p className="text-[9px] text-forcall-400">{VERSION_STRING}</p>

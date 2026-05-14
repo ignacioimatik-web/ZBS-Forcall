@@ -333,7 +333,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             VA
           </button>
         </div>
-        <p>© 2026 ZBS Forcall — {VERSION_STRING}</p>
+        <p>{t('login.footer').replace('{version}', VERSION_STRING)}</p>
         <button
           onClick={() => {
             document.cookie.split(';').forEach(c => {

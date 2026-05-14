@@ -56,12 +56,12 @@ function getDayConflicts(assignments: Assignment[]): string[] {
   return conflicts;
 }
 
-const sectionConfig: Record<string, { label: string; icon: string }> = {
-  guardia: { label: 'Medicina / Enfermería', icon: 'stethoscope' },
-  libranza: { label: 'Libranzas', icon: 'beach_access' },
-  dobla: { label: 'Refuerzos', icon: 'dynamic_feed' },
-  vacacion: { label: 'Vacaciones', icon: 'flight' },
-  meeting: { label: 'Reuniones / MT', icon: 'groups' },
+const sectionConfig: Record<string, { labelKey: string; icon: string }> = {
+  guardia: { labelKey: 'dayDetail.sectionGuardia', icon: 'stethoscope' },
+  libranza: { labelKey: 'dayDetail.sectionLibranza', icon: 'beach_access' },
+  dobla: { labelKey: 'dayDetail.sectionDobla', icon: 'dynamic_feed' },
+  vacacion: { labelKey: 'dayDetail.sectionVacacion', icon: 'flight' },
+  meeting: { labelKey: 'dayDetail.sectionMeeting', icon: 'groups' },
 };
 
 export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
@@ -80,11 +80,11 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
 
   if (!selectedDate) {
     return (
-      <aside className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm" aria-label="Detalle del día seleccionado">
-        <h3 className="text-sm font-bold text-gray-900 mb-2">Detalle del día</h3>
+      <aside className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm" aria-label={t('dayDetail.title')}>
+        <h3 className="text-sm font-bold text-gray-900 mb-2">{t('dayDetail.title')}</h3>
         <div className="flex flex-col items-center justify-center py-10 text-gray-400">
           <span className="material-symbols-outlined text-4xl mb-3">calendar_month</span>
-          <p className="text-sm font-medium text-center">Selecciona un día del calendario para ver sus asignaciones.</p>
+          <p className="text-sm font-medium text-center">{t('dayDetail.selectDay')}</p>
         </div>
       </aside>
     );
@@ -137,31 +137,31 @@ const conflicts = getDayConflicts(assignments);
             <h3 className="text-sm font-bold text-gray-900 leading-tight">{formatDate(selectedDate)}</h3>
             <div className="flex items-center gap-2 mt-1.5">
               {isTodaySelected && (
-                <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">Hoy</span>
+                <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">{t('dayDetail.today')}</span>
               )}
               {conflicts.length > 0 && (
-                <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Con incidencias</span>
+                <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">{t('dayDetail.withIssues')}</span>
               )}
               {selectedProfessional !== 'all' && (
                 <div className="flex items-center gap-1.5 mt-1.5">
-                  <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[10px]">badge</span>
-                    Filtro: {selectedProfessional}
-                  </span>
-                  {onClearProfessionalFilter && (
-                    <button
-                      onClick={onClearProfessionalFilter}
-                      className="text-[9px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full hover:bg-gray-200 transition-colors"
-                      aria-label="Limpiar filtro de profesional"
-                    >
-                      Limpiar
-                    </button>
-                  )}
+                    <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[10px]">badge</span>
+                      {t('dayDetail.filterPrefix')} {selectedProfessional}
+                    </span>
+                    {onClearProfessionalFilter && (
+                      <button
+                        onClick={onClearProfessionalFilter}
+                        className="text-[9px] font-bold text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full hover:bg-gray-200 transition-colors"
+                        aria-label={t('dayDetail.clearFilterAria')}
+                      >
+                        {t('dayDetail.clearFilter')}
+                      </button>
+                    )}
                 </div>
               )}
             </div>
           </div>
-          <button onClick={onClose} aria-label="Cerrar detalle del día" className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+          <button onClick={onClose} aria-label={t('dayDetail.closeAria')} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
             <span className="material-symbols-outlined text-lg">close</span>
           </button>
         </div>
@@ -173,7 +173,7 @@ const conflicts = getDayConflicts(assignments);
            <div className="bg-red-50 border border-red-200 rounded-xl p-3">
              <div className="flex items-center gap-2 mb-1">
                <span className="material-symbols-outlined text-red-600 text-lg">warning</span>
-               <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Incidencias</span>
+                <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">{t('dayDetail.incidents')}</span>
              </div>
              {conflicts.map((c, i) => (
                <p key={i} className="text-xs text-red-700 ml-7" dangerouslySetInnerHTML={{ __html: c }} />
@@ -210,7 +210,7 @@ const conflicts = getDayConflicts(assignments);
           {conflicts.length === 0 && !hasValidationIssues && assignments.length > 0 && (
             <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
               <span className="material-symbols-outlined text-lg">check_circle</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Sin incidencias</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('dayDetail.noIncidents')}</span>
             </div>
           )}
 
@@ -224,7 +224,7 @@ const conflicts = getDayConflicts(assignments);
             <div key={key}>
               <div className="flex items-center gap-2 mb-2">
                 <span className="material-symbols-outlined text-gray-400 text-base">{config.icon}</span>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{config.label}</span>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{t(config.labelKey)}</span>
                 {items && items.length > 0 && (
                   <span className="text-[10px] font-bold text-gray-400 ml-auto">{items.length}</span>
                 )}
@@ -239,7 +239,7 @@ const conflicts = getDayConflicts(assignments);
                   ))}
                 </div>
               ) : (
-                <p className="text-[11px] text-gray-400 italic pl-1">Sin asignación</p>
+                <p className="text-[11px] text-gray-400 italic pl-1">{t('dayDetail.noAssignment')}</p>
               )}
             </div>
           );
@@ -248,13 +248,13 @@ const conflicts = getDayConflicts(assignments);
         {assignments.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-gray-400">
             <span className="material-symbols-outlined text-3xl mb-2">info</span>
-            <p className="text-sm font-medium">No hay asignaciones para este día.</p>
+            <p className="text-sm font-medium">{t('dayDetail.noAssignments')}</p>
           </div>
         )}
       </div>
 
       <div className="p-4 border-t border-gray-100 bg-gray-50/50 space-y-2">
-        <p className="text-[9px] text-gray-400 font-medium text-center">Selecciona un día para ver su detalle</p>
+        <p className="text-[9px] text-gray-400 font-medium text-center">{t('dayDetail.selectDayHint')}</p>
       </div>
     </aside>
   );

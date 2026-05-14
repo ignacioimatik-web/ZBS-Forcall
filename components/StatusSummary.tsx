@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from '../lib/i18n';
 
 interface StatusSummaryProps {
   totalDays: number;
@@ -19,9 +20,10 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({
   validationErrors = 0,
   validationWarnings = 0,
 }) => {
+  const { t } = useT();
   const cards = [
     {
-      label: 'Cobertura completa',
+      label: t('statusSummary.complete'),
       value: `${coveredDays}/${totalDays}`,
       icon: 'checklist',
       accentClass: 'bg-emerald-500',
@@ -29,7 +31,7 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({
       bgClass: 'bg-emerald-50',
     },
     {
-      label: 'Huecos',
+      label: t('statusSummary.gaps'),
       value: String(gaps),
       icon: 'highlight_alt',
       accentClass: 'bg-amber-500',
@@ -37,7 +39,7 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({
       bgClass: 'bg-amber-50',
     },
     {
-      label: 'Conflictos',
+      label: t('statusSummary.conflicts'),
       value: String(conflicts + validationErrors),
       icon: 'warning',
       accentClass: 'bg-red-500',
@@ -45,7 +47,7 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({
       bgClass: 'bg-red-50',
     },
     {
-      label: 'Avisos',
+      label: t('statusSummary.warnings'),
       value: String(validationWarnings),
       icon: 'error_outline',
       accentClass: 'bg-orange-500',
@@ -53,7 +55,7 @@ export const StatusSummary: React.FC<StatusSummaryProps> = ({
       bgClass: 'bg-orange-50',
     },
     {
-      label: 'Pendiente validar',
+      label: t('statusSummary.pending'),
       value: pendingValidation !== null ? String(pendingValidation) : '--',
       icon: 'hourglass_empty',
       accentClass: 'bg-gray-400',
