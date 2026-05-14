@@ -20,9 +20,52 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  const retryCountRef = useRef(0);
 
   useEffect(() => {
     return () => { mountedRef.current = false; };
+  }, []);
+
+  const fetchWithAuth = useCallback(async (): Promise<TranscriptionRecord[] | null> => {
+    // Primero intentar getSession (rápido, usa caché local)
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+    if (!mountedRef.current) return null;
+
+    let userId = sessionData?.session?.user?.id;
+
+    // Si no hay userId en la sesión, intentar getUser (refresca el token si es necesario)
+    if (!userId) {
+      try {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.error('[TranscriptionRecords] getUser error:', userError.message);
+          return null;
+        }
+        userId = userData?.user?.id;
+      } catch (e: any) {
+        console.error('[TranscriptionRecords] getUser exception:', e.message);
+        return null;
+      }
+    }
+
+    if (!userId) {
+      console.error('[TranscriptionRecords] Still no userId after getUser + getSession');
+      return null;
+    }
+
+    // Hacer la query con autenticación explícita
+    const { data, error: fetchError } = await supabase
+      .from('transcription_records')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (fetchError) {
+      console.error('[TranscriptionRecords] Query error:', fetchError.message, fetchError.details);
+      return null;
+    }
+
+    return data || [];
   }, []);
 
   const loadRecords = useCallback(async () => {
@@ -31,114 +74,84 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
     setIsLoading(true);
     setError(null);
 
-    // Timeout de seguridad: si tarda más de 15s, liberar
     const timeoutId = setTimeout(() => {
-      if (mountedRef.current) {
+      if (mountedRef.current && isLoading) {
+        console.warn('[TranscriptionRecords] Timeout after 15s');
         setIsLoading(false);
       }
     }, 15000);
 
     try {
-      // Verificar sesión primero
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-
-      if (!mountedRef.current) return;
-
-      if (sessionError) {
-        console.error('[TranscriptionRecords] Session error:', sessionError.message);
-        setError('Error de sesión. Recarga la página.');
-        return;
-      }
-
-      const userId = sessionData?.session?.user?.id;
-      if (!userId) {
-        console.error('[TranscriptionRecords] No userId found in session');
-        setRecords([]);
-        return;
-      }
-
-      // Intentar refresh del token si está cerca de expirar
-      const expiresAt = sessionData?.session?.expires_at || 0;
-      if (expiresAt - Date.now() / 1000 < 300) {
-        try {
-          await supabase.auth.refreshSession();
-        } catch {
-          // Si el refresh falla, continuar de todas formas
-        }
-      }
-
-      const { data, error: fetchError } = await supabase
-        .from('transcription_records')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const data = await fetchWithAuth();
 
       clearTimeout(timeoutId);
       if (!mountedRef.current) return;
 
-      if (fetchError) {
-        console.error('[TranscriptionRecords] Fetch error:', fetchError.message, fetchError.details);
-        setError('Error al cargar: ' + fetchError.message);
+      if (data === null) {
+        // Fallo de autenticación — reintentar máximo 3 veces
+        if (retryCountRef.current < 3) {
+          retryCountRef.current += 1;
+          console.log(`[TranscriptionRecords] Retry ${retryCountRef.current}/3...`);
+          setTimeout(() => loadRecords(), 1000 * retryCountRef.current);
+        } else {
+          setError('No se pudo conectar. Recarga la página.');
+          setRecords([]);
+        }
         return;
       }
 
-      console.log('[TranscriptionRecords] Fetched', data?.length || 0, 'records');
-      setRecords(data || []);
+      retryCountRef.current = 0; // Resetear contador de reintentos
+      console.log(`[TranscriptionRecords] Fetched ${data.length || 0} records`);
+      setRecords(data as TranscriptionRecord[]);
       setError(null);
     } catch (err: any) {
       clearTimeout(timeoutId);
       if (!mountedRef.current) return;
-      console.error('[TranscriptionRecords] Error:', err);
+      console.error('[TranscriptionRecords] Unexpected error:', err);
       setError(err?.message || 'Error al cargar historial');
+      setRecords([]);
     } finally {
       if (mountedRef.current) {
         clearTimeout(timeoutId);
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [fetchWithAuth]);
 
   useEffect(() => {
     loadRecords();
+
+    // Recargar cuando la pestaña vuelve a ser visible
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && mountedRef.current) {
+        console.log('[TranscriptionRecords] Tab visible, refreshing...');
+        retryCountRef.current = 0;
+        loadRecords();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [loadRecords]);
 
   const addRecord = useCallback(async (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at' | 'user_id'>): Promise<boolean> => {
     if (!mountedRef.current) return false;
 
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !sessionData?.session?.user?.id) {
-        try {
-          const { data: refreshed } = await supabase.auth.refreshSession();
-          if (!refreshed.session?.user?.id) {
-            if (mountedRef.current) setError('Sesión expirada. Vuelve a iniciar sesión.');
-            return false;
-          }
-          const { error: insertError, data: insertedData } = await supabase
-            .from('transcription_records')
-            .insert({
-              user_id: refreshed.session.user.id,
-              name: record.name,
-              text: record.text,
-            } as any)
-            .select()
-            .single();
+      let userId = '';
 
-          if (insertError) {
-            if (mountedRef.current) setError('Error al guardar: ' + insertError.message);
-            return false;
-          }
-          if (mountedRef.current) {
-            setRecords(prev => [insertedData as TranscriptionRecord, ...prev]);
-            setError(null);
-          }
-          return true;
-        } catch (refreshErr) {
-          if (mountedRef.current) setError('Error al actualizar sesión.');
-          return false;
-        }
+      const { data: sessionData } = await supabase.auth.getSession();
+      userId = sessionData?.session?.user?.id || '';
+
+      if (!userId) {
+        const { data: userData } = await supabase.auth.getUser();
+        userId = userData?.user?.id || '';
       }
 
-      const userId = sessionData.session.user.id;
+      if (!userId) {
+        if (mountedRef.current) setError('Sesión expirada. Vuelve a iniciar sesión.');
+        return false;
+      }
+
       const { error: insertError, data: insertedData } = await supabase
         .from('transcription_records')
         .insert({
