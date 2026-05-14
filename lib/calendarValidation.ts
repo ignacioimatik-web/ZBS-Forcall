@@ -1,4 +1,9 @@
 import type { Guardia, Libranza, Dobla, Vacacion, Meeting } from '../types';
+import {
+  evaluateCoverageRules,
+  type CoverageRule,
+  DEFAULT_COVERAGE_RULES,
+} from './calendarCoverageRules';
 
 export type ValidationSeverity = 'ok' | 'info' | 'warning' | 'error';
 
@@ -23,6 +28,8 @@ export interface DayValidationStatus {
 export interface ValidationOptions {
   requireMedicine?: boolean;
   requireNursing?: boolean;
+  coverageRules?: CoverageRule[];
+  isHoliday?: boolean;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────
@@ -97,6 +104,7 @@ export function validateDay(
   const hasAbsence = absences.length > 0;
   const weekday = isWeekday(date);
   const hasMeeting = meetings.some(m => toDateStr(m.date) === dateStr);
+  const isHoliday = options.isHoliday ?? false;
 
   // A) Missing coverage — weekday with zero operational assignments
   if (weekday && !hasOps) {
@@ -157,7 +165,7 @@ export function validateDay(
     }
   }
 
-  // D) Incomplete coverage (configurable, off by default)
+  // D) Incomplete coverage (legacy option, kept for backward compatibility)
   if (options.requireMedicine || options.requireNursing) {
     const hasMedicine = operational.some(
       a => a.type === 'medica' && a.personnelName && normalizeProfessionalKey(a.personnelName)
@@ -187,6 +195,20 @@ export function validateDay(
       }
     }
   }
+
+  // E) Configurable coverage rules
+  const rules = options.coverageRules || DEFAULT_COVERAGE_RULES;
+  const coverageIssues = evaluateCoverageRules(
+    date,
+    guardias,
+    libranzas,
+    doblas,
+    vacaciones,
+    isHoliday,
+    issues,
+    rules
+  );
+  issues.push(...coverageIssues);
 
   // Determine overall severity
   const hasError = issues.some(i => i.severity === 'error');
