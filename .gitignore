@@ -27,6 +27,9 @@ dist-ssr
 .env*.local
 .env.production
 
+# Supabase CLI temp files
+supabase/.temp/
+
 # Test screenshots and temp files
 *.png
 screenshot-*
