@@ -14,6 +14,7 @@ interface HeaderProps {
 const tabLabels: Record<string, string> = {
   Unificado: 'header.unificado',
   Guardias: 'header.guardias',
+  IAassist: 'header.iaassist',
   Chat: 'header.chat',
   Dictado: 'header.dictado',
   Alertas: 'header.alertas',
@@ -22,6 +23,7 @@ const tabLabels: Record<string, string> = {
 const tabIcons: Record<string, string> = {
   Unificado: 'dashboard',
   Guardias: 'calendar_month',
+  IAassist: 'smart_ai',
   Chat: 'forum',
   Dictado: 'mic',
   Alertas: 'campaign',
@@ -30,7 +32,7 @@ const tabIcons: Record<string, string> = {
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogout, userName, user }) => {
   const { t } = useT();
   const isAdmin = user?.staffGroup == null;
-  const tabs = useMemo(() => ['Unificado', 'Guardias', 'Chat', 'Dictado', 'Alertas'].filter(t => !isAdmin || (t !== 'Chat' && t !== 'Dictado')), [isAdmin]);
+  const tabs = useMemo(() => ['Unificado', 'Guardias', 'IAassist', 'Chat', 'Dictado', 'Alertas'].filter(t => !isAdmin || (t !== 'Chat' && t !== 'Dictado' && t !== 'IAassist')), [isAdmin]);
 
   const roleLabel = user
     ? user.role === 'Administrador' ? 'Admin'

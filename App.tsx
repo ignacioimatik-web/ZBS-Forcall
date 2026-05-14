@@ -10,6 +10,7 @@ import { ChatView } from './components/ChatView';
 import { Footer } from './components/Footer';
 import { TranscriptionTool } from './components/TranscriptionTool';
 import { HelpView } from './components/HelpView';
+import { IAassistView } from './components/IAassistView';
 import { ManualHoliday, Vacacion, Meeting, Guardia, Libranza, Dobla, AuditLog } from './types';
 import { useAuth } from './hooks/useAuth';
 import { useGuardias } from './hooks/useGuardias';
@@ -323,6 +324,21 @@ const App: React.FC = () => {
             user={user}
             activeSub={guardiaSub}
             onSubCategoryChange={setGuardiaSub}
+          />
+        );
+      case 'IAassist':
+        return (
+          <IAassistView
+            onAddGuardia={handleUpsertGuardia}
+            onAddLibranza={handleUpsertLibranza}
+            onAddDobla={handleUpsertDobla}
+            onAddVacacion={addVacacion}
+            currentUser={user}
+            notify={notify}
+            guardias={guardias}
+            libranzas={libranzas}
+            doblas={doblas}
+            vacaciones={vacaciones}
           />
         );
       case 'Chat':
