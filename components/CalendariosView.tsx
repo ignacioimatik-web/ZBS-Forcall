@@ -391,7 +391,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           onToday={() => setCurrentMonth(new Date())}
           onDownloadPDF={handleDownloadActiveCalendar}
           downloadLabel={t('calendarios.downloadCalendar')}
-          onPrint={() => window.print()}
         />
 
         {/* Tools bar: swap mode, professional selector, bulk assign */}
