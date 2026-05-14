@@ -20,7 +20,7 @@ export interface DayValidationStatus {
   date: string;
   severity: ValidationSeverity;
   issues: DayValidationIssue[];
-  hasConflict: boolean;
+  hasOverlap: boolean;
   hasWarning: boolean;
   isComplete: boolean;
 }
@@ -224,7 +224,7 @@ export function validateDay(
     date: dateStr,
     severity,
     issues,
-    hasConflict: hasError,
+    hasOverlap: hasError,
     hasWarning,
     isComplete: severity === 'ok',
   };

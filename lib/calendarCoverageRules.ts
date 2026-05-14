@@ -30,7 +30,7 @@ export interface CoverageRule {
 /**
  * Lista de reglas de cobertura configurables.
  *
- * Solo las reglas con `enabled: true` generan conflictos.
+ * Solo las reglas con `enabled: true` generan solapamientos.
  * Reglas marcadas enabled: false están disponibles para activar
  * cuando se defina la política de cobertura real del centro.
  */
@@ -119,8 +119,8 @@ export function ruleAppliesToDate(rule: CoverageRule, date: Date, isHoliday: boo
 
 /**
   * Evalúa las reglas de cobertura para una fecha dada.
-  * Devuelve conflictos solo para reglas con enabled: true.
-  * Evita duplicados: no genera conflicto si ya existe uno del mismo tipo
+  * Devuelve solapamientos solo para reglas con enabled: true.
+  * Evita duplicados: no genera solapamiento si ya existe uno del mismo tipo
   * para la misma fecha.
   */
 export function evaluateCoverageRules(
@@ -186,7 +186,7 @@ export function evaluateCoverageRules(
 
       if (count < min) {
         const missingCount = min - count;
-        // Verificar que no sea duplicado de un conflicto existente
+        // Verificar que no sea duplicado de un solapamiento existente
         const alreadyReported = existingIssues.some(
           i =>
             i.type === 'missing_coverage' &&

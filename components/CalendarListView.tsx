@@ -32,7 +32,7 @@ function getDayName(dow: number, lang: string): string {
   return lang === 'ca' ? ca[dow] : es[dow];
 }
 
-function computeStatus(guardias: Guardia[], libranzas: Libranza[], doblas: Dobla[], vacaciones: Vacacion[], meetings: Meeting[]): 'completo' | 'hueco' | 'conflicto' | 'sin-datos' {
+function computeStatus(guardias: Guardia[], libranzas: Libranza[], doblas: Dobla[], vacaciones: Vacacion[], meetings: Meeting[]): 'completo' | 'hueco' | 'solapamiento' | 'sin-datos' {
   const all = [...guardias, ...libranzas, ...doblas, ...vacaciones];
   if (all.length === 0 && meetings.length === 0) return 'sin-datos';
   if (all.length === 0) return 'hueco';
@@ -44,7 +44,7 @@ function computeStatus(guardias: Guardia[], libranzas: Libranza[], doblas: Dobla
     personnelByDay[ev.personnelName].push(ev._kind || ev.type || 'unknown');
   }
   for (const kinds of Object.values(personnelByDay)) {
-    if (new Set(kinds).size > 1) return 'conflicto';
+    if (new Set(kinds).size > 1) return 'solapamiento';
   }
   return 'completo';
 }
@@ -53,7 +53,7 @@ function getStatusConfig(status: string, t: (key: string) => string) {
   switch (status) {
     case 'completo': return { label: t('calendarios.listView.complete'), className: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
     case 'hueco': return { label: t('calendarios.listView.gap'), className: 'bg-orange-50 text-orange-700 border-orange-200' };
-    case 'conflicto': return { label: t('calendarios.listView.conflict'), className: 'bg-amber-50 text-amber-700 border-amber-200' };
+    case 'solapamiento': return { label: t('calendarios.listView.solapamiento'), className: 'bg-amber-50 text-amber-700 border-amber-200' };
     default: return { label: t('calendarios.listView.noData'), className: 'bg-gray-50 text-gray-400 border-gray-200' };
   }
 }
@@ -352,7 +352,7 @@ const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaci
 {/* Estado */}
                      <td className="px-3 py-2 border-b border-gray-100 text-center">
                        {(function() {
-                          if (validation.hasConflict) return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 leading-none">{t('calendarListView.conflictBadge')}</span>;
+                          if (validation.hasOverlap) return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 leading-none">{t('calendarListView.solapamientoBadge')}</span>;
                          if (validation.hasWarning) return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 leading-none">{statusConfig.label}</span>;
                          return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none ${statusConfig.className}`}>{statusConfig.label}</span>;
                        })()}

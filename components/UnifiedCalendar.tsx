@@ -333,7 +333,7 @@ const startingEmptyCells = useMemo(() => {
            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
            const isFestivo = !!holiday;
            const validation = getValidationForDay(date);
-           const hasError = validation && validation.hasConflict;
+           const hasError = validation && validation.hasOverlap;
            const hasWarning = validation && validation.hasWarning;
           
             if (events.length === 0 && !canManageActiveCategory && !bulkMode) {

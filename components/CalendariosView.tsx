@@ -396,11 +396,11 @@ const isInMonth = useCallback((date: Date) => {
       const dow = date.getDay();
       if (dow >= 1 && dow <= 5 && !coveredSet.has(date.toDateString())) gaps++;
     }
-    let conflicts = 0;
+    let overlaps = 0;
     for (const personnel of Object.values(dayPersonnel)) {
-      if (new Set(personnel).size !== personnel.length) conflicts++;
+      if (new Set(personnel).size !== personnel.length) overlaps++;
     }
-    return { totalDays, coveredDays: coveredSet.size, gaps, conflicts };
+    return { totalDays, coveredDays: coveredSet.size, gaps, overlaps };
   }, [currentMonth, guardias, libranzas, doblas, meetings]);
 
   const isLoading = props.isDataLoading && guardias.length === 0 && libranzas.length === 0;

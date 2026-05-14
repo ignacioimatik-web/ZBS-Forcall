@@ -28,7 +28,7 @@ export const CHANGELOG: VersionEntry[] = [
     date: 'Mayo 2026',
     title: 'Panel lateral de detalle del día y rediseño del calendario',
     changes: [
-      'Panel lateral de detalle del día con secciones agrupadas (guardia, libranza, dobla, vacación, reunión) y detección de conflictos.',
+      'Panel lateral de detalle del día con secciones agrupadas (guardia, libranza, dobla, vacación, reunión) y detección de solapamientos.',
       'Desplazamiento suave y auto-scroll al panel al seleccionar un día.',
       'Indicador visual de día seleccionado con anillo (ring-2) en el calendario.',
       'Rediseño del calendario: contenedor blanco tipo card, rejilla basada en bordes, chips de eventos más suaves.',

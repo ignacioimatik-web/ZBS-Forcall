@@ -79,12 +79,12 @@ function computeStatusMetrics(
   pushIfSameMonth(libranzas);
   pushIfSameMonth(doblas);
 
-  let conflicts = 0;
+  let overlaps = 0;
   for (const personnel of Object.values(dayPersonnel)) {
-    if (new Set(personnel).size !== personnel.length) conflicts++;
+    if (new Set(personnel).size !== personnel.length) overlaps++;
   }
 
-  return { totalDays, coveredDays: coveredSet.size, gaps, conflicts };
+  return { totalDays, coveredDays: coveredSet.size, gaps, overlaps };
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
