@@ -402,14 +402,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           <LoadingSkeleton variant="toolbar" />
           <LoadingSkeleton variant="calendar" />
         </div>
-      ) : isMonthEmpty ? (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
-          <EmptyState
-            icon="calendar_month"
-            title="No hay asignaciones en este mes"
-            action={{ label: t('common.hoy'), onClick: () => setCurrentMonth(new Date()) }}
-          />
-        </div>
       ) : (
       <div className="space-y-4">
         <StatusSummary
