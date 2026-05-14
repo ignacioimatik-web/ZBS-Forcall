@@ -183,51 +183,49 @@ export const TranscriptionTool: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-emerald-800 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 no-print">
-        <div>
-          <h2 className="text-2xl font-black flex items-center gap-2">
-            <span className="material-symbols-outlined text-3xl">mic</span> {t('transcription.title')}
-          </h2>
-          <p className="text-xs opacity-70 font-bold uppercase tracking-widest mt-1">{t('transcription.subtitle')}</p>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+            <span className="material-symbols-outlined text-3xl text-forcall-600">mic</span>
+            {t('transcription.title')}
+          </h1>
+          <p className="text-sm text-gray-500 font-medium mt-0.5">{t('transcription.subtitle')}</p>
         </div>
-        <div className="flex flex-col items-center">
-          <button
-            onClick={isRecording ? stopRecording : startRecording}
-            className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all ${
-              isRecording ? 'bg-red-500 animate-pulse' : 'bg-white text-emerald-800 hover:scale-110'
-            }`}
-          >
-            <span className="material-symbols-outlined text-3xl">{isRecording ? 'stop' : 'mic'}</span>
-          </button>
-          <span className="text-xs font-mono mt-2 font-black">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-mono font-black text-gray-500 bg-white border border-gray-200 rounded-xl px-3.5 py-2 shadow-sm">
             {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
           </span>
+          <button
+            onClick={isRecording ? stopRecording : startRecording}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm border transition-all ${
+              isRecording ? 'bg-red-500 border-red-500 text-white animate-pulse' : 'bg-white border-gray-200 text-forcall-600 hover:bg-forcall-50 hover:border-forcall-300'
+            }`}
+          >
+            <span className="material-symbols-outlined text-2xl">{isRecording ? 'stop' : 'mic'}</span>
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        {/* Transcripción */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
-          <div className="p-4 bg-gray-50 border-b flex justify-between items-center no-print">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('transcription.originalTranscript')}</span>
-            <button
-              onClick={() => savePDF('trans-area', 'transcripcion')}
-              className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-black uppercase"
-            >
-              {t('transcription.savePdf')}
-            </button>
-          </div>
-          <div id="trans-area" className="p-6 flex-1 overflow-y-auto">
-            <textarea
-              value={transcription + interimText}
-              onChange={(e) => {
-                setTranscription(e.target.value);
-                setInterimText('');
-              }}
-              className="w-full h-full resize-none border-none focus:ring-0 text-sm font-medium leading-relaxed text-gray-800"
-              placeholder={t('transcription.pressMic')}
-            />
-          </div>
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-[400px]">
+        <div className="px-5 py-3 border-b border-gray-100 flex justify-between items-center no-print">
+          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('transcription.originalTranscript')}</span>
+          <button
+            onClick={() => savePDF('trans-area', 'transcripcion')}
+            className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[10px] font-black uppercase tracking-wider"
+          >
+            {t('transcription.savePdf')}
+          </button>
+        </div>
+        <div id="trans-area" className="p-6 flex-1 overflow-y-auto">
+          <textarea
+            value={transcription + interimText}
+            onChange={(e) => {
+              setTranscription(e.target.value);
+              setInterimText('');
+            }}
+            className="w-full h-full resize-none border-none focus:ring-0 text-sm font-medium leading-relaxed text-gray-800"
+            placeholder={t('transcription.pressMic')}
+          />
         </div>
       </div>
     </div>
