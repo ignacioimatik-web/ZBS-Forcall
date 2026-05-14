@@ -11,6 +11,9 @@ import { Footer } from './components/Footer';
 import { TranscriptionTool } from './components/TranscriptionTool';
 import { HelpView } from './components/HelpView';
 import { IAassistView } from './components/IAassistView';
+import { SettingsView } from './components/SettingsView';
+import { loadSettings, saveSettings, COLOR_SCHEMES } from './lib/settings';
+import type { AppSettings } from './lib/settings';
 import { ManualHoliday, Vacacion, Meeting, Guardia, Libranza, Dobla, AuditLog } from './types';
 import { useAuth } from './hooks/useAuth';
 import { useGuardias } from './hooks/useGuardias';
@@ -59,6 +62,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Unificado');
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [appSettings, setAppSettings] = useState<AppSettings>(loadSettings);
   const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setNotification({ message, type });
   }, []);
@@ -280,6 +284,16 @@ const App: React.FC = () => {
 
   const isAdminUser = user?.staffGroup == null;
 
+  useEffect(() => {
+    document.body.classList.remove('wave-intensity-low', 'wave-intensity-medium', 'wave-intensity-high');
+    document.body.classList.add(`wave-intensity-${appSettings.intensity}`);
+  }, [appSettings.intensity]);
+
+  const handleSettingsChange = useCallback((settings: AppSettings) => {
+    setAppSettings(settings);
+    saveSettings(settings);
+  }, []);
+
   const renderContent = () => {
     switch (activeTab) {
       case 'Unificado':
@@ -349,6 +363,8 @@ const App: React.FC = () => {
         return <TranscriptionTool />;
       case 'Alertas':
         return <AlertasView />;
+      case 'Configuracion':
+        return <SettingsView settings={appSettings} onSettingsChange={handleSettingsChange} />;
       case 'Ayuda':
         return <HelpView />;
       default:
@@ -369,10 +385,31 @@ const App: React.FC = () => {
     }} />;
   }
 
+  const sc = COLOR_SCHEMES[appSettings.colorScheme];
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in flex">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} guardiaSubCategory={guardiaSub} onGuardiaSubCategoryChange={setGuardiaSub} user={user} userGroup={appUserGroup} />
-      <div className="flex-1 min-h-screen flex flex-col">
+    <div
+      className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in flex"
+      style={{
+        ['--wc1' as string]: sc.c1,
+        ['--wc2' as string]: sc.c2,
+        ['--wc3' as string]: sc.c3,
+        backgroundColor: appSettings.waveType === 'none' ? sc.bg : undefined,
+      }}
+    >
+      {appSettings.waveType !== 'none' && (
+        <div className={`wave-container wave-${appSettings.waveType}`}>
+          <div className="wave-layer" />
+          <div className="wave-layer" />
+          <div className="wave-layer" />
+          {appSettings.waveType === 'particles' && <><div className="wave-layer" /><div className="wave-layer" /></>}
+        </div>
+      )}
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} guardiaSubCategory={guardiaSub} onGuardiaSubCategoryChange={setGuardiaSub} user={user} userGroup={appUserGroup} sidebarBg={sc.sidebar} />
+      <div className="flex-1 min-h-screen flex flex-col relative z-10" style={{
+        backgroundColor: appSettings.waveType !== 'none' ? 'rgba(255,255,255,0.88)' : undefined,
+        backdropFilter: appSettings.waveType !== 'none' ? 'blur(20px)' : undefined,
+        WebkitBackdropFilter: appSettings.waveType !== 'none' ? 'blur(20px)' : undefined,
+      }}>
         <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} userName={user?.name} user={user} />
         {isDataLoading && (
           <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">

@@ -10,6 +10,7 @@ interface SidebarProps {
   onGuardiaSubCategoryChange?: (sub: string) => void;
   user: User | null;
   userGroup?: 'medico' | 'enfermeria' | 'both';
+  sidebarBg?: string;
 }
 
 const tabLabels: Record<string, string> = {
@@ -65,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
   };
 
   return (
-    <aside className="hidden md:flex md:flex-col min-h-screen w-60 bg-forcall-900 z-50 shadow-xl">
+    <aside className="hidden md:flex md:flex-col min-h-screen w-60 z-50 shadow-xl" style={{ backgroundColor: sidebarBg || '#0c4a6e' }}>
       <div className="p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-3xl text-earth-100">landscape</span>
@@ -121,7 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
       </nav>
 
       <div className="p-3 border-t border-white/10 space-y-1">
-        <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-forcall-300 hover:text-white hover:bg-white/5 transition-all cursor-default">
+        <button onClick={() => setActiveTab('Configuracion')} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-forcall-300 hover:text-white hover:bg-white/5 transition-all">
           <span className="material-symbols-outlined text-xl">settings</span>
           <span>{t('sidebar.configuracion')}</span>
         </button>
