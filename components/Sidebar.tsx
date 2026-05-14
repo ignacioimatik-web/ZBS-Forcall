@@ -39,7 +39,7 @@ const guardiaSubItems = [
   { id: 'Vacaciones', labelKey: 'calendarios.vacaciones', icon: 'flight' },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guardiaSubCategory, onGuardiaSubCategoryChange, user, userGroup }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guardiaSubCategory, onGuardiaSubCategoryChange, user, userGroup, sidebarBg }) => {
   const { t } = useT();
   const isAdmin = user?.staffGroup == null;
   const tabs = useMemo(() => ['Unificado', 'Guardias', 'IAassist', 'Chat', 'Dictado', 'Alertas'].filter(t => !isAdmin || (t !== 'Chat' && t !== 'Dictado' && t !== 'IAassist')), [isAdmin]);
