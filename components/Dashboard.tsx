@@ -225,7 +225,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               // Reset selection when switching views
               setSelectedDate(null);
             }}
-            onPrint={handlePrint}
+            onPrint={viewMode === 'list' ? handlePrint : undefined}
           />
         </div>
 
