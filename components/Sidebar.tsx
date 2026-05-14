@@ -50,10 +50,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
   const guardiaSubItems = useMemo(() => {
     const base: { id: string; labelKey: string; icon: string }[] = [];
     if (userGroup === 'medico' || userGroup === 'both') {
-      base.push({ id: 'Medicina', labelKey: 'calendarios.guardiasM', icon: 'stethoscope' });
-    }
-    if (userGroup === 'enfermeria' || userGroup === 'both') {
-      base.push({ id: 'enfermeria', labelKey: 'calendarios.guardiasE', icon: 'vaccines' });
+base.push({ id: 'Medicina', labelKey: 'calendarios.guardiaM', icon: 'stethoscope' });
+     }
+     if (userGroup === 'enfermeria' || userGroup === 'both') {
+       base.push({ id: 'enfermeria', labelKey: 'calendarios.guardiaE', icon: 'vaccines' });
     }
     base.push(
       { id: 'Libranzas', labelKey: 'calendarios.libranzas', icon: 'beach_access' },
