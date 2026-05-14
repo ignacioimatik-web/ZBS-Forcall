@@ -22,29 +22,27 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="confirmation-modal-title">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all animate-slide-in-up">
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-4 text-red-600">
-            <span className="material-symbols-outlined text-3xl">warning</span>
-            <h3 id="confirmation-modal-title" className="text-lg font-bold text-gray-900">{title}</h3>
-          </div>
-          <p className="text-gray-600 leading-relaxed">{message}</p>
-        </div>
-        <div className="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-3">
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-100 transition-colors"
-          >
-            {confirmLabel || t('common.delete')}
-          </button>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="confirmation-modal-title">
+      <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full p-8 animate-slide-in-up">
+        <h3 id="confirmation-modal-title" className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
+          <span className="p-2 rounded-xl bg-red-600 text-white material-symbols-outlined">warning</span>
+          {title}
+        </h3>
+        <p className="text-gray-600 leading-relaxed">{message}</p>
+        <div className="flex gap-3 pt-6">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 bg-white text-gray-700 font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition-colors"
+            className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-colors"
           >
             {t('common.cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-red-700 active:scale-95 transition-all"
+          >
+            {confirmLabel || t('common.delete')}
           </button>
         </div>
       </div>
