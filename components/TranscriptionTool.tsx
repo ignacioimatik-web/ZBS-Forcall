@@ -10,37 +10,46 @@ interface TranscriptionRecord {
   text: string;
 }
 
-const escapeHtml = (text: string) => {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-};
+const generateAndSavePdf = (title: string, dateStr: string, text: string, filename: string) => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  let y = 25;
 
-const generatePdfHtml = (title: string, dateStr: string, text: string) => `
-  <div style="padding: 40px; font-family: 'Inter', sans-serif; max-width: 210mm;">
-    <h1 style="font-size: 20px; font-weight: 900; color: #1f2937; margin-bottom: 4px;">${escapeHtml(title)}</h1>
-    <p style="font-size: 12px; color: #6b7280; margin-bottom: 24px;">${dateStr}</p>
-    <hr style="border: none; border-top: 2px solid #e5e7eb; margin-bottom: 24px;">
-    <p style="font-size: 14px; line-height: 1.8; color: #374151; white-space: pre-wrap;">${escapeHtml(text)}</p>
-  </div>
-`;
+  // Title
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.text(title, margin, y);
+  y += 10;
 
-const savePdfFromHtml = (html: string, filename: string) => {
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  const child = div.firstElementChild as HTMLElement;
-  child.style.position = 'fixed';
-  child.style.top = '0';
-  child.style.left = '0';
-  child.style.visibility = 'hidden';
-  document.body.appendChild(child);
-  const opt = {
-    margin: 10,
-    filename,
-    html2canvas: { scale: 2 },
-    jsPDF: { orientation: 'portrait' as const },
-  };
-  html2pdf().set(opt).from(child).save().then(() => document.body.removeChild(child));
+  // Date
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
+  doc.text(dateStr, margin, y);
+  y += 10;
+
+  // Separator line
+  doc.setDrawColor(229, 231, 235);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 12;
+
+  // Body text with wrapping
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
+  const lines = doc.splitTextToSize(text, contentWidth);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (y > pageHeight - 20) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.text(lines[i], margin, y);
+    y += 7;
+  }
+
+  doc.save(filename);
 };
 
 export const TranscriptionTool: React.FC = () => {
@@ -173,21 +182,19 @@ export const TranscriptionTool: React.FC = () => {
     await deleteRecord(id);
   };
 
-  const saveAsPDF = (record: any) => {
-    const dateStr = new Date(record.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    const name = `grabacion-${record.name.replace(/\s+/g, '_')}-${new Date(record.created_at).toISOString().slice(0, 10)}`;
-    const html = generatePdfHtml(record.name, dateStr, record.text);
-    savePdfFromHtml(html, `${name}.pdf`);
-  };
+const saveAsPDF = (record: any) => {
+     const dateStr = new Date(record.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+     const filename = `grabacion-${record.name.replace(/\s+/g, '_')}-${new Date(record.created_at).toISOString().slice(0, 10)}.pdf`;
+     generateAndSavePdf(record.name, dateStr, record.text, filename);
+   };
 
-  const saveCurrentPdf = () => {
-    const text = transcription || interimText || '';
-    if (!text.trim()) return;
-    const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    const name = `transcripcion-${new Date().toISOString().slice(0, 10)}`;
-    const html = generatePdfHtml(t('transcription.originalTranscript'), dateStr, text);
-    savePdfFromHtml(html, `${name}.pdf`);
-  };
+const saveCurrentPdf = () => {
+     const text = transcription || interimText || '';
+     if (!text.trim()) return;
+     const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+     const filename = `transcripcion-${new Date().toISOString().slice(0, 10)}.pdf`;
+     generateAndSavePdf(t('transcription.originalTranscript'), dateStr, text, filename);
+   };
 
   const sortedHistory = useMemo(() => [...records].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [records]);
 

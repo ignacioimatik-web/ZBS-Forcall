@@ -9,7 +9,7 @@ interface UseTranscriptionRecordsResult {
   records: TranscriptionRecord[];
   isLoading: boolean;
   error: string | null;
-  addRecord: (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at'>) => Promise<void>;
+  addRecord: (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at' | 'user_id'>) => Promise<void>;
   deleteRecord: (id: string) => Promise<boolean>;
   refresh: () => Promise<void>;
 }
@@ -47,15 +47,20 @@ export function useTranscriptionRecords(): UseTranscriptionRecordsResult {
     loadRecords();
   }, [loadRecords]);
 
-  const addRecord = useCallback(async (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at'>) => {
+const addRecord = useCallback(async (record: Omit<TranscriptionRecordInsert, 'id' | 'created_at' | 'user_id'>) => {
     try {
-      const { error: insertError } = await supabase
-        .from('transcription_records')
-        .insert({
-          user_id: supabase.auth.getUser()?.id || '',
-          name: record.name,
-          text: record.text,
-        });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError('Usuario no autenticado');
+        return;
+      }
+const { error: insertError } = await supabase
+         .from('transcription_records')
+         .insert({
+           user_id: user.id,
+           name: record.name,
+           text: record.text,
+         } as any);
 
       if (insertError) {
         console.error('Error adding transcription record:', insertError);
