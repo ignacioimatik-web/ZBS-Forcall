@@ -260,9 +260,9 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
                 Telegram
               </h2>
             </div>
-            <div className="p-3">
+            <div className="p-3 space-y-3">
               {linkedChats.length > 0 && (
-                <div className="mb-3">
+                <div>
                   <p className="text-xs font-semibold text-gray-500 mb-1">{t('telegram.linkedGroups')}</p>
                   {linkedChats.map(chat => (
                     <div key={chat.id} className="flex items-center gap-2 py-1">
@@ -272,14 +272,22 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
                   ))}
                 </div>
               )}
+
+              <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-xs text-blue-700 leading-relaxed">
+                  1. Añade <strong>@ZBSforcabot</strong> como administrador a un grupo de Telegram
+                </p>
+                <p className="text-xs text-blue-700 leading-relaxed mt-1">
+                  2. Escribe cualquier mensaje en el grupo — se vinculará automáticamente
+                </p>
+              </div>
+
               <button
                 onClick={async () => {
                   setQrLoading(true);
                   setQrError(null);
                   setQrResult(null);
-                  console.log('[Telegram] Generating QR...');
                   const result = await generateQR();
-                  console.log('[Telegram] QR result:', result);
                   if (result.success) {
                     setQrResult({ qrUrl: result.qrUrl, deepLink: result.deepLink });
                   } else {
@@ -294,24 +302,24 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
                 {qrLoading ? '...' : t('telegram.generateQR')}
               </button>
               {qrError && (
-                <p className="mt-2 text-xs text-red-500">{qrError}</p>
+                <p className="text-xs text-red-500">{qrError}</p>
               )}
               {qrResult && (
-                <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200 space-y-2">
+                <div className="p-3 bg-white rounded-lg border border-gray-200 space-y-2">
                   <p className="text-xs text-gray-500">{t('telegram.scanQR')}</p>
                   <img
                     src={qrResult.qrUrl || ''}
                     alt="QR Code"
                     className="w-36 h-36 mx-auto"
                   />
-                  <p className="text-xs text-gray-500">{t('telegram.useLink')}</p>
+                  <p className="text-xs text-gray-500">O abre el bot directamente:</p>
                   <a
                     href={qrResult.deepLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block text-xs text-blue-600 break-all hover:underline"
                   >
-                    {qrResult.deepLink}
+                    @ZBSforcabot
                   </a>
                   <button
                     onClick={() => setQrResult(null)}
