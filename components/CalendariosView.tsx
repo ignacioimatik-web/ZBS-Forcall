@@ -473,17 +473,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           )}
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
-          <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t('legend.title')}:</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-blue-600" /> {t('legend.medicina')}</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-rose-600" /> {t('legend.enfermeria')}</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-emerald-600" /> {t('legend.libranza')}</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-orange-600" /> {t('legend.refuerzo')}</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-violet-600" /> {t('legend.vacaciones')}</span>
-          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-sky-600" /> {t('legend.reunion')}</span>
-        </div>
-
         {/* Main layout: calendar + day detail panel */}
         <div className="flex flex-col lg:flex-row gap-3 lg:gap-6">
           <div className="flex-1 min-w-0 -mx-3 sm:-mx-4 md:mx-0">
@@ -544,6 +533,17 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
               onClearProfessionalFilter={() => setSelectedProfessional('all')}
             />
           </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
+          <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t('legend.title')}:</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-blue-600" /> {t('legend.medicina')}</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-rose-600" /> {t('legend.enfermeria')}</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-emerald-600" /> {t('legend.libranza')}</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-orange-600" /> {t('legend.refuerzo')}</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-violet-600" /> {t('legend.vacaciones')}</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-sky-600" /> {t('legend.reunion')}</span>
         </div>
 
         {/* Notes section for planning categories */}
