@@ -10,6 +10,41 @@ interface TranscriptionRecord {
   text: string;
 }
 
+const escapeHtml = (text: string) => {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+};
+
+const generatePdfHtml = (title: string, dateStr: string, text: string) => `
+  <div style="padding: 40px; font-family: 'Inter', sans-serif; max-width: 210mm;">
+    <h1 style="font-size: 20px; font-weight: 900; color: #1f2937; margin-bottom: 4px;">${escapeHtml(title)}</h1>
+    <p style="font-size: 12px; color: #6b7280; margin-bottom: 24px;">${dateStr}</p>
+    <hr style="border: none; border-top: 2px solid #e5e7eb; margin-bottom: 24px;">
+    <p style="font-size: 14px; line-height: 1.8; color: #374151; white-space: pre-wrap;">${escapeHtml(text)}</p>
+  </div>
+`;
+
+const savePdfFromHtml = (html: string, filename: string) => {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  const child = div.firstElementChild as HTMLElement;
+  child.style.position = 'fixed';
+  child.style.top = '0';
+  child.style.left = '0';
+  child.style.visibility = 'hidden';
+  child.style.width = '210mm';
+  document.body.appendChild(child);
+
+  const opt = {
+    margin: 10,
+    filename,
+    html2canvas: { scale: 2 },
+    jsPDF: { orientation: 'portrait' as const },
+  };
+  html2pdf().set(opt).from(child).save().then(() => document.body.removeChild(child));
+};
+
 export const TranscriptionTool: React.FC = () => {
   const { t } = useT();
   const [isRecording, setIsRecording] = useState(false);
@@ -162,6 +197,10 @@ export const TranscriptionTool: React.FC = () => {
   };
 
   const handleFinishRecording = () => {
+    // Guardar texto interino en la transcripción antes de limpiar
+    if (interimText.trim()) {
+      setTranscription((prev) => prev + interimText);
+    }
     stopRecording();
     setIsRecording(false);
     setInterimText('');
@@ -186,71 +225,29 @@ export const TranscriptionTool: React.FC = () => {
       date: new Date().toISOString(),
       text: transcription.trim(),
     };
-    const updated = [newRecord, ...history];
-    setHistory(updated);
+    setHistory((prev) => [newRecord, ...prev]);
     setTranscription('');
     setRecordingName('');
   };
 
   const deleteFromHistory = (id: string) => {
-    setHistory(prev => prev.filter(r => r.id !== id));
+    setHistory((prev) => prev.filter((r) => r.id !== id));
   };
 
   const saveAsPDF = (record: TranscriptionRecord) => {
     const dateStr = new Date(record.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    const div = document.createElement('div');
-    div.style.padding = '40px';
-    div.style.fontFamily = 'Inter, sans-serif';
-    div.innerHTML = `
-      <h1 style="font-size: 20px; font-weight: 900; color: #1f2937; margin-bottom: 4px;">${escapeHtml(record.name)}</h1>
-      <p style="font-size: 12px; color: #6b7280; margin-bottom: 24px;">${dateStr}</p>
-      <hr style="border: none; border-top: 2px solid #e5e7eb; margin-bottom: 24px;">
-      <p style="font-size: 14px; line-height: 1.8; color: #374151; white-space: pre-wrap;">${escapeHtml(record.text)}</p>
-    `;
-    div.style.position = 'fixed';
-    div.style.left = '-9999px';
-    div.style.top = '-9999px';
-    document.body.appendChild(div);
     const name = `grabacion-${record.name.replace(/\s+/g, '_')}-${new Date(record.date).toISOString().slice(0, 10)}`;
-    const opt = {
-      margin: 10,
-      filename: `${name}.pdf`,
-      html2canvas: { scale: 2 },
-      jsPDF: { orientation: 'portrait' as const },
-    };
-    html2pdf().set(opt).from(div).save().then(() => document.body.removeChild(div));
+    const html = generatePdfHtml(record.name, dateStr, record.text);
+    savePdfFromHtml(html, `${name}.pdf`);
   };
 
   const saveCurrentPdf = () => {
     const text = transcription || interimText || '';
     if (!text.trim()) return;
-    const div = document.createElement('div');
-    div.style.padding = '40px';
-    div.style.fontFamily = 'Inter, sans-serif';
-    div.innerHTML = `
-      <h1 style="font-size: 18px; font-weight: 900; color: #1f2937; margin-bottom: 4px;">${t('transcription.originalTranscript')}</h1>
-      <p style="font-size: 12px; color: #6b7280; margin-bottom: 24px;">${new Date().toLocaleDateString('es-ES')}</p>
-      <hr style="border: none; border-top: 2px solid #e5e7eb; margin-bottom: 24px;">
-      <p style="font-size: 14px; line-height: 1.8; color: #374151; white-space: pre-wrap;">${escapeHtml(text)}</p>
-    `;
-    div.style.position = 'fixed';
-    div.style.left = '-9999px';
-    div.style.top = '-9999px';
-    document.body.appendChild(div);
+    const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
     const name = `transcripcion-${new Date().toISOString().slice(0, 10)}`;
-    const opt = {
-      margin: 10,
-      filename: `${name}.pdf`,
-      html2canvas: { scale: 2 },
-      jsPDF: { orientation: 'portrait' as const },
-    };
-    html2pdf().set(opt).from(div).save().then(() => document.body.removeChild(div));
-  };
-
-  const escapeHtml = (text: string) => {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    const html = generatePdfHtml(t('transcription.originalTranscript'), dateStr, text);
+    savePdfFromHtml(html, `${name}.pdf`);
   };
 
   const sortedHistory = useMemo(() => [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [history]);
@@ -313,7 +310,7 @@ export const TranscriptionTool: React.FC = () => {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-[400px]">
         <div className="px-5 py-3 border-b border-gray-100 flex justify-between items-center no-print">
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('transcription.originalTranscript')}</span>
-<button
+          <button
             onClick={saveCurrentPdf}
             className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[10px] font-black uppercase tracking-wider"
           >
@@ -365,7 +362,7 @@ export const TranscriptionTool: React.FC = () => {
                         type="text"
                         value={record.name}
                         onChange={(e) => {
-                          const updated = history.map(r => r.id === record.id ? { ...r, name: e.target.value } : r);
+                          const updated = history.map((r) => (r.id === record.id ? { ...r, name: e.target.value } : r));
                           setHistory(updated);
                         }}
                         className="bg-gray-50 text-sm font-bold text-gray-800 border-none outline-none focus:ring-2 focus:ring-forcall-400 rounded px-1 w-full"
