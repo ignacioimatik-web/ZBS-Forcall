@@ -220,10 +220,6 @@ const startingEmptyCells = useMemo(() => {
   const handleCellClick = (date: Date) => {
     onSelectDay?.(date);
     if (swapMode) return;
-    if (onCellNoteClick) {
-      onCellNoteClick(date);
-      return;
-    }
     if (!canManageActiveCategory || activeCategory === 'Todo') return;
     if (bulkMode && onToggleBulkDate) { onToggleBulkDate(date); return; }
     setSelectedDate(date);
@@ -340,16 +336,16 @@ const startingEmptyCells = useMemo(() => {
            const hasError = validation && validation.hasConflict;
            const hasWarning = validation && validation.hasWarning;
           
-           if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
-            if (isMobile) return (
-<div key={i} className="flex md:hidden items-center gap-3 px-4 py-2 border-b border-gray-100 bg-white" onClick={() => onCellNoteClick?.(date)}>
+            if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
+             if (isMobile) return (
+<div key={i} className="flex md:hidden items-center gap-3 px-4 py-2 border-b border-gray-100 bg-white" onClick={() => handleCellClick(date)}>
                 <span className={`text-sm font-semibold w-7 shrink-0 ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-10 shrink-0">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
                 <span className="text-[10px] text-gray-300 italic">—</span>
               </div>
             );
             return (
-<div key={i} className={`hidden md:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[130px] bg-white ${onCellNoteClick ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => onCellNoteClick?.(date)}>
+<div key={i} className={`hidden md:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[130px] bg-white ${canManageActiveCategory ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => handleCellClick(date)}>
                  <div className="flex items-center gap-1">
 <span className={`text-sm font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
                    {hasError && <span className="material-symbols-outlined text-[10px] text-red-500" title="Conflicto detectado">warning</span>}
