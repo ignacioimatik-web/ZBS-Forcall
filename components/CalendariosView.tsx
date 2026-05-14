@@ -498,26 +498,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
               </button>
             )}
           </div>
-
-          {!canManageActiveCategory && (
-            <div className="mt-2">
-              {isGuardiaCategory && (
-                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 text-[10px] text-amber-900 font-bold text-center">
-                  {t('calendarios.coordOnlyGuardias')}
-                </div>
-              )}
-              {isPlanningCategory && (
-                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 text-[10px] text-amber-900 font-bold text-center">
-                  {t('calendarios.elenaXeloPlanning')}
-                </div>
-              )}
-              {isVacacionesCategory && (
-                <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 text-[10px] text-amber-900 font-bold text-center">
-                  {t('calendarios.elenaXeloVacaciones')}
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Assignment bar: visible when selection mode is active */}
@@ -627,7 +607,26 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             />
           </div>
 
-          <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0 lg:sticky lg:top-20 lg:self-start">
+          <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0 lg:sticky lg:top-20 lg:self-start space-y-3">
+            {!canManageActiveCategory && (
+              <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-3 shadow-sm">
+                {isGuardiaCategory && (
+                  <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 text-[10px] text-amber-900 font-bold text-center">
+                    {t('calendarios.coordOnlyGuardias')}
+                  </div>
+                )}
+                {isPlanningCategory && (
+                  <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 text-[10px] text-amber-900 font-bold text-center">
+                    {t('calendarios.elenaXeloPlanning')}
+                  </div>
+                )}
+                {isVacacionesCategory && (
+                  <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 text-[10px] text-amber-900 font-bold text-center">
+                    {t('calendarios.elenaXeloVacaciones')}
+                  </div>
+                )}
+              </div>
+            )}
             <DayDetailPanel
               selectedDate={selectedDate}
               guardias={guardias}
