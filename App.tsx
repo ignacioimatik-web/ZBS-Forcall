@@ -99,6 +99,10 @@ const App: React.FC = () => {
     prevUserRef.current = user;
   }, [user, refreshGuardias, refreshLibranzas, refreshDoblas, refreshVacaciones, refreshMeetings]);
 
+  useEffect(() => {
+    setAppSettings(loadSettings(user?.id));
+  }, [user?.id]);
+
   // Refrescar datos al volver a la app (cambiar de pestaña, desbloquear iPad, etc.)
   useEffect(() => {
     if (!user) return;
@@ -296,8 +300,8 @@ const App: React.FC = () => {
 
   const handleSettingsChange = useCallback((settings: AppSettings) => {
     setAppSettings(settings);
-    saveSettings(settings);
-  }, []);
+    saveSettings(settings, user?.id);
+  }, [user?.id]);
 
   const renderContent = () => {
     switch (activeTab) {

@@ -8,7 +8,9 @@ export interface AppSettings {
   intensity: Intensity;
 }
 
-const STORAGE_KEY = 'zbs_app_settings';
+function storageKey(userId?: string): string {
+  return userId ? `zbs_settings_${userId}` : 'zbs_app_settings';
+}
 
 export const DEFAULT_SETTINGS: AppSettings = {
   effect: 'gradient',
@@ -57,9 +59,9 @@ export const EFFECT_ICONS: Record<TransitionEffect, string> = {
   shimmer: 'water_lux',
 };
 
-export function loadSettings(): AppSettings {
+export function loadSettings(userId?: string): AppSettings {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(userId));
     if (raw) {
       const parsed = JSON.parse(raw);
       return { ...DEFAULT_SETTINGS, ...parsed };
@@ -68,8 +70,8 @@ export function loadSettings(): AppSettings {
   return { ...DEFAULT_SETTINGS };
 }
 
-export function saveSettings(settings: AppSettings): void {
+export function saveSettings(settings: AppSettings, userId?: string): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    localStorage.setItem(storageKey(userId), JSON.stringify(settings));
   } catch { }
 }
