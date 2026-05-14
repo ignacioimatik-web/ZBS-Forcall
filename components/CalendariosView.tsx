@@ -473,6 +473,17 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           )}
         </div>
 
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-3 px-1">
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t('legend.title')}:</span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-blue-600" /> {t('legend.medicina')}</span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-rose-600" /> {t('legend.enfermeria')}</span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-emerald-600" /> {t('legend.libranza')}</span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-orange-600" /> {t('legend.refuerzo')}</span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-violet-600" /> {t('legend.vacaciones')}</span>
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-sky-600" /> {t('legend.reunion')}</span>
+        </div>
+
         {/* Main layout: calendar + day detail panel */}
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
           <div className="flex-1 min-w-0 -mx-4 md:mx-0">

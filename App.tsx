@@ -349,7 +349,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 md:pb-0 relative animate-fade-in flex">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} guardiaSubCategory={guardiaSub} onGuardiaSubCategoryChange={setGuardiaSub} user={user} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} guardiaSubCategory={guardiaSub} onGuardiaSubCategoryChange={setGuardiaSub} user={user} userGroup={appUserGroup} />
       <div className="flex-1 min-h-screen flex flex-col">
         <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} userName={user?.name} user={user} />
         {isDataLoading && (

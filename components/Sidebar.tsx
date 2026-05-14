@@ -9,6 +9,7 @@ interface SidebarProps {
   guardiaSubCategory?: string;
   onGuardiaSubCategoryChange?: (sub: string) => void;
   user: User | null;
+  userGroup?: 'medico' | 'enfermeria' | 'both';
 }
 
 const tabLabels: Record<string, string> = {
@@ -35,11 +36,17 @@ const guardiaSubItems = [
   { id: 'Vacaciones', labelKey: 'calendarios.vacaciones', icon: 'flight' },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guardiaSubCategory, onGuardiaSubCategoryChange, user }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guardiaSubCategory, onGuardiaSubCategoryChange, user, userGroup }) => {
   const { t } = useT();
   const isAdmin = user?.staffGroup == null;
   const tabs = useMemo(() => ['Unificado', 'Guardias', 'Chat', 'Dictado', 'Alertas'].filter(t => !isAdmin || (t !== 'Chat' && t !== 'Dictado')), [isAdmin]);
   const [guardiaExpanded, setGuardiaExpanded] = useState(false);
+
+  const filteredGuardiaSubItems = useMemo(() => {
+    if (userGroup === 'medico') return guardiaSubItems.filter(s => s.id !== 'enfermeria');
+    if (userGroup === 'enfermeria') return guardiaSubItems.filter(s => s.id !== 'Medicina');
+    return guardiaSubItems;
+  }, [userGroup]);
 
   const handleGuardiaClick = () => {
     if (activeTab !== 'Guardias') {
@@ -91,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
 
             {tab === 'Guardias' && guardiaExpanded && (
               <div className="ml-2 mt-1 space-y-0.5">
-                {guardiaSubItems.map(sub => (
+                {filteredGuardiaSubItems.map(sub => (
                   <button
                     key={sub.id}
                     onClick={() => handleSubClick(sub.id)}
