@@ -107,6 +107,87 @@ async function ocrImage(dataUrl: string, onProgress?: (pct: number) => void): Pr
   return result.data.text;
 }
 
+/* ── Fuzzy string matching ── */
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function findClosestName(text: string, threshold = 0.35): string | null {
+  const cleaned = text.replace(/[^a-zA-ZÀ-ÿ\u00C0-\u024F\s]/g, '').trim().toLowerCase();
+  if (!cleaned || cleaned.length < 3) return null;
+  let best: { name: string; dist: number } | null = null;
+  for (const name of ALL_PERSONNEL) {
+    const nl = name.toLowerCase();
+    const dist = levenshtein(cleaned, nl);
+    const score = dist / Math.max(cleaned.length, nl.length);
+    if (score < threshold && (!best || score < best.dist / Math.max(cleaned.length, best.name.length))) {
+      best = { name, dist };
+    }
+  }
+  if (best) {
+    const parts = cleaned.split(/\s+/);
+    const nameParts = best.name.toLowerCase().split(/\s+/);
+    const matchedParts = parts.filter(p => nameParts.some(np => np.startsWith(p) || p.startsWith(np)));
+    if (matchedParts.length === 0 && best.dist > 2) return null;
+  }
+  return best?.name || null;
+}
+
+/* ── Label normalization ── */
+const LABEL_NORMAL: Record<string, string> = {
+  'M': 'M', 'N': 'M',
+  'E': 'E', 'B': 'E', 'F': 'E',
+  'L': 'L', 'I': 'L', '1': 'L',
+  'R': 'R',
+  'V': 'V', 'U': 'V',
+  'MT': 'MT', 'NT': 'MT',
+};
+
+function normalizeLabel(text: string): string | null {
+  const t = text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (t === 'MT' || t === 'NT') return 'MT';
+  if (t === 'M' || t === 'N') return 'M';
+  if (t === 'E' || t === 'B' || t === 'F') return 'E';
+  if (t === 'L' || t === 'I') return 'L';
+  if (t === 'R') return 'R';
+  if (t === 'V' || t === 'U') return 'V';
+  if (/^(GUARDIA|G)$/i.test(text)) return 'M';
+  if (/^(LIBRANZA|LIB)$/i.test(text)) return 'L';
+  if (/^(REFUERZO|DOBLA|DOB|REF)$/i.test(text)) return 'R';
+  if (/^(VACACION|VAC|VACA)$/i.test(text)) return 'V';
+  return null;
+}
+
+/* ── Fragment cleaning ── */
+function cleanFragment(text: string): string {
+  return text
+    .replace(/^[º°.\s]*/, '')
+    .replace(/[º°.)\]:;\s]+$/, '')
+    .replace(/[_*"«»„"<>|]/g, '')
+    .trim();
+}
+
+function extractDayNumber(text: string): number | null {
+  const cleaned = text.replace(/^[º°.\s]*/, '').replace(/[º°.)\]:;\s]+$/, '');
+  const n = parseInt(cleaned, 10);
+  if (!isNaN(n) && n >= 1 && n <= 31) return n;
+  const match = text.match(/\b(\d{1,2})\b/);
+  if (match) {
+    const n2 = parseInt(match[1], 10);
+    if (n2 >= 1 && n2 <= 31) return n2;
+  }
+  return null;
+}
+
 /* ── Text→entries parser ── */
 interface DayGroup { day: number; names: string[]; labels: string[]; }
 
@@ -114,21 +195,23 @@ function groupByDay(fragments: string[]): DayGroup[] {
   const groups: DayGroup[] = [];
   let current: DayGroup | null = null;
   for (const f of fragments) {
-    const trimmed = f.trim();
-    const dayNum = parseInt(trimmed, 10);
-    if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31) {
+    const cleaned = cleanFragment(f);
+    if (!cleaned) continue;
+    const dayNum = extractDayNumber(cleaned);
+    if (dayNum !== null) {
       current = { day: dayNum, names: [], labels: [] };
       groups.push(current);
-    } else if (current) {
-      const known = ['M', 'E', 'L', 'R', 'MT', 'V'];
-      if (known.includes(trimmed)) {
-        current.labels.push(trimmed);
+    } else if (current && cleaned.length > 0) {
+      const label = normalizeLabel(cleaned);
+      if (label) {
+        current.labels.push(label);
       } else {
-        const matched = ALL_PERSONNEL.filter(n =>
-          n.toLowerCase().includes(trimmed.toLowerCase()) || trimmed.toLowerCase().includes(n.toLowerCase())
-        );
-        if (matched.length > 0) current.names.push(matched[0]);
-        else if (trimmed.length > 2) current.names.push(trimmed);
+        const fuzzy = findClosestName(cleaned);
+        if (fuzzy) {
+          current.names.push(fuzzy);
+        } else if (cleaned.length > 2 && /[a-zA-ZÀ-ÿ]/.test(cleaned)) {
+          current.names.push(cleaned);
+        }
       }
     }
   }
@@ -160,6 +243,11 @@ function parseFragmentsIntoEntries(fragments: string[], targetMonth?: number, ta
         const name = g.names[i] || g.names[0] || '';
         if (!name || name === label) continue;
         entries.push({ id: generateId(), date: dateStr, category: CAT_MAP[label] || 'guardia', type: TYPE_MAP[label] || 'medica', personnelName: name });
+      }
+      if (g.labels.length > 0 && g.names.length === 0) {
+        for (const label of g.labels) {
+          entries.push({ id: generateId(), date: dateStr, category: CAT_MAP[label] || 'guardia', type: TYPE_MAP[label] || 'medica', personnelName: 'PENDIENTE' });
+        }
       }
     }
   }
@@ -432,15 +520,15 @@ export const IAassistView: React.FC<IAassistViewProps> = ({
             )}
 
             {rawText && (
-              <div>
+              <div className="space-y-2">
                 <button onClick={() => setShowRawText(!showRawText)}
                   className="text-[10px] font-bold text-gray-500 hover:text-gray-700 uppercase tracking-widest flex items-center gap-1"
                 >
                   <span className="material-symbols-outlined text-sm">{showRawText ? 'visibility_off' : 'visibility'}</span>
-                  Texto extraído
+                  Texto extraído por OCR
                 </button>
                 {showRawText && (
-                  <pre className="mt-2 p-3 bg-gray-50 rounded-xl text-[10px] text-gray-600 max-h-40 overflow-y-auto border border-gray-100 whitespace-pre-wrap break-all">{rawText}</pre>
+                  <pre className="mt-1 p-3 bg-gray-50 rounded-xl text-[10px] text-gray-600 max-h-40 overflow-y-auto border border-gray-100 whitespace-pre-wrap break-all">{rawText}</pre>
                 )}
               </div>
             )}
