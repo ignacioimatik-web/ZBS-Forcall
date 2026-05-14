@@ -395,8 +395,8 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
         />
 
         {/* Tools bar: swap mode, professional selector, bulk assign */}
-        <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-3 flex-wrap">
+        <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {props.user?.role !== 'Administrador' && (
               <button
                 onClick={() => { setSwapMode(!swapMode); setBulkPersonnel(null); }}
@@ -415,7 +415,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
               value={bulkPersonnel || ''}
               disabled={swapMode || !canManageActiveCategory}
               onChange={(e) => { setBulkPersonnel(e.target.value); setBulkDates([]); }}
-              className="flex-1 min-w-[140px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-100"
+              className="w-full sm:flex-1 sm:min-w-[140px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-100"
             >
               <option value="">{t('calendarios.selectProfessional')}</option>
               {currentPersonnel.map(p => <option key={p} value={p}>{p}</option>)}
@@ -474,19 +474,19 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-3 px-1">
-          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t('legend.title')}:</span>
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-blue-600" /> {t('legend.medicina')}</span>
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-rose-600" /> {t('legend.enfermeria')}</span>
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-emerald-600" /> {t('legend.libranza')}</span>
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-orange-600" /> {t('legend.refuerzo')}</span>
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-violet-600" /> {t('legend.vacaciones')}</span>
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-600"><span className="w-3 h-3 rounded-sm bg-sky-600" /> {t('legend.reunion')}</span>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
+          <span className="text-[8px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t('legend.title')}:</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-blue-600" /> {t('legend.medicina')}</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-rose-600" /> {t('legend.enfermeria')}</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-emerald-600" /> {t('legend.libranza')}</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-orange-600" /> {t('legend.refuerzo')}</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-violet-600" /> {t('legend.vacaciones')}</span>
+          <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-gray-600"><span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm bg-sky-600" /> {t('legend.reunion')}</span>
         </div>
 
         {/* Main layout: calendar + day detail panel */}
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-          <div className="flex-1 min-w-0 -mx-4 md:mx-0">
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-6">
+          <div className="flex-1 min-w-0 -mx-3 sm:-mx-4 md:mx-0">
             {(activeSub === 'Libranzas' || activeSub === 'Refuerzo' || activeSub === 'Vacaciones') && userGroup !== 'both' && (
               <div className="mb-4 px-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full">
@@ -530,7 +530,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
             />
           </div>
 
-          <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0">
+          <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0 lg:sticky lg:top-20 lg:self-start">
             <DayDetailPanel
               selectedDate={selectedDate}
               guardias={guardias}

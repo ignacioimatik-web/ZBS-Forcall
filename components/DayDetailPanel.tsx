@@ -130,7 +130,7 @@ const conflicts = getDayConflicts(assignments);
    const hasValidationIssues = validationIssues.length > 0;
 
   return (
-    <aside className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden sticky top-20" aria-label={`Detalle del día: ${formatDate(selectedDate)}`}>
+    <aside className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden lg:sticky lg:top-20" aria-label={`Detalle del día: ${formatDate(selectedDate)}`}>
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">

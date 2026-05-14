@@ -325,8 +325,14 @@ const startingEmptyCells = useMemo(() => {
            const hasError = validation && validation.hasConflict;
            const hasWarning = validation && validation.hasWarning;
           
-          if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
-            if (isMobile) return null;
+           if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
+            if (isMobile) return (
+<div key={i} className="flex md:hidden items-center gap-3 px-4 py-2 border-b border-gray-100 bg-white" onClick={() => onCellNoteClick?.(date)}>
+                <span className={`text-sm font-semibold w-7 shrink-0 ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-10 shrink-0">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
+                <span className="text-[10px] text-gray-300 italic">—</span>
+              </div>
+            );
             return (
 <div key={i} className={`hidden md:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[130px] bg-white ${onCellNoteClick ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => onCellNoteClick?.(date)}>
                  <div className="flex items-center gap-1">
@@ -356,7 +362,7 @@ const startingEmptyCells = useMemo(() => {
             <div 
               key={i} 
               onClick={() => handleCellClick(date)} 
-              className={`flex md:flex-col gap-2 p-3 border-b border-r border-gray-100 relative group md:min-h-[130px] bg-white transition-colors
+              className={`flex md:flex-col gap-1 md:gap-2 p-2 md:p-3 border-b border-r border-gray-100 relative group md:min-h-[130px] bg-white transition-colors
                 ${isToday ? 'bg-blue-50/40' : ''} 
                 ${isFestivo ? 'bg-red-50/20' : ''} 
                 ${canManageActiveCategory && !swapMode ? 'cursor-pointer hover:bg-gray-50' : ''} 
@@ -383,7 +389,7 @@ const startingEmptyCells = useMemo(() => {
               </div>
               {events.length > 0 ? (
                 <div className="flex-1 space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
-                  {events.slice(0, 4).map((ev: CalendarEvent, idx) => {
+                  {events.slice(0, isMobile ? 2 : 4).map((ev: CalendarEvent, idx) => {
                     const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
                     const chipStyle = getEventStyle(ev);
                     const isInteractive = canDelete && !swapMode && !bulkMode;
@@ -394,9 +400,9 @@ const startingEmptyCells = useMemo(() => {
                      </button>
                     );
                   })}
-                  {events.length > 4 && (
+                  {events.length > (isMobile ? 2 : 4) && (
                     <div className="h-[26px] px-2 rounded-lg text-[10px] font-bold text-gray-400 flex items-center justify-center border border-dashed border-gray-200">
-                      +{events.length - 4} m&aacute;s
+                      +{events.length - (isMobile ? 2 : 4)} m&aacute;s
                     </div>
                   )}
                 </div>

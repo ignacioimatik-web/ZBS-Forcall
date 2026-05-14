@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Meeting, Guardia, Libranza, Dobla, Vacacion } from '../types';
 import { ShiftBadge } from './ShiftBadge';
 import { useT } from '../lib/i18n';
@@ -73,6 +73,13 @@ export const CalendarListView: React.FC<CalendarListViewProps> = ({
   onSelectDay,
 }) => {
   const { t, lang } = useT();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const daysInMonth = React.useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -148,7 +155,66 @@ export const CalendarListView: React.FC<CalendarListViewProps> = ({
         </div>
       )}
 
-      {/* Tabla */}
+      {/* Mobile: day cards */}
+      {isMobile ? (
+        <div className="space-y-2">
+          {daysInMonth.map((row: DayRow) => {
+            const isToday = row.date.toDateString() === todayStr;
+            const isSelected = selectedDate && selectedDate.toDateString() === row.date.toDateString();
+            const isWeekend = row.date.getDay() === 0 || row.date.getDay() === 6;
+            const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaciones, row.meetings);
+            const statusConfig = getStatusConfig(status, t);
+            const validation = validateDay(row.date, row.guardias, row.libranzas, row.doblas, row.vacaciones, row.meetings);
+            const hasSelectedProfessional = selectedProfessional !== 'all';
+            const dayHasProf = [...row.guardias, ...row.libranzas, ...row.doblas, ...row.vacaciones].some(e => e.personnelName === selectedProfessional);
+            const allRowEvents = [
+              ...row.guardias.map(g => ({ kind: 'guardia' as const, type: g.type, name: g.personnelName })),
+              ...row.libranzas.map(l => ({ kind: 'libranza' as const, type: l.type, name: l.personnelName })),
+              ...row.doblas.map(d => ({ kind: 'dobla' as const, type: d.type, name: d.personnelName })),
+              ...row.vacaciones.map(v => ({ kind: 'vacacion' as const, type: v.type, name: v.personnelName })),
+              ...row.meetings.map(m => ({ kind: 'meeting' as const, type: m.type, name: m.title })),
+            ];
+
+            if (hasSelectedProfessional && !dayHasProf) return null;
+
+            return (
+              <div
+                key={row.date.toISOString()}
+                onClick={() => onSelectDay(row.date)}
+                className={`bg-white border border-gray-200 rounded-xl px-3 py-2.5 shadow-sm cursor-pointer hover:bg-blue-25 active:bg-blue-50 transition-colors ${
+                  isWeekend ? 'bg-gray-50/50' : ''
+                } ${isSelected ? 'ring-2 ring-blue-300 bg-blue-50' : ''}`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-bold ${isToday ? 'bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs' : 'text-gray-800'}`}>
+                      {row.date.getDate()}
+                    </span>
+                    <span className={`text-[10px] font-bold uppercase ${isWeekend ? 'text-red-400' : 'text-gray-400'}`}>
+                      {weekdays[row.date.getDay()]}
+                    </span>
+                    <span className="text-[9px] text-gray-300">{row.date.toLocaleDateString(lang === 'ca' ? 'ca' : 'es', { month: 'short' })}</span>
+                  </div>
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full leading-none ${statusConfig.className}`}>
+                    {statusConfig.label}
+                  </span>
+                </div>
+                {allRowEvents.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {allRowEvents.map((ev, i) => (
+                      <span key={i} className="inline-flex items-center gap-0.5">
+                        <ShiftBadge kind={ev.kind} type={ev.type} />
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-[10px] text-gray-300 italic">-</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (<>
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm" aria-label={t('common.viewList')}>
@@ -312,6 +378,7 @@ const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaci
           </table>
         </div>
       </div>
+      </>)}
     </div>
   );
 };
