@@ -5,7 +5,7 @@ import { Dashboard } from './components/Dashboard';
 import { CalendariosView } from './components/CalendariosView';
 import { NotificationToast } from './components/NotificationToast';
 import { LoginScreen } from './components/LoginScreen';
-import { AlertasView } from './components/AlertasView';
+import { AvisosView } from './components/AvisosView';
 import { ChatView } from './components/ChatView';
 import { Footer } from './components/Footer';
 import { TranscriptionTool } from './components/TranscriptionTool';
@@ -371,7 +371,7 @@ const App: React.FC = () => {
         if (isAdminUser) return null;
         return <TranscriptionTool />;
       case 'Avisos':
-        return <AlertasView />;
+        return <AvisosView />;
       case 'Configuracion':
         return <SettingsView settings={appSettings} onSettingsChange={handleSettingsChange} />;
       case 'Ayuda':
