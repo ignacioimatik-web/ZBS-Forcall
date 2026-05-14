@@ -49,7 +49,7 @@ function getDayConflicts(assignments: Assignment[]): string[] {
   for (const [person, kinds] of Object.entries(byPerson)) {
     const unique = new Set(kinds);
     if (unique.size > 1) {
-      conflicts.push(`${person} asignado a ${Array.from(unique).join(' y ')} el mismo d&iacute;a`);
+      conflicts.push(`${person} asignado a ${Array.from(unique).join(' y ')} el mismo día`);
     }
   }
 
@@ -57,7 +57,7 @@ function getDayConflicts(assignments: Assignment[]): string[] {
 }
 
 const sectionConfig: Record<string, { label: string; icon: string }> = {
-  guardia: { label: 'Medicina / Enfermer&iacute;a', icon: 'stethoscope' },
+  guardia: { label: 'Medicina / Enfermería', icon: 'stethoscope' },
   libranza: { label: 'Libranzas', icon: 'beach_access' },
   dobla: { label: 'Refuerzos', icon: 'dynamic_feed' },
   vacacion: { label: 'Vacaciones', icon: 'flight' },
@@ -81,10 +81,10 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
   if (!selectedDate) {
     return (
       <aside className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm" aria-label="Detalle del día seleccionado">
-        <h3 className="text-sm font-bold text-gray-900 mb-2">Detalle del d&iacute;a</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-2">Detalle del día</h3>
         <div className="flex flex-col items-center justify-center py-10 text-gray-400">
           <span className="material-symbols-outlined text-4xl mb-3">calendar_month</span>
-          <p className="text-sm font-medium text-center">Selecciona un d&iacute;a del calendario para ver sus asignaciones.</p>
+          <p className="text-sm font-medium text-center">Selecciona un día del calendario para ver sus asignaciones.</p>
         </div>
       </aside>
     );
@@ -239,7 +239,7 @@ const conflicts = getDayConflicts(assignments);
                   ))}
                 </div>
               ) : (
-                <p className="text-[11px] text-gray-400 italic pl-1">Sin asignaci&oacute;n</p>
+                <p className="text-[11px] text-gray-400 italic pl-1">Sin asignación</p>
               )}
             </div>
           );
@@ -248,13 +248,13 @@ const conflicts = getDayConflicts(assignments);
         {assignments.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-gray-400">
             <span className="material-symbols-outlined text-3xl mb-2">info</span>
-            <p className="text-sm font-medium">No hay asignaciones para este d&iacute;a.</p>
+            <p className="text-sm font-medium">No hay asignaciones para este día.</p>
           </div>
         )}
       </div>
 
       <div className="p-4 border-t border-gray-100 bg-gray-50/50 space-y-2">
-        <p className="text-[9px] text-gray-400 font-medium text-center">Selecciona un d&iacute;a para ver su detalle</p>
+        <p className="text-[9px] text-gray-400 font-medium text-center">Selecciona un día para ver su detalle</p>
       </div>
     </aside>
   );
