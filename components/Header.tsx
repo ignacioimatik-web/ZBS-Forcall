@@ -23,7 +23,7 @@ const tabLabels: Record<string, string> = {
 const tabIcons: Record<string, string> = {
   Unificado: 'dashboard',
   Guardias: 'calendar_month',
-  IAassist: 'smart_ai',
+  IAassist: 'auto_awesome',
   Chat: 'forum',
   Dictado: 'mic',
   Alertas: 'campaign',

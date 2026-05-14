@@ -362,7 +362,7 @@ export const IAassistView: React.FC<IAassistViewProps> = ({
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center p-8 max-w-md">
-          <span className="material-symbols-outlined text-5xl text-gray-300 mb-4">smart_ai</span>
+          <span className="material-symbols-outlined text-5xl text-gray-300 mb-4">auto_awesome</span>
           <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">
             Solo la coordinación puede importar datos.
           </p>
@@ -375,7 +375,7 @@ export const IAassistView: React.FC<IAassistViewProps> = ({
     <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
       <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="material-symbols-outlined text-2xl text-forcall-600">smart_ai</span>
+          <span className="material-symbols-outlined text-2xl text-forcall-600">auto_awesome</span>
           <h2 className="text-lg font-black text-gray-900 tracking-tight flex-1">IAassist — Importación de Cuadrante</h2>
         </div>
         <p className="text-[10px] text-gray-400 font-medium mt-1 ml-1">
