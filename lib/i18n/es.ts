@@ -135,12 +135,11 @@ calendarios: {
      bulkDelete: 'ELIMINAR SELECCIÓN',
      bulkDeleteTitle: 'Eliminar eventos',
      bulkDeleteConfirm: 'Se eliminarán los eventos seleccionados',
-     listView: {
-       complete: 'Completo',
-       gap: 'Hueco',
-        overlap: 'Turno duplicado',
-       noData: 'Sin datos',
-     },
+listView: {
+        assigned: 'Asignado',
+        gap: 'Hueco',
+        noData: 'Sin datos',
+      },
      validation: {
        issues: 'Incidencias detectadas',
        missingCoverage: 'Sin cobertura',
@@ -187,9 +186,8 @@ dayDetail: {
     refuerzos: 'Refuerzos',
     vac: 'VAC',
     reun: 'Reun.',
-    status: 'Estado',
-    issueBadge: 'Problema',
-  },
+status: 'Estado',
+   },
   unifiedCalendar: {
     cancelSwap: 'CANCELAR PERMUTA',
     assign: 'Asignar',

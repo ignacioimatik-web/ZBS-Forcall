@@ -139,9 +139,8 @@ dayDetail: {
     refuerzos: 'Reforços',
     vac: 'VAC',
     reun: 'Reun.',
-    status: 'Estat',
-    issueBadge: 'Problema',
-  },
+status: 'Estat',
+   },
   unifiedCalendar: {
     cancelSwap: 'CANCEL·LAR PERMUTA',
     assign: 'Assignar',

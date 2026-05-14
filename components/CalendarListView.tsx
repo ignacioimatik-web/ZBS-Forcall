@@ -32,28 +32,17 @@ function getDayName(dow: number, lang: string): string {
   return lang === 'ca' ? ca[dow] : es[dow];
 }
 
-function computeStatus(guardias: Guardia[], libranzas: Libranza[], doblas: Dobla[], vacaciones: Vacacion[], meetings: Meeting[]): 'completo' | 'hueco' | 'overlap' | 'sin-datos' {
+function computeStatus(guardias: Guardia[], libranzas: Libranza[], doblas: Dobla[], vacaciones: Vacacion[], meetings: Meeting[]): 'completo' | 'hueco' | 'sin-datos' {
   const all = [...guardias, ...libranzas, ...doblas, ...vacaciones];
   if (all.length === 0 && meetings.length === 0) return 'sin-datos';
   if (all.length === 0) return 'hueco';
-
-  const personnelByDay: Record<string, string[]> = {};
-  for (const ev of all) {
-    if (!ev.personnelName) continue;
-    if (!personnelByDay[ev.personnelName]) personnelByDay[ev.personnelName] = [];
-    personnelByDay[ev.personnelName].push(ev._kind || ev.type || 'unknown');
-  }
-  for (const kinds of Object.values(personnelByDay)) {
-    if (new Set(kinds).size > 1) return 'overlap';
-  }
   return 'completo';
 }
 
 function getStatusConfig(status: string, t: (key: string) => string) {
   switch (status) {
-    case 'completo': return { label: t('calendarios.listView.complete'), className: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    case 'completo': return { label: t('calendarios.listView.assigned'), className: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
     case 'hueco': return { label: t('calendarios.listView.gap'), className: 'bg-orange-50 text-orange-700 border-orange-200' };
-    case 'overlap': return { label: t('calendarios.listView.issue'), className: 'bg-amber-50 text-amber-700 border-amber-200' };
     default: return { label: t('calendarios.listView.noData'), className: 'bg-gray-50 text-gray-400 border-gray-200' };
   }
 }
@@ -251,9 +240,9 @@ export const CalendarListView: React.FC<CalendarListViewProps> = ({
                 const isToday = row.date.toDateString() === todayStr;
                 const isSelected = selectedDate && selectedDate.toDateString() === row.date.toDateString();
                 const isWeekend = row.date.getDay() === 0 || row.date.getDay() === 6;
-const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaciones, row.meetings);
-                 const statusConfig = getStatusConfig(status, t);
-                 const validation = validateDay(row.date, row.guardias, row.libranzas, row.doblas, row.vacaciones, row.meetings);
+                const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaciones, row.meetings);
+                const statusConfig = getStatusConfig(status, t);
+                const validation = validateDay(row.date, row.guardias, row.libranzas, row.doblas, row.vacaciones, row.meetings);
                 const hasSelectedProfessional = selectedProfessional !== 'all';
                 const dayHasProf = [
                   ...row.guardias,
@@ -289,74 +278,74 @@ const status = computeStatus(row.guardias, row.libranzas, row.doblas, row.vacaci
                       </span>
                     </td>
 
-{/* Medicina */}
-                     <td className="px-3 py-2 border-b border-gray-100">
-                       <div className="flex flex-wrap gap-0.5">
-                         {row.guardias.filter((g: any) => g.type === 'medica').map((g: any, i: number) => (
-                           <span key={i} className="inline-flex items-center gap-0.5" title={g.personnelName}>
-                             <ShiftBadge kind="guardia" type="medica" />
-                             <span className="text-[9px] font-medium">{g.personnelName}</span>
-                           </span>
-                         ))}
-                       </div>
-                     </td>
+                    {/* Medicina */}
+                    <td className="px-3 py-2 border-b border-gray-100">
+                      <div className="flex flex-wrap gap-0.5">
+                        {row.guardias.filter((g: any) => g.type === 'medica').map((g: any, i: number) => (
+                          <span key={i} className="inline-flex items-center gap-0.5" title={g.personnelName}>
+                            <ShiftBadge kind="guardia" type="medica" />
+                            <span className="text-[9px] font-medium">{g.personnelName}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </td>
 
-                     {/* Enfermería */}
-                     <td className="px-3 py-2 border-b border-gray-100">
-                       <div className="flex flex-wrap gap-0.5">
-                         {row.guardias.filter((g: any) => g.type === 'enfermeria').map((g: any, i: number) => (
-                           <span key={i} className="inline-flex items-center gap-0.5" title={g.personnelName}>
-                             <ShiftBadge kind="guardia" type="enfermeria" />
-                             <span className="text-[9px] font-medium">{g.personnelName}</span>
-                           </span>
-                         ))}
-                       </div>
-                     </td>
+                    {/* Enfermería */}
+                    <td className="px-3 py-2 border-b border-gray-100">
+                      <div className="flex flex-wrap gap-0.5">
+                        {row.guardias.filter((g: any) => g.type === 'enfermeria').map((g: any, i: number) => (
+                          <span key={i} className="inline-flex items-center gap-0.5" title={g.personnelName}>
+                            <ShiftBadge kind="guardia" type="enfermeria" />
+                            <span className="text-[9px] font-medium">{g.personnelName}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </td>
 
-                     {/* Libranzas */}
-                     <td className="px-3 py-2 border-b border-gray-100">
-                       <div className="flex flex-wrap gap-0.5">
-                         {row.libranzas.map((l: any, i: number) => (
-                           <span key={i} className="inline-flex items-center gap-0.5" title={l.personnelName}>
-                             <ShiftBadge kind="libranza" type={l.type} />
-                             <span className="text-[9px] font-medium">{l.personnelName}</span>
-                           </span>
-                         ))}
-                       </div>
-                     </td>
+                    {/* Libranzas */}
+                    <td className="px-3 py-2 border-b border-gray-100">
+                      <div className="flex flex-wrap gap-0.5">
+                        {row.libranzas.map((l: any, i: number) => (
+                          <span key={i} className="inline-flex items-center gap-0.5" title={l.personnelName}>
+                            <ShiftBadge kind="libranza" type={l.type} />
+                            <span className="text-[9px] font-medium">{l.personnelName}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </td>
 
-                     {/* Refuerzos (Doblas) */}
-                     <td className="px-3 py-2 border-b border-gray-100">
-                       <div className="flex flex-wrap gap-0.5">
-                         {row.doblas.map((d: any, i: number) => (
-                           <span key={i} className="inline-flex items-center gap-0.5" title={d.personnelName}>
-                             <ShiftBadge kind="dobla" type={d.type} />
-                             <span className="text-[9px] font-medium">{d.personnelName}</span>
-                           </span>
-                         ))}
-                       </div>
-                     </td>
+                    {/* Refuerzos (Doblas) */}
+                    <td className="px-3 py-2 border-b border-gray-100">
+                      <div className="flex flex-wrap gap-0.5">
+                        {row.doblas.map((d: any, i: number) => (
+                          <span key={i} className="inline-flex items-center gap-0.5" title={d.personnelName}>
+                            <ShiftBadge kind="dobla" type={d.type} />
+                            <span className="text-[9px] font-medium">{d.personnelName}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </td>
 
-                     {/* Vacaciones */}
-                     <td className="px-3 py-2 border-b border-gray-100">
-                       <div className="flex flex-wrap gap-0.5">
-                         {row.vacaciones.map((v: any, i: number) => (
-                           <span key={i} className="inline-flex items-center gap-0.5" title={v.personnelName}>
-                             <ShiftBadge kind="vacacion" type={v.type} />
-                             <span className="text-[9px] font-medium">{v.personnelName}</span>
-                           </span>
-                         ))}
-</div>
-                      </td>
+                    {/* Vacaciones */}
+                    <td className="px-3 py-2 border-b border-gray-100">
+                      <div className="flex flex-wrap gap-0.5">
+                        {row.vacaciones.map((v: any, i: number) => (
+                          <span key={i} className="inline-flex items-center gap-0.5" title={v.personnelName}>
+                            <ShiftBadge kind="vacacion" type={v.type} />
+                            <span className="text-[9px] font-medium">{v.personnelName}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </td>
 
-{/* Estado */}
-                     <td className="px-3 py-2 border-b border-gray-100 text-center">
-                       {(function() {
-                          if (validation.hasOverlap) return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 leading-none">{t('calendarListView.issueBadge')}</span>;
-                         if (validation.hasWarning) return <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 leading-none">{statusConfig.label}</span>;
-                         return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none ${statusConfig.className}`}>{statusConfig.label}</span>;
-                       })()}
-                     </td>
+                    {/* Estado */}
+                    <td className="px-3 py-2 border-b border-gray-100 text-center">
+                      {validation.isAssigned && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 leading-none">
+                          {t('calendarios.listView.assigned')}
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
