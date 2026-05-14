@@ -27,6 +27,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   const { linkedChats, generateQR, isTelegramConfigured } = useTelegram();
   const [qrResult, setQrResult] = useState<{ qrUrl?: string; deepLink?: string } | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -274,9 +275,15 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
               <button
                 onClick={async () => {
                   setQrLoading(true);
+                  setQrError(null);
+                  setQrResult(null);
+                  console.log('[Telegram] Generating QR...');
                   const result = await generateQR();
+                  console.log('[Telegram] QR result:', result);
                   if (result.success) {
                     setQrResult({ qrUrl: result.qrUrl, deepLink: result.deepLink });
+                  } else {
+                    setQrError(result.error || 'Error desconocido');
                   }
                   setQrLoading(false);
                 }}
@@ -286,6 +293,9 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
                 <span className="material-symbols-outlined text-sm">qr_code</span>
                 {qrLoading ? '...' : t('telegram.generateQR')}
               </button>
+              {qrError && (
+                <p className="mt-2 text-xs text-red-500">{qrError}</p>
+              )}
               {qrResult && (
                 <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200 space-y-2">
                   <p className="text-xs text-gray-500">{t('telegram.scanQR')}</p>
