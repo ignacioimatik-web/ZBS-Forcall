@@ -355,8 +355,7 @@ export const IAassistView: React.FC<IAassistViewProps> = ({
     return entries.filter(e => e.personnelName.toLowerCase().includes(filterPersonnel.toLowerCase()));
   }, [entries, filterPersonnel]);
 
-  const isAdmin = currentUser?.staffGroup == null;
-  const canAssign = currentUser?.role === 'Administrador' || currentUser?.role === 'Coordinador';
+  const canAssign = currentUser?.role === 'Coordinador';
 
   if (!canAssign) {
     return (

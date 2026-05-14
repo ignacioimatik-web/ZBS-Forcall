@@ -42,7 +42,12 @@ const guardiaSubItems = [
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guardiaSubCategory, onGuardiaSubCategoryChange, user, userGroup, sidebarBg }) => {
   const { t } = useT();
   const isAdmin = user?.staffGroup == null;
-  const tabs = useMemo(() => ['Unificado', 'Guardias', 'IAassist', 'Chat', 'Dictado', 'Alertas'].filter(t => !isAdmin || (t !== 'Chat' && t !== 'Dictado' && t !== 'IAassist')), [isAdmin]);
+  const isCoord = user?.role === 'Coordinador';
+  const tabs = useMemo(() => ['Unificado', 'Guardias', 'IAassist', 'Chat', 'Dictado', 'Alertas'].filter(t => {
+    if (isAdmin && (t === 'Chat' || t === 'Dictado' || t === 'IAassist')) return false;
+    if (t === 'IAassist' && !isCoord) return false;
+    return true;
+  }), [isAdmin, isCoord]);
   const [guardiaExpanded, setGuardiaExpanded] = useState(false);
 
   const filteredGuardiaSubItems = useMemo(() => {
