@@ -316,7 +316,7 @@ forecast5Days: 'Previsió 5 Dies',
     protocolWindContent: 'Precaució per ratxes laterals al Port de Querol. Efecte pantalla en eixir de túnels.',
     protocolLogisticsTitle: 'Logística Sanitària Hivernal',
     protocolLogisticsContent: 'Verificar estat de cadenes en vehicles de guàrdia davant avisos de neu per damunt de nivell groc.',
-    infoNoteText: 'Les estacions de <strong>Portell</strong> i <strong>Morella</strong> solen registrar les temperatures més baixes de la zona. Es recomana extremar la precaució en les visites domiciliàries matinals durant els mesos d\'hivern.',
+    infoNoteText: 'Les estacions de <strong>Portell</strong> i <strong>Palanques</strong> solen registrar les temperatures més baixes de la zona. Es recomana extremar la precaució en les visites domiciliàries matinals durant els mesos d\'hivern.',
   },
   guardias: {
     monthly: 'Guàrdies Mensuals',

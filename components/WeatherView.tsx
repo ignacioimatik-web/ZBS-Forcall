@@ -27,14 +27,15 @@ export const WeatherView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const { t } = useT();
   
-  // Datos rigurosos al estilo AEMET (Agencia Estatal de Meteorología)
-  const [currentWeather] = useState<WeatherPoint[]>([
-    { id: '1', town: 'Forcall', lat: 40.6433, lng: -0.2300, temp: 12.4, condition: 'Sunny', humidity: 40, windSpeed: 10, alertLevel: 'Verde' },
-    { id: '2', town: 'Morella', lat: 40.6186, lng: -0.1017, temp: 8.2, condition: 'Wind', humidity: 35, windSpeed: 40, gusts: 65, alertLevel: 'Verde' },
-    { id: '3', town: 'Cinctorres', lat: 40.5833, lng: -0.2300, temp: 10.1, condition: 'Cloudy', humidity: 50, windSpeed: 15, alertLevel: 'Verde' },
-    { id: '4', town: 'Portell de Morella', lat: 40.5333, lng: -0.2633, temp: 7.5, condition: 'Fog', humidity: 85, windSpeed: 5, alertLevel: 'Verde' },
-    { id: '5', town: 'Villores', lat: 40.6700, lng: -0.2000, temp: 13.0, condition: 'Sunny', humidity: 38, windSpeed: 12, alertLevel: 'Verde' }
-  ]);
+// Datos rigurosos al estilo AEMET (Agencia Estatal de Meteorología)
+   const [currentWeather] = useState<WeatherPoint[]>([
+     { id: '1', town: 'Forcall', lat: 40.6433, lng: -0.2300, temp: 12.4, condition: 'Sunny', humidity: 40, windSpeed: 10, alertLevel: 'Verde' },
+     { id: '2', town: 'Cinctorres', lat: 40.5833, lng: -0.2300, temp: 10.1, condition: 'Cloudy', humidity: 50, windSpeed: 15, alertLevel: 'Verde' },
+     { id: '3', town: 'Portell de Morella', lat: 40.5333, lng: -0.2633, temp: 7.5, condition: 'Fog', humidity: 85, windSpeed: 5, alertLevel: 'Verde' },
+     { id: '4', town: 'Villores', lat: 40.6700, lng: -0.2000, temp: 13.0, condition: 'Sunny', humidity: 38, windSpeed: 12, alertLevel: 'Verde' },
+     { id: '5', town: 'Todolella', lat: 40.662, lng: -0.250, temp: 9.8, condition: 'Wind', humidity: 45, windSpeed: 20, alertLevel: 'Verde' },
+     { id: '6', town: 'Palanques', lat: 40.631, lng: -0.383, temp: 8.5, condition: 'Cloudy', humidity: 55, windSpeed: 18, alertLevel: 'Verde' }
+   ]);
 
   const forecast: ForecastDay[] = [
     { date: new Date(new Date().setDate(new Date().getDate() + 1)), min: 4, max: 14, condition: 'Sunny' },

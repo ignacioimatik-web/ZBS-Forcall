@@ -363,7 +363,7 @@ status: 'Estado',
     protocolWindContent: 'Precaución por rachas laterales en el Puerto de Querol. Efecto pantalla al salir de túneles.',
     protocolLogisticsTitle: 'Logística Sanitaria Invernal',
     protocolLogisticsContent: 'Verificar estado de cadenas en vehículos de guardia ante avisos de nieve por encima de nivel amarillo.',
-    infoNoteText: 'Las estaciones de <strong>Portell</strong> y <strong>Morella</strong> suelen registrar las temperaturas más bajas de la zona. Se recomienda extremar la precaución en las visitas domiciliarias matinales durante los meses de invierno.',
+    infoNoteText: 'Las estaciones de <strong>Portell</strong> y <strong>Palanques</strong> suelen registrar las temperaturas más bajas de la zona. Se recomienda extremar la precaución en las visitas domiciliarias matinales durante los meses de invierno.',
   },
   guardias: {
     monthly: 'Guardias Mensuales',

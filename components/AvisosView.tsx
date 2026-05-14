@@ -29,12 +29,13 @@ interface ForecastDay {
 
 const TOWNS = [
   { id: 'forcall', town: 'Forcall', lat: 40.646, lng: -0.200 },
-  { id: 'morella', town: 'Morella', lat: 40.620, lng: -0.100 },
   { id: 'cinctorres', town: 'Cinctorres', lat: 40.583, lng: -0.217 },
   { id: 'portell', town: 'Portell de Morella', lat: 40.533, lng: -0.263 },
   { id: 'villores', town: 'Villores', lat: 40.667, lng: -0.200 },
   { id: 'la_mata', town: 'La Mata de Morella', lat: 40.617, lng: -0.283 },
   { id: 'olocau', town: 'Olocau del Rey', lat: 40.633, lng: -0.350 },
+  { id: 'todolella', town: 'Todolella', lat: 40.662, lng: -0.250 },
+  { id: 'palanques', town: 'Palanques', lat: 40.631, lng: -0.383 },
 ];
 
 function wmoToCondition(code: number): WeatherPoint['condition'] {
