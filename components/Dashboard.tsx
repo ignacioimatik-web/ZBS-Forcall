@@ -104,7 +104,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const { t } = useT();
   const [calendarMonth, setCalendarMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'month' | 'list'>('month');
 

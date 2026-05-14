@@ -76,7 +76,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
     if (!externalMonth) setInternalMonth(m);
   };
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [personnelName, setPersonnelName] = useState('');
   const [firstSwapTarget, setFirstSwapTarget] = useState<CalendarEvent | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
