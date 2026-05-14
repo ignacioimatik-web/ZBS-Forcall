@@ -9,7 +9,6 @@ import { useAuditLogs } from '../hooks/useAuditLogs';
 import { useT } from '../lib/i18n';
 import { PageHeader } from './PageHeader';
 import { StatusSummary } from './StatusSummary';
-import { CalendarToolbar } from './CalendarToolbar';
 import { DayDetailPanel } from './DayDetailPanel';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import { EmptyState } from './EmptyState';
@@ -69,12 +68,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
-
-  const changeMonth = (offset: number) => {
-    const newDate = new Date(currentMonth);
-    newDate.setMonth(newDate.getMonth() + offset);
-    setCurrentMonth(newDate);
-  };
 
   const doctors = ["Elena Benages", "Delia Mestre", "Frank Castillo", "Fernando Sierra", "Jorge Ramón", "Ilie Popov", "Externo/a Medicina"];
   const nurses = ["Xelo García", "Yolanda Lainez", "Maite Beltrán", "Yolanda García", "Rosa Carbó", "Externo/a Enfermeria"];
@@ -445,16 +438,6 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           swapCount={permutaHistory.length}
         />
 
-        <CalendarToolbar
-          currentMonth={currentMonth}
-          onPrevMonth={() => changeMonth(-1)}
-          onNextMonth={() => changeMonth(1)}
-          onToday={() => setCurrentMonth(new Date())}
-          onDownloadPDF={handleDownloadActiveCalendar}
-          isDownloading={isDownloading}
-          downloadLabel={t('calendarios.downloadCalendar')}
-        />
-
         {/* Assignment bar: visible when selection mode is active with days selected */}
         {selectionMode && bulkDates.length > 0 && (
           <div className="border rounded-2xl px-3 sm:px-4 py-3 shadow-sm transition-all bg-emerald-50/30 border-emerald-200">
@@ -543,6 +526,13 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
           <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0 lg:sticky lg:top-20 lg:self-start space-y-3">
             <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-3 shadow-sm">
               <div className="flex flex-col gap-2">
+                <button onClick={() => setCurrentMonth(new Date())} className="w-full px-4 py-2 bg-forcall-50 text-forcall-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-forcall-200 hover:bg-forcall-100 transition-all">
+                  {t('common.hoy')}
+                </button>
+                <button onClick={handleDownloadActiveCalendar} disabled={isDownloading} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-gray-800 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span className="material-symbols-outlined text-sm">{isDownloading ? 'hourglass_top' : 'download'}</span>
+                  {isDownloading ? t('common.downloading') : t('calendarios.downloadCalendar')}
+                </button>
                 {(activeSub === 'Libranzas' || activeSub === 'Refuerzo' || activeSub === 'Vacaciones') && userGroup !== 'both' && (
                   <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 bg-gray-100 px-3 py-1.5 rounded-xl text-center">
                     {t('calendarios.showingOnly')} {userGroup === 'medico' ? t('calendarios.medicina') : t('calendarios.enfermeria')}
