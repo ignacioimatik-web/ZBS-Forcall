@@ -61,7 +61,6 @@ const sectionConfig: Record<string, { labelKey: string; icon: string }> = {
   libranza: { labelKey: 'dayDetail.sectionLibranza', icon: 'beach_access' },
   dobla: { labelKey: 'dayDetail.sectionDobla', icon: 'dynamic_feed' },
   vacacion: { labelKey: 'dayDetail.sectionVacacion', icon: 'flight' },
-  meeting: { labelKey: 'dayDetail.sectionMeeting', icon: 'groups' },
 };
 
 export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
@@ -119,7 +118,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
   }
 
 const conflicts = getDayConflicts(assignments);
-   const orderedSections = ['guardia', 'libranza', 'dobla', 'vacacion', 'meeting'];
+   const orderedSections = ['guardia', 'libranza', 'dobla', 'vacacion'];
   return (
     <aside className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden lg:sticky lg:top-20" aria-label={`Detalle del día: ${formatDate(selectedDate)}`}>
       <div className="p-4 border-b border-gray-100">
