@@ -8,13 +8,9 @@ interface ChatViewProps {
   currentUser: User | null;
 }
 
-type Conversation =
-  | { type: 'channel'; id: string; label: string }
-  | { type: 'dm'; userId: string; label: string };
-
 export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   const { t } = useT();
-  const { profiles, messagesByChannel, sendMessage, sendPrivateMessage, sendImage, sendAudio, deleteMessage, isUploading } = useChat(currentUser?.id);
+  const { messagesByChannel, sendMessage, sendImage, sendAudio, deleteMessage, isUploading } = useChat(currentUser?.id);
   const [inputText, setInputText] = useState('');
   const [showAttach, setShowAttach] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
@@ -35,38 +31,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const teamConv: Conversation = { type: 'channel', id: 'general', label: t('chat.teamChat') };
-const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
-     .filter(p => p.id !== currentUser?.id && !p.full_name?.toLowerCase().includes('externo') && p.full_name !== 'Joan')
-     .map(p => ({ type: 'dm' as const, userId: p.id, label: p.full_name || p.email }));
-
-  const [activeConv, setActiveConv] = useState<Conversation>(teamConv);
-  const mountTime = useRef(Date.now());
-  const lastRead = useRef<Record<string, number>>({});
-
-  function markRead(conv: Conversation) {
-    const key = conv.type === 'channel'
-      ? 'general'
-      : [currentUser?.id || '', conv.userId].sort().join('_');
-    lastRead.current[key] = Date.now();
-  }
-
-  function getUnreadCount(channelKey: string): number {
-    const since = lastRead.current[channelKey] || mountTime.current;
-    return (messagesByChannel[channelKey] || []).filter(m => m.timestamp.getTime() > since).length;
-  }
-
-  function handleSetActiveConv(conv: Conversation) {
-    markRead(conv);
-    setActiveConv(conv);
-  }
-
-  useEffect(() => { markRead(teamConv); }, []);
-
-  const channelKey = activeConv.type === 'channel'
-    ? 'general'
-    : [currentUser?.id || '', activeConv.userId].sort().join('_');
-
+  const channelKey = 'general';
   const conversationMessages = messagesByChannel[channelKey] || [];
 
   const scrollToBottom = () => {
@@ -93,22 +58,14 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
-    if (activeConv.type === 'channel') {
-      sendMessage(inputText);
-    } else {
-      sendPrivateMessage(activeConv.userId, inputText);
-    }
+    sendMessage(inputText);
     setInputText('');
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (activeConv.type === 'dm') {
-        sendImage(file, activeConv.userId);
-      } else {
-        sendImage(file);
-      }
+      sendImage(file);
     }
     e.target.value = '';
     setShowAttach(false);
@@ -127,11 +84,7 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
 
       recorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        if (activeConv.type === 'dm') {
-          sendAudio(blob, activeConv.userId);
-        } else {
-          sendAudio(blob);
-        }
+        sendAudio(blob);
         stream.getTracks().forEach(t => t.stop());
       };
 
@@ -188,67 +141,21 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-100px)] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
+    <div className="flex flex-col md:flex-row h-[450px] max-h-[450px] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
       {/* Sidebar */}
-      <div className="w-full md:w-1/4 bg-earth-50 border-r border-gray-200 flex flex-col overflow-y-auto">
-        {/* Team channel */}
+      <div className="w-full md:w-72 bg-earth-50 border-r border-gray-200 flex flex-col overflow-y-auto">
         <div className="p-3 border-b border-gray-200 bg-earth-50">
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('chat.channels')}</h2>
         </div>
-        <button
-          onClick={() => handleSetActiveConv(teamConv)}
-          className={`w-full flex items-center gap-3 p-3 transition-all ${
-            activeConv.type === 'channel' && activeConv.id === teamConv.id
-              ? 'bg-white shadow-sm ring-1 ring-gray-200'
-              : 'hover:bg-earth-100/50'
-          }`}
-        >
-          <div className="p-2 rounded-full bg-blue-100 text-blue-700">
-            <span className="material-symbols-outlined text-sm">forum</span>
+        <div className="p-3">
+          <div className="flex items-center gap-3 p-2 rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
+            <div className="p-2 rounded-full bg-blue-100 text-blue-700">
+              <span className="material-symbols-outlined text-sm">forum</span>
+            </div>
+            <span className="font-medium text-sm text-gray-900">
+              {t('chat.teamChat')}
+            </span>
           </div>
-          <span className={`font-medium text-sm ${activeConv.type === 'channel' && activeConv.id === teamConv.id ? 'text-gray-900' : 'text-gray-600'}`}>
-            {teamConv.label}
-          </span>
-        </button>
-
-        {/* Direct messages */}
-        <div className="p-3 border-b border-t border-gray-200 bg-earth-50 mt-2">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('chat.directMessages')}</h2>
-        </div>
-        <div className="flex-1">
-          {dmConvs.map(conv => {
-            const isActiveDm = activeConv.type === 'dm' && activeConv.userId === conv.userId;
-            const dmKey = [currentUser?.id || '', conv.userId].sort().join('_');
-            const unread = isActiveDm ? 0 : getUnreadCount(dmKey);
-            return (
-              <button
-                key={conv.userId}
-                onClick={() => handleSetActiveConv(conv)}
-                className={`w-full flex items-center gap-3 p-3 transition-all ${
-                  isActiveDm
-                    ? 'bg-white shadow-sm ring-1 ring-gray-200'
-                    : 'hover:bg-earth-100/50'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-full bg-forcall-100 text-forcall-700 flex items-center justify-center text-sm font-bold shrink-0">
-                  {conv.label.charAt(0).toUpperCase()}
-                </div>
-                <div className="text-left min-w-0 flex-1">
-                  <span className={`block font-medium text-sm truncate ${isActiveDm ? 'text-gray-900' : 'text-gray-600'}`}>
-                    {conv.label}
-                  </span>
-                </div>
-                {unread > 0 && (
-                  <span className="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1.5 shadow-sm">
-                    {unread > 99 ? '99+' : unread}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-          {dmConvs.length === 0 && (
-            <p className="text-xs text-gray-400 text-center py-4">{t('chat.noOtherUsers')}</p>
-          )}
         </div>
 
         {/* Telegram section */}
@@ -335,18 +242,12 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-white min-w-0">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-white shadow-sm z-10">
+        <div className="p-3 border-b border-gray-200 flex justify-between items-center bg-white shadow-sm z-10">
           <div className="flex items-center gap-3">
-            {activeConv.type === 'channel' ? (
-              <span className="material-symbols-outlined text-blue-500">forum</span>
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-forcall-100 text-forcall-700 flex items-center justify-center text-sm font-bold">
-                {activeConv.label.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <h3 className="font-bold text-gray-800 text-lg">{activeConv.label}</h3>
+            <span className="material-symbols-outlined text-blue-500">forum</span>
+            <h3 className="font-bold text-gray-800 text-base">{t('chat.teamChat')}</h3>
           </div>
           <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
             {conversationMessages.length} {t('chat.messages')}
@@ -354,12 +255,10 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/30" role="log" aria-live="polite" aria-atomic="false">
+        <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50/30" role="log" aria-live="polite" aria-atomic="false">
           {conversationMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
-              <span className="material-symbols-outlined text-5xl mb-3">
-                {activeConv.type === 'channel' ? 'forum' : 'chat'}
-              </span>
+              <span className="material-symbols-outlined text-5xl mb-3">forum</span>
               <p className="font-medium">{t('chat.noMessages')}</p>
               <p className="text-sm">{t('chat.beFirst')}</p>
             </div>
@@ -407,11 +306,6 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
                       {isOwn && <span className="material-symbols-outlined text-[10px]">done_all</span>}
                     </div>
                   </div>
-                  {!isOwn && activeConv.type === 'dm' && (
-                    <div className="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-[10px] font-bold shrink-0">
-                      {msg.senderName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
                 </div>
               );
             })
@@ -420,7 +314,7 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
         </div>
 
         {/* Input area */}
-        <div className="p-4 bg-white border-t border-gray-200">
+        <div className="p-3 bg-white border-t border-gray-200">
           {isRecording ? (
             <div className="flex items-center gap-3 bg-red-50 rounded-xl px-4 py-3">
               <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
@@ -480,8 +374,8 @@ const dmConvs: { type: 'dm'; userId: string; label: string }[] = profiles
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder={activeConv.type === 'channel' ? `${t('chat.messagePlaceholder')} #${teamConv.label}...` : `${t('chat.messagePlaceholder')} ${activeConv.label}...`}
-                  className={`w-full border border-gray-300 rounded-full pl-5 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow shadow-sm ${
+                  placeholder={`${t('chat.messagePlaceholder')} #${t('chat.teamChat')}...`}
+                  className={`w-full border border-gray-300 rounded-full pl-5 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow shadow-sm ${
                     isUploading ? 'opacity-50' : 'focus:ring-forcall-500'
                   }`}
                   disabled={isUploading}

@@ -54,12 +54,19 @@ serve(async (req) => {
 
     // Auto-register if not exists (auto-join mode)
     if (!existingChat || lookupError) {
+      // Find a valid user to be the creator
+      const { data: firstUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .limit(1)
+        .single();
+
       const { error: insertError } = await supabase
         .from('telegram_chats')
         .upsert({
           group_id: chatId,
           group_name: chatTitle,
-          created_by: '00000000-0000-0000-0000-000000000000',
+          created_by: firstUser?.id || '00000000-0000-0000-0000-000000000000',
           is_active: true,
         }, { onConflict: 'group_id' });
 
@@ -69,14 +76,7 @@ serve(async (req) => {
     }
 
     // Forward message to Supabase chat_messages
-    // Map sender_id to a profile if possible
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, full_name')
-      .eq('id', senderId)
-      .single();
-
-    const senderNameFinal = profile?.full_name || senderName;
+    const senderNameFinal = senderName;
 
     // Insert into chat_messages as a telegram-originated message
     const { error: insertMsgError } = await supabase
@@ -84,8 +84,8 @@ serve(async (req) => {
       .insert({
         channel_id: 'general',
         text: text,
-        sender_id: senderId || 'telegram',
-        sender_name: senderNameFinal,
+        sender_id: null,
+        sender_name: `${senderNameFinal} (Telegram)`,
         additional_data: JSON.stringify({
           telegram_chat_id: chatId,
           telegram_chat_name: chatTitle,

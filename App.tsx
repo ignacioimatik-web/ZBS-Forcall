@@ -291,6 +291,7 @@ const App: React.FC = () => {
   }, [user, doblas, addDobla, updateDobla]);
 
   const isAdminUser = user?.staffGroup == null;
+  const isCoordUser = user?.role === 'Coordinador';
 
   useEffect(() => {
     document.body.classList.remove('eff-low', 'eff-medium', 'eff-high');
@@ -369,10 +370,10 @@ const App: React.FC = () => {
           />
         );
       case 'Chat':
-        if (isAdminUser) return null;
+        if (isAdminUser || !isCoordUser) return null;
         return <ChatView currentUser={user} />;
       case 'Dictado':
-        if (isAdminUser) return null;
+        if (isAdminUser || !isCoordUser) return null;
         return <TranscriptionTool />;
       case 'Avisos':
         return <AvisosView />;

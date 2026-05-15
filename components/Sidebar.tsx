@@ -39,6 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guard
   const tabs = useMemo(() =>
     ['Unificado', 'Turnos', 'IAassist', 'Chat', 'Dictado', 'Avisos'].filter(t => {
       if (isAdmin && (t === 'Chat' || t === 'Dictado' || t === 'IAassist' || t === 'Turnos')) return false;
+      if ((t === 'Chat' || t === 'Dictado') && !isCoord) return false;
       if (t === 'IAassist' && !isCoord) return false;
       return true;
     }),
