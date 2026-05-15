@@ -58,46 +58,24 @@ serve(async (req) => {
     const results = await Promise.allSettled(
       (chats || []).map(async (chat) => {
         if (audio_url) {
-          // Try sendVoice (OGG/Opus/MP3 — native voice playback)
-          const trySendVoice = async () => {
-            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice`;
-            const res = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: chat.group_id,
-                voice: audio_url,
-                caption: `🎤 *${sender_name || 'Equipo'}:*`,
-                parse_mode: 'Markdown',
-              }),
-            });
-            if (res.ok) return true;
-            console.error('sendVoice failed:', await res.text());
-            return false;
-          };
+          // Try sendVoice (OGG/Opus — native Telegram voice)
+          const voiceUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice`;
+          const voiceRes = await fetch(voiceUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chat.group_id,
+              voice: audio_url,
+              caption: `🎤 *${sender_name || 'Equipo'}:*`,
+              parse_mode: 'Markdown',
+            }),
+          });
 
-          // Try sendAudio (MP4/AAC/MP3 — inline playback)
-          const trySendAudio = async () => {
-            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendAudio`;
-            const res = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: chat.group_id,
-                audio: audio_url,
-                caption: `🎤 *${sender_name || 'Equipo'}:*`,
-                parse_mode: 'Markdown',
-              }),
-            });
-            if (res.ok) return true;
-            console.error('sendAudio failed:', await res.text());
-            return false;
-          };
+          if (voiceRes.ok) return voiceRes.json();
 
-          if (await trySendVoice()) return new Response('ok');
-          if (await trySendAudio()) return new Response('ok');
+          console.error('sendVoice failed:', await voiceRes.text());
 
-          // Final fallback: send as clickable link
+          // Fallback: clickable link
           const textUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
           const textRes = await fetch(textUrl, {
             method: 'POST',
@@ -110,8 +88,8 @@ serve(async (req) => {
           });
 
           if (!textRes.ok) {
-            console.error('Audio link fallback failed:', await textRes.text());
-            throw new Error('All audio send methods failed');
+            console.error('Link fallback failed:', await textRes.text());
+            throw new Error('Audio send failed');
           }
 
           return textRes.json();
