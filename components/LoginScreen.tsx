@@ -136,25 +136,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       </div>
 
       {/* Card */}
-      <div className="relative z-10 bg-white/97 backdrop-blur-md rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-white/20">
+      <div className="relative z-10 bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden border border-white/30 shadow-black/10">
         {/* Card Header with back button */}
-        <div className="px-6 pt-6 pb-4 border-b border-gray-100">
-          <div className="flex items-center gap-3">
+        <div className="px-6 pt-6 pb-4 border-b border-gray-100/80">
+          <div className="flex items-center gap-3 min-h-[44px]">
             {step !== 'category' && (
               <button
                 onClick={handleBack}
-                className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+                className="p-1.5 -ml-1.5 rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all active:scale-90"
               >
                 <span className="material-symbols-outlined text-xl">arrow_back</span>
               </button>
             )}
-            <div>
-              <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">
+            <div className="min-w-0">
+              <p className="text-[11px] text-gray-400 uppercase tracking-[0.15em] font-bold">
                 {step === 'category' && t('login.access')}
                 {step === 'user' && selectedCategory}
                 {step === 'pin' && selectedUserName}
               </p>
-              <h2 className="text-lg font-black text-gray-800 leading-tight">
+              <h2 className="text-lg font-black text-gray-900 leading-tight mt-0.5">
                 {step === 'category' && t('login.selectGroup')}
                 {step === 'user' && t('login.selectName')}
                 {step === 'pin' && t('login.enterPin')}
@@ -164,15 +164,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
           {/* Progress dots */}
           <div className="flex gap-1.5 mt-3">
-            {(['category', 'user', 'pin'] as Step[]).map((s) => (
+            {(['category', 'user', 'pin'] as Step[]).map((s, idx) => (
               <div
                 key={s}
-                className={`h-1 rounded-full transition-all duration-300 ${
+                className={`h-1 rounded-full transition-all duration-500 ease-out ${
                   s === step
                     ? 'w-6 bg-forcall-600'
-                    : step === 'pin' && s !== 'pin'
-                    ? 'w-2 bg-forcall-300'
-                    : step === 'user' && s === 'category'
+                    : idx < ['category', 'user', 'pin'].indexOf(step)
                     ? 'w-2 bg-forcall-300'
                     : 'w-2 bg-gray-200'
                 }`}
@@ -184,24 +182,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         <div className="px-6 py-5">
           {/* Step 1: Category */}
           {step === 'category' && (
-            <div key="category" className="animate-wave-in animate-stagger space-y-3">
+            <div key="category" className="animate-wave-in animate-stagger space-y-2.5">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => handleCategorySelect(cat.id)}
-                  className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl border-2 font-semibold text-left transition-all shadow-sm hover:shadow-md ${
+                  className={`w-full flex items-center gap-4 px-4 py-4.5 rounded-2xl border-2 font-semibold text-left transition-all duration-200 shadow-xs hover:shadow-lg active:scale-[0.98] ${
                     categoryColors[cat.id] || 'bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-800'
                   }`}
                 >
-                  <span
-                    className={`material-symbols-outlined text-2xl ${
-                      categoryIconColors[cat.id] || 'text-gray-400'
-                    }`}
-                  >
-                    {cat.icon}
+                  <span className={`p-2.5 rounded-xl bg-white/80 shadow-sm ${categoryIconColors[cat.id] || 'text-gray-400'}`}>
+                    <span className="material-symbols-outlined text-2xl">{cat.icon}</span>
                   </span>
-                  <span className="text-base font-bold">{t(`login.${({ Medicina: 'medicina', enfermeria: 'enfermeria', Administrativos: 'administrativos' } as Record<string, string>)[cat.id]}`)}</span>
-                  <span className="material-symbols-outlined text-lg ml-auto opacity-40">
+                  <span className="text-base font-bold flex-1">{t(`login.${({ Medicina: 'medicina', enfermeria: 'enfermeria', Administrativos: 'administrativos' } as Record<string, string>)[cat.id]}`)}</span>
+                  <span className="material-symbols-outlined text-lg text-gray-300 group-hover:text-gray-500 transition-colors">
                     chevron_right
                   </span>
                 </button>
@@ -211,7 +205,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
           {/* Step 2: User selection */}
           {step === 'user' && (
-            <div key="user" className="animate-wave-in animate-stagger space-y-2">
+            <div key="user" className="animate-wave-in animate-stagger space-y-1.5">
               {categoryUsers.length === 0 ? (
                 <div className="text-center py-8 text-gray-400">
                   <span className="material-symbols-outlined text-4xl block mb-2">person_off</span>
@@ -222,13 +216,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                   <button
                     key={u.id}
                     onClick={() => handleUserSelect(u.id, u.name, u.email)}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-forcall-50 hover:border-forcall-300 font-semibold text-left transition-all group"
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-gray-200/80 bg-white hover:bg-forcall-50 hover:border-forcall-300 hover:shadow-md font-semibold text-left transition-all duration-200 group active:scale-[0.99]"
                   >
-                    <div className="w-9 h-9 rounded-full bg-forcall-100 flex items-center justify-center text-forcall-700 font-black text-sm">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-forcall-500 to-forcall-700 flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0">
                       {u.name.charAt(0)}
                     </div>
-                    <span className="text-gray-800 font-bold">{u.name}</span>
-                    <span className="material-symbols-outlined text-lg ml-auto text-gray-300 group-hover:text-forcall-400 transition-colors">
+                    <span className="text-gray-800 font-bold flex-1">{u.name}</span>
+                    <span className="material-symbols-outlined text-lg text-gray-300 group-hover:text-forcall-500 transition-colors">
                       chevron_right
                     </span>
                   </button>
@@ -245,27 +239,29 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 {[0, 1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
-                    className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center transition-all ${
+                    className={`w-11 h-12 rounded-2xl border-2 flex items-center justify-center transition-all duration-200 ${
                       i < pin.length
-                        ? 'border-forcall-500 bg-forcall-50'
+                        ? 'border-forcall-500 bg-forcall-50 shadow-sm scale-105'
+                        : pin.length === i
+                        ? 'border-forcall-300 bg-gray-50 animate-pulse'
                         : 'border-gray-200 bg-gray-50'
                     }`}
                   >
                     {i < pin.length ? (
-                      <div className="w-3 h-3 rounded-full bg-forcall-600" />
+                      <div className="w-3 h-3 rounded-full bg-forcall-600 transition-all duration-200 scale-100" />
                     ) : null}
                   </div>
                 ))}
               </div>
 
               {/* Numeric keypad */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="grid grid-cols-3 gap-2.5 mb-4">
                 {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
                   <button
                     key={d}
                     onClick={() => handlePinDigit(d)}
                     disabled={pin.length === 6 || isLoading}
-                    className="h-14 rounded-xl bg-gray-50 border border-gray-200 text-xl font-bold text-gray-800 hover:bg-forcall-50 hover:border-forcall-300 active:scale-95 transition-all disabled:opacity-40"
+                    className="h-14 rounded-2xl bg-white border border-gray-200/80 text-xl font-bold text-gray-800 shadow-xs hover:bg-forcall-50 hover:border-forcall-300 hover:shadow-md active:scale-90 active:bg-forcall-100 transition-all duration-150 disabled:opacity-30 disabled:active:scale-100"
                   >
                     {d}
                   </button>
@@ -274,13 +270,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                 <button
                   onClick={() => handlePinDigit('0')}
                   disabled={pin.length === 6 || isLoading}
-                  className="h-14 rounded-xl bg-gray-50 border border-gray-200 text-xl font-bold text-gray-800 hover:bg-forcall-50 hover:border-forcall-300 active:scale-95 transition-all disabled:opacity-40"
+                  className="h-14 rounded-2xl bg-white border border-gray-200/80 text-xl font-bold text-gray-800 shadow-xs hover:bg-forcall-50 hover:border-forcall-300 hover:shadow-md active:scale-90 active:bg-forcall-100 transition-all duration-150 disabled:opacity-30 disabled:active:scale-100"
                 >
                   0
                 </button>
                 <button
                   onClick={handlePinDelete}
-                  className="h-14 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 hover:bg-red-50 hover:border-red-200 active:scale-95 transition-all flex items-center justify-center"
+                  className="h-14 rounded-2xl bg-white border border-gray-200/80 text-gray-500 shadow-xs hover:bg-red-50 hover:border-red-200 hover:text-red-600 hover:shadow-md active:scale-90 transition-all duration-150 flex items-center justify-center"
                 >
                   <span className="material-symbols-outlined text-xl">backspace</span>
                 </button>
@@ -288,7 +284,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
               {/* Error message */}
               {(error || authError) && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm text-center mb-3">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-sm text-center mb-3 font-medium shadow-xs">
                   {error || authError}
                 </div>
               )}
@@ -297,9 +293,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               <button
                 onClick={handlePinSubmit}
                 disabled={pin.length !== 6 || isLoading}
-                className={`w-full py-3.5 rounded-xl font-bold text-white transition-all shadow-md ${
+                className={`w-full py-3.5 rounded-2xl font-bold text-white transition-all duration-200 shadow-md active:scale-[0.97] ${
                   pin.length === 6 && !isLoading
-                    ? 'bg-forcall-600 hover:bg-forcall-700 hover:shadow-lg'
+                    ? 'bg-gradient-to-r from-forcall-600 to-forcall-700 hover:from-forcall-700 hover:to-forcall-800 hover:shadow-lg'
                     : 'bg-gray-300 cursor-not-allowed'
                 }`}
               >
@@ -318,17 +314,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       </div>
 
       <div className="relative z-10 mt-6 text-center text-white/60 text-xs space-y-2 animate-fade-in">
-        <div className="flex items-center justify-center gap-3 mb-3">
+        <div className="flex items-center justify-center gap-1 p-0.5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/10 mb-3">
           <button
             onClick={() => setLang('es')}
-            className={`px-3 py-1 rounded-lg font-bold uppercase tracking-wider transition-all ${lang === 'es' ? 'bg-white/20 text-white' : 'text-white/40 hover:text-white/70'}`}
+            className={`px-4 py-1.5 rounded-lg font-bold uppercase tracking-wider text-[11px] transition-all duration-200 ${
+              lang === 'es' ? 'bg-white/25 text-white shadow-sm' : 'text-white/50 hover:text-white/80'
+            }`}
           >
             ES
           </button>
-          <span className="text-white/20">|</span>
           <button
             onClick={() => setLang('ca')}
-            className={`px-3 py-1 rounded-lg font-bold uppercase tracking-wider transition-all ${lang === 'ca' ? 'bg-white/20 text-white' : 'text-white/40 hover:text-white/70'}`}
+            className={`px-4 py-1.5 rounded-lg font-bold uppercase tracking-wider text-[11px] transition-all duration-200 ${
+              lang === 'ca' ? 'bg-white/25 text-white shadow-sm' : 'text-white/50 hover:text-white/80'
+            }`}
           >
             VA
           </button>
