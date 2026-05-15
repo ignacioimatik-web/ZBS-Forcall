@@ -348,10 +348,8 @@ const startingEmptyCells = useMemo(() => {
 <div key={i} className={`hidden md:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[130px] bg-white ${canManageActiveCategory ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => handleCellClick(date)}>
                  <div className="flex items-center gap-1">
 <span className={`text-sm font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
-                   {hasError && <span className="material-symbols-outlined text-[10px] text-red-500" title="Conflicto detectado">warning</span>}
-                   {hasWarning && !hasError && <span className="material-symbols-outlined text-[10px] text-amber-500" title="Aviso de validación">error_outline</span>}
-                   {hasError && <span className="material-symbols-outlined text-[10px] text-red-500" title="Conflicto">warning</span>}
-                   {hasWarning && !hasError && <span className="material-symbols-outlined text-[10px] text-amber-500" title="Aviso">error_outline</span>}
+                    {hasError && <span className="material-symbols-outlined text-[10px] text-red-500" title="Conflicto">warning</span>}
+                    {hasWarning && !hasError && <span className="material-symbols-outlined text-[10px] text-amber-500" title="Aviso">error_outline</span>}
                   {noteDates.includes(date.toDateString()) && (
                     <span className="material-symbols-outlined text-amber-500 text-base">sticky_note_2</span>
                   )}
