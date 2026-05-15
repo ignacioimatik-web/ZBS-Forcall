@@ -12,7 +12,7 @@ import { TranscriptionTool } from './components/TranscriptionTool';
 import { HelpView } from './components/HelpView';
 import { IAassistView } from './components/IAassistView';
 import { SettingsView } from './components/SettingsView';
-import { loadSettings, saveSettings, COLOR_SCHEMES } from './lib/settings';
+import { loadSettings, saveSettings, loadSettingsFromDb, saveSettingsToDb, COLOR_SCHEMES } from './lib/settings';
 import type { AppSettings } from './lib/settings';
 import { ManualHoliday, Vacacion, Meeting, Guardia, Libranza, Dobla, AuditLog } from './types';
 import { useAuth } from './hooks/useAuth';
@@ -63,6 +63,7 @@ const App: React.FC = () => {
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [appSettings, setAppSettings] = useState<AppSettings>(loadSettings);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setNotification({ message, type });
   }, []);
@@ -104,7 +105,16 @@ const App: React.FC = () => {
   }, [user, refreshGuardias, refreshLibranzas, refreshDoblas, refreshVacaciones, refreshMeetings]);
 
   useEffect(() => {
-    setAppSettings(loadSettings(user?.id));
+    if (!user?.id) return;
+    const local = loadSettings(user.id);
+    setAppSettings(local);
+    loadSettingsFromDb(user.id).then((dbSettings) => {
+      if (dbSettings) {
+        setAppSettings(dbSettings);
+        saveSettings(dbSettings, user.id);
+      }
+      setSettingsLoaded(true);
+    });
   }, [user?.id]);
 
   // Refrescar datos al volver a la app (cambiar de pestaña, desbloquear iPad, etc.)
@@ -306,6 +316,7 @@ const App: React.FC = () => {
   const handleSettingsChange = useCallback((settings: AppSettings) => {
     setAppSettings(settings);
     saveSettings(settings, user?.id);
+    if (user?.id) saveSettingsToDb(settings, user.id);
   }, [user?.id]);
 
   const renderContent = () => {

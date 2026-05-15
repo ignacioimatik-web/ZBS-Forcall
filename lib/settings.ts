@@ -75,3 +75,31 @@ export function saveSettings(settings: AppSettings, userId?: string): void {
     localStorage.setItem(storageKey(userId), JSON.stringify(settings));
   } catch { }
 }
+
+export async function loadSettingsFromDb(userId: string): Promise<AppSettings | null> {
+  try {
+    const { supabase } = await import('./supabase');
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('settings')
+      .eq('user_id', userId)
+      .single();
+    if (error || !data) return null;
+    return { ...DEFAULT_SETTINGS, ...(data.settings as Partial<AppSettings>) };
+  } catch {
+    return null;
+  }
+}
+
+export async function saveSettingsToDb(settings: AppSettings, userId: string): Promise<void> {
+  try {
+    const { supabase } = await import('./supabase');
+    const payload = { user_id: userId, settings };
+    const { error } = await supabase
+      .from('user_settings')
+      .upsert(payload, { onConflict: 'user_id' });
+    if (error) console.error('Error saving settings to DB:', error);
+  } catch (err) {
+    console.error('Error saving settings to DB:', err);
+  }
+}
