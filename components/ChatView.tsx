@@ -76,6 +76,10 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mimeType = MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')
         ? 'audio/ogg;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/mp4')
+        ? 'audio/mp4'
+        : MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
         : 'audio/webm';
       const recorder = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
