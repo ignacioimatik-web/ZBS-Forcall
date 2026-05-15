@@ -333,7 +333,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             onClick={() => setLang('ca')}
             className="relative z-10 px-5 py-1.5 rounded-lg font-bold uppercase tracking-wider text-[11px] transition-all duration-200 flex items-center gap-2"
           >
-            <span className={`transition-all duration-200 ${lang === 'ca' ? 'text-white drop-shadow-sm scale-100' : 'text-white/50 scale-90'}`}>🏴</span>
+            <span className={`transition-all duration-200 ${lang === 'ca' ? 'text-white drop-shadow-sm scale-100' : 'text-white/50 scale-90'}`}>
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block align-middle">
+                <rect width="16" height="12" fill="#FFC400"/>
+                <rect y="0" width="16" height="1.5" fill="#DA121A"/>
+                <rect y="3" width="16" height="1.5" fill="#DA121A"/>
+                <rect y="6" width="16" height="1.5" fill="#DA121A"/>
+                <rect y="9" width="16" height="1.5" fill="#DA121A"/>
+                <rect width="3.5" height="12" fill="#0039F0"/>
+                <circle cx="1.75" cy="3" r="1.5" fill="#FFC400" stroke="#8B5E3C" strokeWidth="0.3"/>
+                <path d="M0.8 2l0.95-0.6L2.7 2l-0.25-1.1L2.7 0 1.75 0.4 0.8 0l0.25 0.9L0.8 2z" fill="#8B5E3C"/>
+              </svg>
+            </span>
             <span className={`transition-all duration-200 ${lang === 'ca' ? 'text-white drop-shadow-sm' : 'text-white/50'}`}>Valencià</span>
           </button>
         </div>
