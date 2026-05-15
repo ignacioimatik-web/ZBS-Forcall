@@ -57,13 +57,6 @@ function wmoToForecastCondition(code: number): ForecastDay['condition'] {
   return 'Rain';
 }
 
-interface VostPost {
-  title: string;
-  content: string;
-  pubDate: string;
-  link: string;
-}
-
 interface CivilProtectionBrief {
   title: string;
   summary: string;
@@ -131,9 +124,6 @@ export const AvisosView: React.FC = () => {
   const [currentWeather, setCurrentWeather] = useState<WeatherPoint[]>([]);
   const [forecast, setForecast] = useState<ForecastDay[]>([]);
 
-  const [vostPosts, setVostPosts] = useState<VostPost[]>([]);
-  const [vostLoading, setVostLoading] = useState(true);
-
   const [categories, setCategories] = useState<PhoneCategory[]>([
     {
       title: "Emergencias y Sanitarios",
@@ -186,7 +176,6 @@ export const AvisosView: React.FC = () => {
     }
     fetchWeather();
     fetchCivilProtectionStatus();
-    fetchVostPosts();
   }, []);
 
   const fetchWeather = async () => {
@@ -228,20 +217,6 @@ export const AvisosView: React.FC = () => {
       setWeatherError('No se ha podido obtener los datos meteorológicos.');
     } finally {
       setWeatherLoading(false);
-    }
-  };
-
-  const fetchVostPosts = async () => {
-    setVostLoading(true);
-    try {
-      const res = await fetch(`/api/vost-rss?t=${Date.now()}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`VOST respondió ${res.status}`);
-      const data = await res.json();
-      setVostPosts(data.posts || []);
-    } catch (err) {
-      console.error('Error fetching VOST posts:', err);
-    } finally {
-      setVostLoading(false);
     }
   };
 
@@ -296,8 +271,13 @@ export const AvisosView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
+    <div className="space-y-6 animate-fade-in pb-12 relative">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-forcall-200/30 via-sky-200/20 to-transparent blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute -bottom-40 -right-40 w-[450px] h-[450px] rounded-full bg-gradient-to-tl from-amber-200/30 via-orange-200/20 to-transparent blur-3xl animate-pulse" style={{ animationDuration: '10s' }} />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-r from-emerald-200/20 via-teal-200/10 to-transparent blur-3xl animate-pulse" style={{ animationDuration: '12s' }} />
+      </div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2 relative z-10">
         <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
             <span className="material-symbols-outlined text-3xl text-forcall-600">notifications_active</span>
@@ -306,7 +286,7 @@ export const AvisosView: React.FC = () => {
           <p className="text-sm text-gray-500 font-medium mt-0.5">{t('avisos.emergencyEdition')}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-          <button onClick={fetchCivilProtectionStatus} disabled={civilProtectionLoading} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-forcall-600 hover:bg-forcall-50 border border-gray-200 bg-white transition-all">
+          <button onClick={fetchCivilProtectionStatus} disabled={civilProtectionLoading} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-forcall-600 hover:bg-forcall-50/70 border border-white/30 bg-white/50 backdrop-blur-md transition-all">
             <span className={`material-symbols-outlined text-lg ${civilProtectionLoading ? 'animate-spin' : ''}`}>refresh</span>
             {t('avisos.civilProtection')}
           </button>
@@ -314,9 +294,9 @@ export const AvisosView: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 2xl:grid-cols-12 gap-6 items-start">
-        <section className="2xl:col-span-8 space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-4">
+        <section className="2xl:col-span-8 space-y-6 relative z-10">
+          <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/20 shadow-lg shadow-black/5 overflow-hidden">
+            <div className="px-6 py-4 bg-white/40 backdrop-blur-sm border-b border-white/20 flex items-center justify-between gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('avisos.cover')}</p>
                 <h3 className="text-lg font-black text-gray-900 mt-1">{t('avisos.officialCivilProtection')}</h3>
@@ -330,7 +310,7 @@ export const AvisosView: React.FC = () => {
 
             <div className="p-6 space-y-5">
               {civilProtectionError && (
-                <div className="rounded-2xl border border-red-100 bg-red-50 p-3 text-[10px] font-bold text-red-700">
+                <div className="rounded-2xl border border-red-200/50 bg-red-50/60 backdrop-blur-sm p-3 text-[10px] font-bold text-red-700">
                   {civilProtectionError}
                 </div>
               )}
@@ -343,26 +323,26 @@ export const AvisosView: React.FC = () => {
                         <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('avisos.mainHeadline')}</p>
                         <h4 className="text-2xl font-black text-gray-900 leading-tight mt-2">{civilProtectionUpdate.headline}</h4>
                         <div className="flex flex-wrap gap-2 mt-3 text-[10px] font-black uppercase tracking-widest text-gray-500">
-                          <span className="px-3 py-1 rounded-full bg-gray-100 border border-gray-200">{civilProtectionUpdate.territory}</span>
-                          <span className="px-3 py-1 rounded-full bg-gray-100 border border-gray-200">Actualizado {civilProtectionUpdate.fetchedAt}</span>
+                          <span className="px-3 py-1 rounded-full bg-white/60 backdrop-blur-sm border border-white/30 shadow-sm">{civilProtectionUpdate.territory}</span>
+                          <span className="px-3 py-1 rounded-full bg-white/60 backdrop-blur-sm border border-white/30 shadow-sm">Actualizado {civilProtectionUpdate.fetchedAt}</span>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {civilProtectionUpdate.briefs.length > 0 ? civilProtectionUpdate.briefs.map((brief, index) => (
+                        {civilProtectionUpdate.briefs.length > 0 ? civilProtectionUpdate.briefs.slice(0, 2).map((brief, index) => (
                           <a
                             key={`${brief.url}-${index}`}
                             href={brief.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="block rounded-[1.75rem] border border-gray-200 bg-white p-4 hover:bg-gray-50 transition-all"
+                            className="block rounded-[1.75rem] border border-white/30 bg-white/50 backdrop-blur-sm p-4 hover:bg-white/70 shadow-sm transition-all"
                           >
                             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2">{t('avisos.pressRelease')} {index + 1}</p>
                             <h5 className="text-sm font-black text-gray-900 leading-snug">{brief.title}</h5>
                             <p className="text-xs text-gray-600 mt-2 leading-relaxed">{brief.summary}</p>
                           </a>
                         )) : (
-                          <div className="md:col-span-2 rounded-[1.75rem] border border-gray-200 bg-white p-4 text-xs font-bold text-gray-500">
+                          <div className="md:col-span-2 rounded-[1.75rem] border border-white/30 bg-white/50 backdrop-blur-sm p-4 text-xs font-bold text-gray-500 shadow-sm">
                             {t('avisos.noBriefs')}
                           </div>
                         )}
@@ -376,9 +356,9 @@ export const AvisosView: React.FC = () => {
                           href={map.sourceUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="block rounded-[1.75rem] border border-gray-200 overflow-hidden hover:shadow-md transition-all bg-white"
+                          className="block rounded-[1.75rem] border border-white/30 overflow-hidden hover:shadow-lg transition-all bg-white/50 backdrop-blur-sm"
                         >
-                          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                          <div className="px-4 py-3 border-b border-white/20 bg-white/40 backdrop-blur-sm">
                             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-500">{map.label}</p>
                           </div>
                           <img src={map.imageUrl} alt={map.label} className="w-full h-40 object-cover" />
@@ -392,7 +372,7 @@ export const AvisosView: React.FC = () => {
                       href={civilProtectionUpdate.sourceUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-center gap-2 rounded-2xl bg-forcall-50 text-forcall-700 border border-forcall-100 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-forcall-100 transition-all"
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-forcall-50/70 backdrop-blur-sm text-forcall-700 border border-forcall-200/50 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-forcall-100/70 transition-all"
                     >
                       <span className="material-symbols-outlined text-sm">open_in_new</span>
                       {t('avisos.officialSource')}
@@ -401,7 +381,7 @@ export const AvisosView: React.FC = () => {
                       href="https://www.112cv.gva.es/WebPublica-MapasOnLineV2/portadaCastellano.jsf"
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-center gap-2 rounded-2xl bg-orange-50 text-orange-700 border border-orange-100 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all"
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-orange-50/70 backdrop-blur-sm text-orange-700 border border-orange-200/50 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-orange-100/70 transition-all"
                     >
                       <span className="material-symbols-outlined text-sm">map</span>
                       {t('avisos.map112')}
@@ -409,7 +389,7 @@ export const AvisosView: React.FC = () => {
                     <button
                       onClick={fetchCivilProtectionStatus}
                       disabled={civilProtectionLoading}
-                      className="flex items-center justify-center gap-2 rounded-2xl bg-gray-900 text-white border border-gray-900 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all disabled:opacity-60"
+                      className="flex items-center justify-center gap-2 rounded-2xl bg-gray-900/80 backdrop-blur-sm text-white border border-white/20 px-4 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-gray-900 transition-all disabled:opacity-60"
                     >
                       <span className={`material-symbols-outlined text-sm ${civilProtectionLoading ? 'animate-spin' : ''}`}>refresh</span>
                       {t('avisos.refreshBlock')}
@@ -421,15 +401,15 @@ export const AvisosView: React.FC = () => {
           </div>
         </section>
 
-        <aside className="2xl:col-span-4 space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
+        <aside className="2xl:col-span-4 space-y-6 relative z-10">
+          <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/20 shadow-lg shadow-black/5 overflow-hidden">
+            <div className="px-6 py-4 bg-white/40 backdrop-blur-sm border-b border-white/20">
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('avisos.teletype')}</p>
               <h3 className="text-lg font-black text-gray-900 mt-1">{t('avisos.operationalNotes')}</h3>
             </div>
             <div className="p-4 space-y-2">
               {protocols.map(p => (
-                <div key={p.id} className="bg-white p-4 rounded-xl border-l-4 border-l-sky-500 shadow-sm border border-gray-200">
+                <div key={p.id} className="bg-white/50 backdrop-blur-sm p-4 rounded-xl border-l-4 border-l-sky-500 shadow-sm border border-white/30">
                   <h4 className="text-[10px] font-black text-gray-800 uppercase mb-1 tracking-widest flex items-center gap-2">
                     <span className="material-symbols-outlined text-sky-500 text-sm">{p.icon}</span>
                     {p.title}
@@ -440,18 +420,18 @@ export const AvisosView: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="p-4 bg-gray-50 border-b border-gray-100">
+          <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/20 shadow-lg shadow-black/5 overflow-hidden">
+            <div className="p-4 bg-white/40 backdrop-blur-sm border-b border-white/20">
               <h3 className="font-black text-gray-800 text-xs uppercase tracking-widest flex items-center gap-2">
                 <span className="material-symbols-outlined text-red-600">emergency</span> {t('avisos.emergencies')}
               </h3>
             </div>
             <div className="p-1 space-y-0.5 max-h-[520px] overflow-y-auto no-scrollbar">
               {categories.map((cat, idx) => (
-                <div key={idx} className="border-b border-gray-50 last:border-0">
+                <div key={idx} className="border-b border-white/10 last:border-0">
                   <button
                     onClick={() => toggleCategory(idx)}
-                    className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center justify-between p-3 hover:bg-white/40 transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-gray-400 text-lg">{cat.icon}</span>
@@ -462,9 +442,9 @@ export const AvisosView: React.FC = () => {
                   {cat.isOpen && (
                     <div className="px-2 pb-2 space-y-1">
                       {cat.contacts.map((c, i) => (
-                        <a key={i} href={`tel:${c.phone}`} className="flex justify-between items-center p-2.5 hover:bg-gray-50 rounded-xl transition-all border border-transparent">
+                        <a key={i} href={`tel:${c.phone}`} className="flex justify-between items-center p-2.5 hover:bg-white/40 rounded-xl transition-all border border-transparent">
                           <span className="text-[10px] font-bold text-gray-700">{c.name}</span>
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${c.phone === '112' ? 'text-red-600 bg-red-50' : 'text-forcall-700 bg-forcall-50'}`}>{c.phone}</span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${c.phone === '112' ? 'text-red-600 bg-red-50/70' : 'text-forcall-700 bg-forcall-50/70'}`}>{c.phone}</span>
                         </a>
                       ))}
                     </div>
@@ -474,55 +454,17 @@ export const AvisosView: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('avisos.socialNetwork')}</p>
-              <h3 className="text-lg font-black text-gray-900 mt-1">@VOSTcvalenciana</h3>
-            </div>
-            <div className="p-4 space-y-3">
-              {vostLoading ? (
-                <div className="flex items-center gap-2 py-4 text-gray-400">
-                  <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest">{t('avisos.loadingPosts')}</span>
-                </div>
-              ) : vostPosts.length === 0 ? (
-                <div className="py-4 text-[10px] font-bold text-gray-500 text-center">
-                  {t('avisos.noPosts')}
-                </div>
-              ) : (
-                vostPosts.slice(0, 2).map((post, i) => (
-                  <a
-                    key={i}
-                    href={post.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block rounded-2xl border border-gray-200 p-4 hover:bg-gray-50 transition-all"
-                  >
-                    <p className="text-[10px] text-gray-700 leading-relaxed whitespace-pre-line">{post.content}</p>
-                    <p className="text-[8px] text-gray-400 mt-2">
-                      {new Date(post.pubDate).toLocaleDateString('es', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </a>
-                ))
-              )}
-            </div>
-          </div>
         </aside>
       </div>
 
-      <div className="space-y-6">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col md:flex-row items-center gap-4">
+      <div className="space-y-6 relative z-10">
+        <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/20 shadow-lg shadow-black/5 p-5 flex flex-col md:flex-row items-center gap-4">
           <span className="material-symbols-outlined text-4xl text-emerald-600">check_circle</span>
           <div className="flex-1">
             <h3 className="font-black uppercase text-sm tracking-widest text-gray-900">{t('avisos.roadStatus')}</h3>
             <p className="text-sm text-gray-600 font-medium">Condiciones favorables para la actividad asistencial.</p>
           </div>
-          <a href="https://etraffic.dgt.es" target="_blank" rel="noreferrer" className="px-4 py-2 bg-gray-900 text-white rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-black transition-all">{t('avisos.consultDGT')}</a>
+          <a href="https://etraffic.dgt.es" target="_blank" rel="noreferrer" className="px-4 py-2 bg-gray-900/80 backdrop-blur-sm text-white rounded-lg text-[10px] font-black uppercase tracking-wider border border-white/20 hover:bg-gray-900 transition-all">{t('avisos.consultDGT')}</a>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -531,7 +473,7 @@ export const AvisosView: React.FC = () => {
               <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{t('avisos.currentWeather')}</h3>
               <div className="flex gap-2">
                 {weatherError && <span className="text-[8px] text-red-500 font-bold self-center">{weatherError}</span>}
-                <button onClick={fetchWeather} disabled={weatherLoading} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 text-[9px] font-black uppercase tracking-widest transition-all">
+                <button onClick={fetchWeather} disabled={weatherLoading} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/50 backdrop-blur-sm text-gray-500 hover:bg-white/70 border border-white/30 text-[9px] font-black uppercase tracking-widest transition-all">
                   <span className={`material-symbols-outlined text-sm ${weatherLoading ? 'animate-spin' : ''}`}>refresh</span>
                   {t('avisos.refresh')}
                 </button>
@@ -547,7 +489,7 @@ export const AvisosView: React.FC = () => {
               {currentWeather.map(p => {
                 const s = getIconStyle(p.condition);
                 return (
-                  <div key={p.id} className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm flex items-center gap-4">
+                  <div key={p.id} className="bg-white/60 backdrop-blur-xl rounded-2xl p-5 border border-white/20 shadow-lg shadow-black/5 flex items-center gap-4">
                     <div className={`p-4 rounded-2xl ${s.bg} ${s.color}`}>
                       <span className="material-symbols-outlined text-2xl">{s.icon}</span>
                     </div>
@@ -563,11 +505,11 @@ export const AvisosView: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="bg-white/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-lg shadow-black/5">
               <h3 className="text-[10px] font-black text-sky-800 uppercase tracking-widest mb-4">{t('avisos.forecast5Days')}</h3>
               <div className="space-y-3">
                 {forecast.map((f, i) => (
-                  <div key={i} className="flex justify-between items-center bg-white/50 p-2 rounded-xl text-xs font-bold">
+                  <div key={i} className="flex justify-between items-center bg-white/40 backdrop-blur-sm p-2 rounded-xl text-xs font-bold border border-white/10">
                     <span className="w-8 uppercase">{f.date.toLocaleDateString('es', { weekday: 'short' })}</span>
                     <span className="material-symbols-outlined text-sky-500">{getIconStyle(f.condition).icon}</span>
                     <span className="text-gray-900">{f.max}° / <span className="text-sky-600">{f.min}°</span></span>
