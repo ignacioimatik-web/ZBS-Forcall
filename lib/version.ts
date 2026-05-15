@@ -1,4 +1,4 @@
-export const VERSION = '2.0.0';
+export const VERSION = '2.3.0';
 export const VERSION_STRING = `Gestión Equipos v${VERSION}`;
 export const VERSION_YEAR = '2026';
 
@@ -10,6 +10,26 @@ export interface VersionEntry {
 }
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: '2.3.0',
+    date: 'Mayo 2026',
+    title: 'Telegram, Mensajes, Turnos, Transcripciones multi-dispositivo',
+    changes: [
+      'Transcripciones de voz multi-dispositivo vía Supabase con botones separados start/stop y PDF nativo (jsPDF).',
+      'Renombrado Alertas → Avisos en toda la interfaz (i18n, rutas, componentes).',
+      'Renombrado Guardias → Turnos con subcategorías por rol (Médico/Enfermería).',
+      'Eliminado sistema de detección de solapamientos/conflictos. Días con eventos muestran "Asignado".',
+      'Renombrado Chat → Mensajes visualmente (manteniendo nomenclatura interna).',
+      'Chat simplificado: solo canal de equipo, sin mensajes directos, ventana compacta (450px).',
+      'Chat restringido a coordinadoras (Elena y Xelo).',
+      'Sustituidos Morella por Todolella y Palanques en clima y avisos.',
+      'Integración con Telegram: bot @ZBSforcabot, webhook, QR linking, reenvío bidireccional de mensajes.',
+      'Reenvío de imágenes a Telegram vía sendPhoto API.',
+      'Reenvío de audio a Telegram: OGG/Opus sendVoice (timeline) con fallback MP4 sendAudio (ventana inline) y enlace.',
+      'Grabación de audio en OGG/Opus con fallback a MP4/WebM según soporte del navegador.',
+      'Arreglo de build: variable "all" no declarada en validateDay, keys i18n incorrectas.',
+    ],
+  },
   {
     version: '2.0.0',
     date: 'Mayo 2026',
