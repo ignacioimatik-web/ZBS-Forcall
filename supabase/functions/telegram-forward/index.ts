@@ -58,11 +58,10 @@ serve(async (req) => {
     const results = await Promise.allSettled(
       (chats || []).map(async (chat) => {
         if (audio_url) {
-          const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendAudio`;
+          const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
           const body: Record<string, unknown> = {
             chat_id: chat.group_id,
-            voice: audio_url,
-            caption: `💬 *${sender_name || 'Equipo'}:*`,
+            text: `🎤 *${sender_name || 'Equipo'}:*\n[🎧 Escuchar audio](${audio_url})`,
             parse_mode: 'Markdown',
           };
 
@@ -74,7 +73,7 @@ serve(async (req) => {
 
           if (!response.ok) {
             const err = await response.text();
-            console.error(`Telegram sendAudio failed for chat ${chat.group_id}:`, err);
+            console.error(`Telegram audio message failed for chat ${chat.group_id}:`, err);
             throw new Error(`Failed for chat ${chat.group_id}`);
           }
 
