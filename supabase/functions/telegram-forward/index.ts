@@ -21,7 +21,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, sender_name, user_id, image_url } = await req.json();
+    const { text, sender_name, user_id, image_url, audio_url } = await req.json();
 
     if (!user_id) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -57,7 +57,29 @@ serve(async (req) => {
     // Forward message to each linked Telegram group
     const results = await Promise.allSettled(
       (chats || []).map(async (chat) => {
-        if (image_url) {
+        if (audio_url) {
+          const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice`;
+          const body: Record<string, unknown> = {
+            chat_id: chat.group_id,
+            voice: audio_url,
+            caption: `💬 *${sender_name || 'Equipo'}:*`,
+            parse_mode: 'Markdown',
+          };
+
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+
+          if (!response.ok) {
+            const err = await response.text();
+            console.error(`Telegram sendVoice failed for chat ${chat.group_id}:`, err);
+            throw new Error(`Failed for chat ${chat.group_id}`);
+          }
+
+          return response.json();
+        } else if (image_url) {
           const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
           const body: Record<string, unknown> = {
             chat_id: chat.group_id,

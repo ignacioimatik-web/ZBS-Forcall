@@ -185,7 +185,7 @@ export function useChat(currentUserId?: string | null): UseChatResult {
   }, [uid, getChannelKey, addMessage, removeMessage]);
 
   // Reenvío a Telegram (no bloquea la UI)
-  const forwardToTelegram = useCallback(async (text: string, senderName: string, imageUrl?: string) => {
+  const forwardToTelegram = useCallback(async (text: string, senderName: string, imageUrl?: string, audioUrl?: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) return;
@@ -201,6 +201,7 @@ export function useChat(currentUserId?: string | null): UseChatResult {
           sender_name: senderName,
           user_id: session.user.id,
           image_url: imageUrl,
+          audio_url: audioUrl,
         }),
       });
     } catch (err) {
@@ -314,7 +315,7 @@ export function useChat(currentUserId?: string | null): UseChatResult {
     if (data?.[0]) {
       const key = getChannelKey(data[0]);
       if (key) addMessage(key, mapRow(data[0]));
-      if (!receiverId) forwardToTelegram('🎤 [Mensaje de voz]', data[0].sender_name || 'Equipo');
+      if (!receiverId) forwardToTelegram('🎤', data[0].sender_name || 'Equipo', undefined, url);
     }
   }, [uploadFile, uid, getChannelKey, addMessage, forwardToTelegram]);
 
