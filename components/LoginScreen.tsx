@@ -314,22 +314,27 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       </div>
 
       <div className="relative z-10 mt-6 text-center text-white/60 text-xs space-y-2 animate-fade-in">
-        <div className="flex items-center justify-center gap-1 p-0.5 bg-white/10 backdrop-blur-sm rounded-xl border border-white/10 mb-3">
+        <div className="relative flex items-center p-0.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 mb-3 mx-auto w-fit">
+          <div
+            className="absolute top-0.5 bottom-0.5 rounded-lg bg-white/20 shadow-sm transition-all duration-300 ease-out"
+            style={{
+              left: lang === 'es' ? '0.125rem' : '50%',
+              width: 'calc(50% - 0.25rem)',
+            }}
+          />
           <button
             onClick={() => setLang('es')}
-            className={`px-4 py-1.5 rounded-lg font-bold uppercase tracking-wider text-[11px] transition-all duration-200 ${
-              lang === 'es' ? 'bg-white/25 text-white shadow-sm' : 'text-white/50 hover:text-white/80'
-            }`}
+            className="relative z-10 px-5 py-1.5 rounded-lg font-bold uppercase tracking-wider text-[11px] transition-all duration-200 flex items-center gap-2"
           >
-            ES
+            <span className={`transition-all duration-200 ${lang === 'es' ? 'text-white drop-shadow-sm scale-100' : 'text-white/50 scale-90'}`}>🇪🇸</span>
+            <span className={`transition-all duration-200 ${lang === 'es' ? 'text-white drop-shadow-sm' : 'text-white/50'}`}>Español</span>
           </button>
           <button
             onClick={() => setLang('ca')}
-            className={`px-4 py-1.5 rounded-lg font-bold uppercase tracking-wider text-[11px] transition-all duration-200 ${
-              lang === 'ca' ? 'bg-white/25 text-white shadow-sm' : 'text-white/50 hover:text-white/80'
-            }`}
+            className="relative z-10 px-5 py-1.5 rounded-lg font-bold uppercase tracking-wider text-[11px] transition-all duration-200 flex items-center gap-2"
           >
-            VA
+            <span className={`transition-all duration-200 ${lang === 'ca' ? 'text-white drop-shadow-sm scale-100' : 'text-white/50 scale-90'}`}>🏴</span>
+            <span className={`transition-all duration-200 ${lang === 'ca' ? 'text-white drop-shadow-sm' : 'text-white/50'}`}>Valencià</span>
           </button>
         </div>
         <p>{t('login.footer').replace('{version}', VERSION_STRING)}</p>
