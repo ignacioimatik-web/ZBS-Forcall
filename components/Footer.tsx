@@ -261,39 +261,57 @@ function generateVersionesPDF() {
   ctx.doc.setFont('helvetica', 'normal');
   ctx.doc.setTextColor(...GRAY);
   ctx.doc.text(`${VERSION_STRING} — Documento de versionado semántico`, MARGIN, ctx.y);
-  ctx.y += 7;
+  ctx.y += 8;
 
   for (const entry of CHANGELOG) {
-    const entryNeeded = 14 + entry.changes.length * 4;
+    const entryNeeded = 18 + entry.changes.length * 4.5;
     ctx = ensureSpace(ctx, entryNeeded, 'Historial de Versiones', docName);
 
+    // Version badge
     ctx.doc.setFillColor(...RED);
-    ctx.doc.circle(MARGIN + 1.5, ctx.y + 2, 1.5, 'F');
-
-    ctx.doc.setFontSize(12);
+    ctx.doc.roundedRect(MARGIN, ctx.y, 14, 6, 1, 1, 'F');
+    ctx.doc.setFontSize(8);
     ctx.doc.setFont('helvetica', 'bold');
-    ctx.doc.setTextColor(...DARK);
-    ctx.doc.text(`v${entry.version}`, MARGIN + 5, ctx.y + 3);
+    ctx.doc.setTextColor(255, 255, 255);
+    ctx.doc.text(`v${entry.version}`, MARGIN + 7, ctx.y + 4, { align: 'center' });
 
+    // Date
     ctx.doc.setFontSize(7.5);
     ctx.doc.setFont('helvetica', 'normal');
     ctx.doc.setTextColor(...GRAY);
-    ctx.doc.text(entry.date, MARGIN + 32, ctx.y + 3);
-    ctx.y += 6;
+    ctx.doc.text(entry.date, MARGIN + 18, ctx.y + 4);
+    ctx.y += 8;
 
+    // Title
     ctx.doc.setFontSize(9);
     ctx.doc.setFont('helvetica', 'bold');
     ctx.doc.setTextColor(...RED);
-    ctx.doc.text(entry.title, MARGIN + 5, ctx.y);
-    ctx.y += 4.5;
+    const titleLines = ctx.doc.splitTextToSize(entry.title, pw - MARGIN * 2 - 18);
+    ctx.doc.text(titleLines, MARGIN + 18, ctx.y);
+    ctx.y += titleLines.length * 4 + 3;
 
+    // Separator line
+    ctx.doc.setDrawColor(...LIGHT_GRAY);
+    ctx.doc.line(MARGIN + 18, ctx.y, pw - MARGIN, ctx.y);
+    ctx.y += 3;
+
+    // Changes
     ctx.doc.setFont('helvetica', 'normal');
     ctx.doc.setTextColor(...DARK);
+    ctx.doc.setFontSize(8);
     for (const change of entry.changes) {
       ctx = ensureSpace(ctx, 5, 'Historial de Versiones', docName);
-      ctx.doc.text(`• ${change}`, MARGIN + 8, ctx.y);
-      ctx.y += 4;
+      const changeLines = ctx.doc.splitTextToSize(`• ${change}`, pw - MARGIN * 2 - 22);
+      ctx.doc.text(changeLines, MARGIN + 20, ctx.y);
+      ctx.y += changeLines.length * 4 + 0.5;
     }
+    ctx.y += 4;
+
+    // Entry separator
+    ctx.doc.setDrawColor(...LIGHT_GRAY);
+    ctx.doc.setLineDashPattern([1, 2], 0);
+    ctx.doc.line(MARGIN, ctx.y, pw - MARGIN, ctx.y);
+    ctx.doc.setLineDashPattern([], 0);
     ctx.y += 3;
   }
 
