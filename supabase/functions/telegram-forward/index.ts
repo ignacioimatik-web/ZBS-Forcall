@@ -21,9 +21,9 @@ serve(async (req) => {
   }
 
   try {
-    const { text, sender_name, user_id } = await req.json();
+    const { text, sender_name, user_id, image_url } = await req.json();
 
-    if (!text || !user_id) {
+    if (!user_id) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -57,26 +57,50 @@ serve(async (req) => {
     // Forward message to each linked Telegram group
     const results = await Promise.allSettled(
       (chats || []).map(async (chat) => {
-        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-        const body = {
-          chat_id: chat.group_id,
-          text: `💬 *${sender_name || 'Equipo'}:*\n${text}`,
-          parse_mode: 'Markdown',
-        };
+        if (image_url) {
+          const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
+          const body: Record<string, unknown> = {
+            chat_id: chat.group_id,
+            photo: image_url,
+            caption: `💬 *${sender_name || 'Equipo'}:*\n${text || ''}`,
+            parse_mode: 'Markdown',
+          };
 
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
 
-        if (!response.ok) {
-          const err = await response.text();
-          console.error(`Telegram send failed for chat ${chat.group_id}:`, err);
-          throw new Error(`Failed for chat ${chat.group_id}`);
+          if (!response.ok) {
+            const err = await response.text();
+            console.error(`Telegram sendPhoto failed for chat ${chat.group_id}:`, err);
+            throw new Error(`Failed for chat ${chat.group_id}`);
+          }
+
+          return response.json();
+        } else {
+          const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+          const body: Record<string, unknown> = {
+            chat_id: chat.group_id,
+            text: `💬 *${sender_name || 'Equipo'}:*\n${text || ''}`,
+            parse_mode: 'Markdown',
+          };
+
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+
+          if (!response.ok) {
+            const err = await response.text();
+            console.error(`Telegram sendMessage failed for chat ${chat.group_id}:`, err);
+            throw new Error(`Failed for chat ${chat.group_id}`);
+          }
+
+          return response.json();
         }
-
-        return response.json();
       })
     );
 
