@@ -63,7 +63,6 @@ const App: React.FC = () => {
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [appSettings, setAppSettings] = useState<AppSettings>(loadSettings);
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setNotification({ message, type });
   }, []);
@@ -113,7 +112,6 @@ const App: React.FC = () => {
         setAppSettings(dbSettings);
         saveSettings(dbSettings, user.id);
       }
-      setSettingsLoaded(true);
     });
   }, [user?.id]);
 

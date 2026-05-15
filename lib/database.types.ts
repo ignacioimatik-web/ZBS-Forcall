@@ -354,25 +354,6 @@ updated_at?: string;
           is_urgent?: boolean;
         };
       };
-      user_settings: {
-        Row: {
-          user_id: string;
-          settings: Json;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          user_id: string;
-          settings?: Json;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          user_id?: string;
-          settings?: Json;
-          updated_at?: string;
-        };
-      };
       audit_logs: {
         Row: {
           id: string;
