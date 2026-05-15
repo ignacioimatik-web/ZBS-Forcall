@@ -146,7 +146,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-[450px] max-h-[450px] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
+    <div className="flex flex-col md:flex-row h-[600px] max-h-[600px] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
       {/* Sidebar */}
       <div className="w-full md:w-72 bg-earth-50 border-r border-gray-200 flex flex-col overflow-y-auto">
         <div className="p-3 border-b border-gray-200 bg-earth-50">
