@@ -289,8 +289,9 @@ export function useChat(currentUserId?: string | null): UseChatResult {
     if (data?.[0]) {
       const key = getChannelKey(data[0]);
       if (key) addMessage(key, mapRow(data[0]));
+      if (!receiverId) forwardToTelegram('📷 [Imagen]', data[0].sender_name || 'Equipo');
     }
-  }, [uploadFile, uid, getChannelKey, addMessage]);
+  }, [uploadFile, uid, getChannelKey, addMessage, forwardToTelegram]);
 
   const sendAudio = useCallback(async (blob: Blob, receiverId?: string) => {
     if (receiverId && !uid) return;
@@ -312,8 +313,9 @@ export function useChat(currentUserId?: string | null): UseChatResult {
     if (data?.[0]) {
       const key = getChannelKey(data[0]);
       if (key) addMessage(key, mapRow(data[0]));
+      if (!receiverId) forwardToTelegram('🎤 [Mensaje de voz]', data[0].sender_name || 'Equipo');
     }
-  }, [uploadFile, uid, getChannelKey, addMessage]);
+  }, [uploadFile, uid, getChannelKey, addMessage, forwardToTelegram]);
 
   const deleteMessage = useCallback(async (msg: ChatMessage) => {
     try {
