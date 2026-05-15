@@ -58,26 +58,44 @@ serve(async (req) => {
     const results = await Promise.allSettled(
       (chats || []).map(async (chat) => {
         if (audio_url) {
-          const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-          const body: Record<string, unknown> = {
+          // Try sendVoice first (OGG/Opus native format)
+          const voiceUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice`;
+          const voiceBody: Record<string, unknown> = {
+            chat_id: chat.group_id,
+            voice: audio_url,
+            caption: `🎤 *${sender_name || 'Equipo'}:*`,
+            parse_mode: 'Markdown',
+          };
+
+          const voiceRes = await fetch(voiceUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(voiceBody),
+          });
+
+          if (voiceRes.ok) return voiceRes.json();
+
+          // Fallback: send as clickable link
+          const textUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+          const textBody: Record<string, unknown> = {
             chat_id: chat.group_id,
             text: `🎤 *${sender_name || 'Equipo'}:*\n[🎧 Escuchar audio](${audio_url})`,
             parse_mode: 'Markdown',
           };
 
-          const response = await fetch(url, {
+          const textRes = await fetch(textUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+            body: JSON.stringify(textBody),
           });
 
-          if (!response.ok) {
-            const err = await response.text();
-            console.error(`Telegram audio message failed for chat ${chat.group_id}:`, err);
+          if (!textRes.ok) {
+            const err = await textRes.text();
+            console.error(`Telegram audio fallback failed for chat ${chat.group_id}:`, err);
             throw new Error(`Failed for chat ${chat.group_id}`);
           }
 
-          return response.json();
+          return textRes.json();
         } else if (image_url) {
           const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
           const body: Record<string, unknown> = {

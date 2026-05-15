@@ -74,7 +74,10 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      const mimeType = MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')
+        ? 'audio/ogg;codecs=opus'
+        : 'audio/webm';
+      const recorder = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
       mediaRecorderRef.current = recorder;
 
@@ -83,7 +86,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
         sendAudio(blob);
         stream.getTracks().forEach(t => t.stop());
       };
