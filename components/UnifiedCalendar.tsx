@@ -82,6 +82,8 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [slideEpoch, setSlideEpoch] = useState(0);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
@@ -276,13 +278,30 @@ const startingEmptyCells = useMemo(() => {
   const hasFilterNoResults = selectedProfessional !== 'all' && filteredMonthEvents && filteredMonthEvents.length === 0;
 
   const changeMonth = (offset: number) => {
+    setSlideDirection(offset > 0 ? 'right' : 'left');
+    setSlideEpoch(prev => prev + 1);
     const next = new Date(currentMonth);
     next.setMonth(currentMonth.getMonth() + offset);
     setCurrentMonth(next);
   };
 
   return (
-    <div id={id} className="relative group w-full bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden" style={{ touchAction: 'pan-y' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <>
+      <style>{`
+        @keyframes slideFromRight { from { transform: translateX(24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideFromLeft { from { transform: translateX(-24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .anim-from-right { animation: slideFromRight 280ms cubic-bezier(0.16, 1, 0.3, 1); }
+        .anim-from-left { animation: slideFromLeft 280ms cubic-bezier(0.16, 1, 0.3, 1); }
+      `}</style>
+      <div className="flex items-stretch gap-0 md:gap-1">
+        {!isMobile && (
+          <button onClick={() => changeMonth(-1)} aria-label="Mes anterior"
+            className="flex flex-col items-center justify-center w-9 md:w-11 rounded-2xl bg-white border border-gray-200 shadow-sm text-gray-300 hover:text-forcall-600 hover:border-forcall-200 hover:shadow-md active:scale-95 transition-all cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-lg md:text-xl">chevron_left</span>
+          </button>
+        )}
+        <div id={id} className="relative group w-full bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden" style={{ touchAction: 'pan-y' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {!hideHeader && (
         <div className="flex flex-col sm:flex-row items-center justify-between bg-white px-4 py-3 border-b border-gray-200 no-print sticky top-0 z-40 gap-3">
           {!hideMonthNav && (
@@ -329,6 +348,7 @@ const startingEmptyCells = useMemo(() => {
         </div>
       )}
 
+      <div key={slideEpoch} className={slideEpoch > 0 ? (slideDirection === 'right' ? 'anim-from-right' : 'anim-from-left') : ''}>
       <div className="hidden md:grid md:grid-cols-7 bg-gray-50 border-b border-gray-200">
         {[t('unifiedCalendar.mon'), t('unifiedCalendar.tue'), t('unifiedCalendar.wed'), t('unifiedCalendar.thu'), t('unifiedCalendar.fri'), t('unifiedCalendar.sat'), t('unifiedCalendar.sun')].map(d => (
           <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider py-2.5 border-r border-gray-200 last:border-r-0">{d}</div>
@@ -439,6 +459,7 @@ const startingEmptyCells = useMemo(() => {
           );
         })}
       </div>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm no-print">
@@ -479,25 +500,16 @@ const startingEmptyCells = useMemo(() => {
         }}
         onCancel={() => setDeleteTarget(null)}
       />
-
-      {!isMobile && (
-        <>
-          <button
-            onClick={() => changeMonth(-1)}
-            className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity z-10 cursor-pointer bg-gradient-to-r from-black/[0.03] to-transparent hover:from-black/[0.06] active:from-black/[0.1]"
-            aria-label="Mes anterior"
-          >
-            <span className="material-symbols-outlined text-gray-400 text-xl drop-shadow-sm">chevron_left</span>
-          </button>
-          <button
-            onClick={() => changeMonth(1)}
-            className="absolute right-0 top-0 bottom-0 w-10 flex items-center justify-center opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity z-10 cursor-pointer bg-gradient-to-l from-black/[0.03] to-transparent hover:from-black/[0.06] active:from-black/[0.1]"
-            aria-label="Mes siguiente"
-          >
-            <span className="material-symbols-outlined text-gray-400 text-xl drop-shadow-sm">chevron_right</span>
-          </button>
-        </>
-      )}
     </div>
+
+        {!isMobile && (
+          <button onClick={() => changeMonth(1)} aria-label="Mes siguiente"
+            className="flex flex-col items-center justify-center w-9 md:w-11 rounded-2xl bg-white border border-gray-200 shadow-sm text-gray-300 hover:text-forcall-600 hover:border-forcall-200 hover:shadow-md active:scale-95 transition-all cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-lg md:text-xl">chevron_right</span>
+          </button>
+        )}
+      </div>
+    </>
   );
 };
