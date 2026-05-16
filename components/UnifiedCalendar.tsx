@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Meeting, MeetingType, Guardia, User, Libranza, Dobla, Vacacion } from '../types';
 import { getHolidayName } from '../utils';
 import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType, canManageVacaciones } from '../lib/guardiaPermissions';
@@ -82,6 +82,25 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    const threshold = 50;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+      changeMonth(dx > 0 ? -1 : 1);
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -263,7 +282,7 @@ const startingEmptyCells = useMemo(() => {
   };
 
   return (
-    <div id={id} className="w-full bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+    <div id={id} className="relative group w-full bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden" style={{ touchAction: 'pan-y' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {!hideHeader && (
         <div className="flex flex-col sm:flex-row items-center justify-between bg-white px-4 py-3 border-b border-gray-200 no-print sticky top-0 z-40 gap-3">
           {!hideMonthNav && (
@@ -460,6 +479,25 @@ const startingEmptyCells = useMemo(() => {
         }}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {!isMobile && (
+        <>
+          <button
+            onClick={() => changeMonth(-1)}
+            className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity z-10 cursor-pointer bg-gradient-to-r from-black/[0.03] to-transparent hover:from-black/[0.06] active:from-black/[0.1]"
+            aria-label="Mes anterior"
+          >
+            <span className="material-symbols-outlined text-gray-400 text-xl drop-shadow-sm">chevron_left</span>
+          </button>
+          <button
+            onClick={() => changeMonth(1)}
+            className="absolute right-0 top-0 bottom-0 w-10 flex items-center justify-center opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity z-10 cursor-pointer bg-gradient-to-l from-black/[0.03] to-transparent hover:from-black/[0.06] active:from-black/[0.1]"
+            aria-label="Mes siguiente"
+          >
+            <span className="material-symbols-outlined text-gray-400 text-xl drop-shadow-sm">chevron_right</span>
+          </button>
+        </>
+      )}
     </div>
   );
 };
