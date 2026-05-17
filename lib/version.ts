@@ -1,4 +1,4 @@
-export const VERSION = '2.3.0';
+export const VERSION = '2.4.0';
 export const VERSION_STRING = `Gestión Equipos v${VERSION}`;
 export const VERSION_YEAR = '2026';
 
@@ -10,6 +10,22 @@ export interface VersionEntry {
 }
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: '2.4.0',
+    date: 'Mayo 2026',
+    title: 'Dictado por voz, navegación por gestos en calendarios y persistencia de ajustes',
+    changes: [
+      'IAassist dividido en dos paneles: dictado por voz (izquierda) y PDF/OCR (derecha).',
+      'Dictado por voz con tres modos seleccionables: Asignar, Borrar entradas y Notas.',
+      'Las notas de voz se asignan al día concreto y aparecen en el calendario de planificación.',
+      'Navegación entre meses con swipe táctil (iPad/tablet/móvil) y barras laterales en escritorio.',
+      'Transición slide animada al cambiar de mes (40px, 300ms, cubic-bezier).',
+      'Persistencia de configuración por usuario en metadata de Supabase Auth (esquema de color, efecto, intensidad).',
+      'Chat ampliado de 450px a 600px de altura.',
+      'Refactor de avisos: eliminada sección VOST/red social, estilo liquid glass en tarjetas.',
+      'Selector de idioma en login con indicador animado y banderas (🇪🇸 + Senyera Coronada).',
+    ],
+  },
   {
     version: '2.3.0',
     date: 'Mayo 2026',
