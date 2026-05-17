@@ -370,6 +370,10 @@ const App: React.FC = () => {
             onAddLibranza={handleUpsertLibranza}
             onAddDobla={handleUpsertDobla}
             onAddVacacion={addVacacion}
+            onDeleteGuardia={handleDeleteGuardia}
+            onDeleteLibranza={deleteLibranza}
+            onDeleteDobla={deleteDobla}
+            onDeleteVacacion={handleDeleteVacacion}
             currentUser={user}
             notify={notify}
             guardias={guardias}

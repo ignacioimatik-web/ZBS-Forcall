@@ -18,6 +18,10 @@ interface IAassistViewProps {
   onAddLibranza: (libranza: Libranza) => Promise<void>;
   onAddDobla: (dobla: Dobla) => Promise<void>;
   onAddVacacion: (vacacion: Vacacion) => Promise<void>;
+  onDeleteGuardia?: (id: string) => Promise<boolean | void>;
+  onDeleteLibranza?: (id: string) => Promise<boolean | void>;
+  onDeleteDobla?: (id: string) => Promise<boolean | void>;
+  onDeleteVacacion?: (id: string) => Promise<boolean | void>;
   currentUser: User | null;
   notify: (message: string, type: 'success' | 'error' | 'info') => void;
   guardias: Guardia[];
@@ -273,6 +277,7 @@ const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 
 /* ── Component ── */
 export const IAassistView: React.FC<IAassistViewProps> = ({
   onAddGuardia, onAddLibranza, onAddDobla, onAddVacacion,
+  onDeleteGuardia, onDeleteLibranza, onDeleteDobla, onDeleteVacacion,
   currentUser, notify, guardias, libranzas, doblas, vacaciones,
 }) => {
   const { t } = useT();
@@ -453,6 +458,14 @@ export const IAassistView: React.FC<IAassistViewProps> = ({
             onAddLibranza={onAddLibranza}
             onAddDobla={onAddDobla}
             onAddVacacion={onAddVacacion}
+            onDeleteGuardia={onDeleteGuardia}
+            onDeleteLibranza={onDeleteLibranza}
+            onDeleteDobla={onDeleteDobla}
+            onDeleteVacacion={onDeleteVacacion}
+            guardias={guardias}
+            libranzas={libranzas}
+            doblas={doblas}
+            vacaciones={vacaciones}
             currentUser={currentUser}
             notify={localNotify}
           />
