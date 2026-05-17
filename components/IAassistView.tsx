@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useT } from '../lib/i18n';
 import { User, Guardia, Libranza, Dobla, Vacacion } from '../types';
 import { NotificationToast } from './NotificationToast';
+import { VoiceShiftInput } from './VoiceShiftInput';
 import { USERS } from '../lib/users';
 
 interface IAEntry {
@@ -430,276 +431,298 @@ export const IAassistView: React.FC<IAassistViewProps> = ({
   }
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-5xl mx-auto">
+    <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
       <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="material-symbols-outlined text-2xl text-forcall-600">auto_awesome</span>
           <h2 className="text-lg font-black text-gray-900 tracking-tight flex-1">IAassist — Importación de Cuadrante</h2>
         </div>
-        <p className="text-[10px] text-gray-400 font-medium mt-1 ml-1">Importa un PDF o imagen del cuadrante para asignar guardias, libranzas, refuerzos y vacaciones.</p>
+        <p className="text-[10px] text-gray-400 font-medium mt-1 ml-1">Importa un PDF o imagen del cuadrante, o usa el dictado por voz para asignar guardias, libranzas, refuerzos y vacaciones.</p>
       </div>
 
-      {/* Method tabs */}
-      <div className="flex bg-gray-100 p-1.5 rounded-xl border border-gray-200 max-w-xs">
-        {(['pdf', 'image'] as const).map(method => (
-          <button key={method} onClick={() => { setActiveMethod(method); setFile(null); setEntries([]); setRawText(''); setImagePreview(''); setOcrProgress(0); }}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${activeMethod === method ? 'bg-white text-gray-800 shadow-sm border' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            <span className="material-symbols-outlined text-base">{method === 'pdf' ? 'description' : 'image'}</span>
-            {method === 'pdf' ? 'PDF' : 'Imagen'}
-          </button>
-        ))}
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Voice dictation */}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+          <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider mb-1 flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg text-forcall-600">mic</span>
+            Dictado por Voz
+          </h3>
+          <p className="text-[9px] text-gray-400 font-medium mb-4">Di los turnos en voz alta y confirma antes de asignar.</p>
+          <VoiceShiftInput
+            onAddGuardia={onAddGuardia}
+            onAddLibranza={onAddLibranza}
+            onAddDobla={onAddDobla}
+            onAddVacacion={onAddVacacion}
+            currentUser={currentUser}
+            notify={localNotify}
+          />
+        </div>
 
-      {/* Upload area */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-        {activeMethod === 'pdf' ? (
-          <div className="space-y-4">
-            <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-8 cursor-pointer hover:border-forcall-400 transition-colors bg-gray-50/50">
-              <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">description</span>
-              <span className="text-sm font-bold text-gray-600">{file ? file.name : 'Selecciona un archivo PDF'}</span>
-              <span className="text-[10px] text-gray-400 mt-1">El PDF debe contener el cuadrante con las asignaciones</span>
-              <input type="file" accept=".pdf,application/pdf" onChange={handleFileChange} className="hidden" />
-            </label>
-            {file && (
-              <button onClick={handleProcessPdf} disabled={isProcessing}
-                className="w-full py-3 bg-forcall-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+        {/* Right: PDF / OCR import */}
+        <div className="space-y-6">
+          {/* Method tabs */}
+          <div className="flex bg-gray-100 p-1.5 rounded-xl border border-gray-200 max-w-xs">
+            {(['pdf', 'image'] as const).map(method => (
+              <button key={method} onClick={() => { setActiveMethod(method); setFile(null); setEntries([]); setRawText(''); setImagePreview(''); setOcrProgress(0); }}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${activeMethod === method ? 'bg-white text-gray-800 shadow-sm border' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                {isProcessing ? <span className="flex items-center justify-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>Analizando...</span> : 'Analizar PDF'}
+                <span className="material-symbols-outlined text-base">{method === 'pdf' ? 'description' : 'image'}</span>
+                {method === 'pdf' ? 'PDF' : 'Imagen'}
               </button>
-            )}
+            ))}
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-              <span className="material-symbols-outlined text-sm text-forcall-600">calendar_month</span>
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Mes del cuadrante:</span>
-              <select value={targetMonth} onChange={e => setTargetMonth(Number(e.target.value))}
-                className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500"
-              >
-                {MONTHS.map((name, i) => <option key={i} value={i}>{name}</option>)}
-              </select>
-              <select value={targetYear} onChange={e => setTargetYear(Number(e.target.value))}
-                className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500"
-              >
-                {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
 
-            <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-8 cursor-pointer hover:border-forcall-400 transition-colors bg-gray-50/50">
-              <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">image</span>
-              <span className="text-sm font-bold text-gray-600">{file ? file.name : 'Selecciona una imagen'}</span>
-              <span className="text-[10px] text-gray-400 mt-1">La imagen debe mostrar el cuadrante con las asignaciones</span>
-              <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-            </label>
-
-            {imagePreview && (
-              <div className="space-y-3">
-                <div className="rounded-2xl overflow-hidden border border-gray-200">
-                  <img src={imagePreview} alt="Cuadrante" className="w-full object-contain max-h-[400px]" />
-                </div>
-                <button onClick={handleProcessImage} disabled={isProcessing}
-                  className="w-full py-3 bg-forcall-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
-                >
-                  {isProcessing ? (
-                    <span className="flex flex-col items-center gap-1">
-                      <span className="flex items-center gap-2">
-                        <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                        Analizando imagen con OCR...
-                      </span>
-                      <span className="text-[9px] opacity-70">{ocrProgress}%</span>
-                      {ocrProgress > 0 && (
-                        <span className="w-full max-w-xs h-1 bg-white/20 rounded-full overflow-hidden">
-                          <span className="block h-full bg-white rounded-full transition-all" style={{ width: `${ocrProgress}%` }} />
-                        </span>
-                      )}
-                    </span>
-                  ) : 'Analizar imagen con OCR'}
-                </button>
+          {/* Upload area */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            {activeMethod === 'pdf' ? (
+              <div className="space-y-4">
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-8 cursor-pointer hover:border-forcall-400 transition-colors bg-gray-50/50">
+                  <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">description</span>
+                  <span className="text-sm font-bold text-gray-600">{file ? file.name : 'Selecciona un archivo PDF'}</span>
+                  <span className="text-[10px] text-gray-400 mt-1">El PDF debe contener el cuadrante con las asignaciones</span>
+                  <input type="file" accept=".pdf,application/pdf" onChange={handleFileChange} className="hidden" />
+                </label>
+                {file && (
+                  <button onClick={handleProcessPdf} disabled={isProcessing}
+                    className="w-full py-3 bg-forcall-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                  >
+                    {isProcessing ? <span className="flex items-center justify-center gap-2"><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>Analizando...</span> : 'Analizar PDF'}
+                  </button>
+                )}
               </div>
-            )}
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <span className="material-symbols-outlined text-sm text-forcall-600">calendar_month</span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Mes del cuadrante:</span>
+                  <select value={targetMonth} onChange={e => setTargetMonth(Number(e.target.value))}
+                    className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500"
+                  >
+                    {MONTHS.map((name, i) => <option key={i} value={i}>{name}</option>)}
+                  </select>
+                  <select value={targetYear} onChange={e => setTargetYear(Number(e.target.value))}
+                    className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500"
+                  >
+                    {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
 
-            {rawText && (
-              <div className="space-y-2">
-                <button onClick={() => setShowRawText(!showRawText)}
-                  className="text-[10px] font-bold text-gray-500 hover:text-gray-700 uppercase tracking-widest flex items-center gap-1"
-                >
-                  <span className="material-symbols-outlined text-sm">{showRawText ? 'visibility_off' : 'visibility'}</span>
-                  Texto extraído por OCR
-                </button>
-                {showRawText && (
-                  <pre className="mt-1 p-3 bg-gray-50 rounded-xl text-[10px] text-gray-600 max-h-40 overflow-y-auto border border-gray-100 whitespace-pre-wrap break-all">{rawText}</pre>
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-8 cursor-pointer hover:border-forcall-400 transition-colors bg-gray-50/50">
+                  <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">image</span>
+                  <span className="text-sm font-bold text-gray-600">{file ? file.name : 'Selecciona una imagen'}</span>
+                  <span className="text-[10px] text-gray-400 mt-1">La imagen debe mostrar el cuadrante con las asignaciones</span>
+                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                </label>
+
+                {imagePreview && (
+                  <div className="space-y-3">
+                    <div className="rounded-2xl overflow-hidden border border-gray-200">
+                      <img src={imagePreview} alt="Cuadrante" className="w-full object-contain max-h-[400px]" />
+                    </div>
+                    <button onClick={handleProcessImage} disabled={isProcessing}
+                      className="w-full py-3 bg-forcall-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                    >
+                      {isProcessing ? (
+                        <span className="flex flex-col items-center gap-1">
+                          <span className="flex items-center gap-2">
+                            <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                            Analizando imagen con OCR...
+                          </span>
+                          <span className="text-[9px] opacity-70">{ocrProgress}%</span>
+                          {ocrProgress > 0 && (
+                            <span className="w-full max-w-xs h-1 bg-white/20 rounded-full overflow-hidden">
+                              <span className="block h-full bg-white rounded-full transition-all" style={{ width: `${ocrProgress}%` }} />
+                            </span>
+                          )}
+                        </span>
+                      ) : 'Analizar imagen con OCR'}
+                    </button>
+                  </div>
+                )}
+
+                {rawText && (
+                  <div className="space-y-2">
+                    <button onClick={() => setShowRawText(!showRawText)}
+                      className="text-[10px] font-bold text-gray-500 hover:text-gray-700 uppercase tracking-widest flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-sm">{showRawText ? 'visibility_off' : 'visibility'}</span>
+                      Texto extraído por OCR
+                    </button>
+                    {showRawText && (
+                      <pre className="mt-1 p-3 bg-gray-50 rounded-xl text-[10px] text-gray-600 max-h-40 overflow-y-auto border border-gray-100 whitespace-pre-wrap break-all">{rawText}</pre>
+                    )}
+                  </div>
                 )}
               </div>
             )}
           </div>
-        )}
-      </div>
 
-      {/* Entries section */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">
-            <span className="material-symbols-outlined text-base align-text-bottom mr-1">table</span>
-            Entradas ({entries.length})
-          </h3>
-          <div className="flex gap-2 items-center">
-            {filterPersonnel && <span className="text-[9px] text-gray-400 font-medium">Filtro: {filterPersonnel}</span>}
-            <button onClick={handleClearAll} disabled={entries.length === 0}
-              className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-gray-200 disabled:opacity-50 transition-colors"
-            >Limpiar todo</button>
-          </div>
-        </div>
-
-        {/* Stats summary */}
-        {entries.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-            {Object.entries(stats.cats).map(([k, v]) => (
-              <div key={k} className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{CATEGORY_LABELS[k] || k}</span>
-                <p className="text-lg font-black text-gray-800">{v}</p>
+          {/* Entries section */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h3 className="text-sm font-black text-gray-800 uppercase tracking-wider">
+                <span className="material-symbols-outlined text-base align-text-bottom mr-1">table</span>
+                Entradas ({entries.length})
+              </h3>
+              <div className="flex gap-2 items-center">
+                {filterPersonnel && <span className="text-[9px] text-gray-400 font-medium">Filtro: {filterPersonnel}</span>}
+                <button onClick={handleClearAll} disabled={entries.length === 0}
+                  className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                >Limpiar todo</button>
               </div>
-            ))}
-            <div className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Medicina</span>
-              <p className="text-lg font-black text-blue-700">{stats.types.medica || 0}</p>
             </div>
-            <div className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Enfermeria</span>
-              <p className="text-lg font-black text-rose-700">{stats.types.enfermeria || 0}</p>
-            </div>
-            <div className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Profesionales</span>
-              <p className="text-lg font-black text-gray-800">{Object.keys(stats.persons).length}</p>
-            </div>
-          </div>
-        )}
 
-        {/* Manual add form */}
-        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-4">
-          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm">add</span>
-            Añadir entrada manual
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-            <input type="date" value={formDate} onChange={e => setFormDate(e.target.value)}
-              className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all" />
-            <select value={formCategory} onChange={e => setFormCategory(e.target.value as any)}
-              className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
-              {Object.entries(CATEGORY_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
-            </select>
-            <select value={formType} onChange={e => setFormType(e.target.value as any)}
-              className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
-              {Object.entries(TYPE_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
-            </select>
-            <select value={formPersonnel} onChange={e => setFormPersonnel(e.target.value)}
-              className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
-              <option value="">-- Seleccionar --</option>
-              {ALL_PERSONNEL.map(name => <option key={name} value={name}>{name}</option>)}
-            </select>
-            <button onClick={handleAddManualEntry}
-              className="py-2 bg-forcall-900 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow hover:bg-black transition-all active:scale-95"
-            >Añadir</button>
+            {/* Stats summary */}
+            {entries.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                {Object.entries(stats.cats).map(([k, v]) => (
+                  <div key={k} className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{CATEGORY_LABELS[k] || k}</span>
+                    <p className="text-lg font-black text-gray-800">{v}</p>
+                  </div>
+                ))}
+                <div className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Medicina</span>
+                  <p className="text-lg font-black text-blue-700">{stats.types.medica || 0}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Enfermeria</span>
+                  <p className="text-lg font-black text-rose-700">{stats.types.enfermeria || 0}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Profesionales</span>
+                  <p className="text-lg font-black text-gray-800">{Object.keys(stats.persons).length}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Manual add form */}
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-4">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">add</span>
+                Añadir entrada manual
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+                <input type="date" value={formDate} onChange={e => setFormDate(e.target.value)}
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all" />
+                <select value={formCategory} onChange={e => setFormCategory(e.target.value as any)}
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
+                  {Object.entries(CATEGORY_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                </select>
+                <select value={formType} onChange={e => setFormType(e.target.value as any)}
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
+                  {Object.entries(TYPE_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                </select>
+                <select value={formPersonnel} onChange={e => setFormPersonnel(e.target.value)}
+                  className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
+                  <option value="">-- Seleccionar --</option>
+                  {ALL_PERSONNEL.map(name => <option key={name} value={name}>{name}</option>)}
+                </select>
+                <button onClick={handleAddManualEntry}
+                  className="py-2 bg-forcall-900 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow hover:bg-black transition-all active:scale-95"
+                >Añadir</button>
+              </div>
+            </div>
+
+            {/* Filter */}
+            {entries.length > 0 && (
+              <div className="mb-3">
+                <input type="text" value={filterPersonnel} onChange={e => setFilterPersonnel(e.target.value)}
+                  placeholder="Filtrar por profesional..."
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all" />
+              </div>
+            )}
+
+            {/* Table grouped by month */}
+            {entriesByMonth.length > 0 ? (
+              <div className="space-y-6">
+                {entriesByMonth.map(([monthKey, monthEntries]) => {
+                  const [y, m] = monthKey.split('-').map(Number);
+                  return (
+                    <div key={monthKey}>
+                      <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-sm text-forcall-600">calendar_month</span>
+                        {MONTHS[m - 1]} {y}
+                        <span className="text-[9px] font-bold text-gray-400 normal-case">({monthEntries.length} entradas)</span>
+                      </h4>
+                      <div className="overflow-x-auto rounded-xl border border-gray-100">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                              <th className="text-left py-2 px-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">Día</th>
+                              <th className="text-left py-2 px-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">Categoría</th>
+                              <th className="text-left py-2 px-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">Tipo</th>
+                              <th className="text-left py-2 px-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">Profesional</th>
+                              <th className="text-right py-2 px-2 text-[9px] font-black text-gray-500 uppercase tracking-widest"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {monthEntries.map(entry => (
+                              <tr key={entry.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                <td className="py-1.5 px-2">
+                                  <input type="date" value={entry.date} onChange={e => handleUpdateEntry(entry.id, 'date', e.target.value)}
+                                    className="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all" />
+                                </td>
+                                <td className="py-1.5 px-2">
+                                  <select value={entry.category} onChange={e => handleUpdateEntry(entry.id, 'category', e.target.value)}
+                                    className="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
+                                    {Object.entries(CATEGORY_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                                  </select>
+                                </td>
+                                <td className="py-1.5 px-2">
+                                  <select value={entry.type} onChange={e => handleUpdateEntry(entry.id, 'type', e.target.value)}
+                                    className="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
+                                    {Object.entries(TYPE_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                                  </select>
+                                </td>
+                                <td className="py-1.5 px-2">
+                                  <select value={entry.personnelName} onChange={e => handleUpdateEntry(entry.id, 'personnelName', e.target.value)}
+                                    className="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
+                                    {ALL_PERSONNEL.map(name => <option key={name} value={name}>{name}</option>)}
+                                  </select>
+                                </td>
+                                <td className="py-1.5 px-2 text-right">
+                                  <button onClick={() => handleRemoveEntry(entry.id)}
+                                    className="p-1 text-gray-400 hover:text-red-600 transition-colors">
+                                    <span className="material-symbols-outlined text-sm">remove_circle</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <span className="material-symbols-outlined text-3xl text-gray-200">table_rows</span>
+                <p className="text-xs font-bold text-gray-400 mt-2">
+                  {activeMethod === 'pdf'
+                    ? 'Sube un PDF y pulsa "Analizar" para extraer las entradas, o añádelas manualmente.'
+                    : 'Sube una imagen y pulsa "Analizar imagen con OCR" para extraer las entradas, o añádelas manualmente.'}
+                </p>
+              </div>
+            )}
+
+            {entries.length > 0 && (
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                <button onClick={handleAssignAll} disabled={isAssigning}
+                  className="flex-1 py-4 bg-forcall-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                >
+                  {isAssigning ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                      Asignando...
+                    </span>
+                  ) : `Asignar todo (${entries.length})`}
+                </button>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Filter */}
-        {entries.length > 0 && (
-          <div className="mb-3">
-            <input type="text" value={filterPersonnel} onChange={e => setFilterPersonnel(e.target.value)}
-              placeholder="Filtrar por profesional..."
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all" />
-          </div>
-        )}
-
-        {/* Table grouped by month */}
-        {entriesByMonth.length > 0 ? (
-          <div className="space-y-6">
-            {entriesByMonth.map(([monthKey, monthEntries]) => {
-              const [y, m] = monthKey.split('-').map(Number);
-              return (
-                <div key={monthKey}>
-                  <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm text-forcall-600">calendar_month</span>
-                    {MONTHS[m - 1]} {y}
-                    <span className="text-[9px] font-bold text-gray-400 normal-case">({monthEntries.length} entradas)</span>
-                  </h4>
-                  <div className="overflow-x-auto rounded-xl border border-gray-100">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="text-left py-2 px-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">Día</th>
-                          <th className="text-left py-2 px-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">Categoría</th>
-                          <th className="text-left py-2 px-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">Tipo</th>
-                          <th className="text-left py-2 px-2 text-[9px] font-black text-gray-500 uppercase tracking-widest">Profesional</th>
-                          <th className="text-right py-2 px-2 text-[9px] font-black text-gray-500 uppercase tracking-widest"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {monthEntries.map(entry => (
-                          <tr key={entry.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                            <td className="py-1.5 px-2">
-                              <input type="date" value={entry.date} onChange={e => handleUpdateEntry(entry.id, 'date', e.target.value)}
-                                className="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all" />
-                            </td>
-                            <td className="py-1.5 px-2">
-                              <select value={entry.category} onChange={e => handleUpdateEntry(entry.id, 'category', e.target.value)}
-                                className="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
-                                {Object.entries(CATEGORY_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
-                              </select>
-                            </td>
-                            <td className="py-1.5 px-2">
-                              <select value={entry.type} onChange={e => handleUpdateEntry(entry.id, 'type', e.target.value)}
-                                className="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
-                                {Object.entries(TYPE_LABELS).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
-                              </select>
-                            </td>
-                            <td className="py-1.5 px-2">
-                              <select value={entry.personnelName} onChange={e => handleUpdateEntry(entry.id, 'personnelName', e.target.value)}
-                                className="w-full px-2 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold outline-none focus:ring-2 focus:ring-forcall-500 transition-all">
-                                {ALL_PERSONNEL.map(name => <option key={name} value={name}>{name}</option>)}
-                              </select>
-                            </td>
-                            <td className="py-1.5 px-2 text-right">
-                              <button onClick={() => handleRemoveEntry(entry.id)}
-                                className="p-1 text-gray-400 hover:text-red-600 transition-colors">
-                                <span className="material-symbols-outlined text-sm">remove_circle</span>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <span className="material-symbols-outlined text-3xl text-gray-200">table_rows</span>
-            <p className="text-xs font-bold text-gray-400 mt-2">
-              {activeMethod === 'pdf'
-                ? 'Sube un PDF y pulsa "Analizar" para extraer las entradas, o añádelas manualmente.'
-                : 'Sube una imagen y pulsa "Analizar imagen con OCR" para extraer las entradas, o añádelas manualmente.'}
-            </p>
-          </div>
-        )}
-
-        {entries.length > 0 && (
-          <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
-            <button onClick={handleAssignAll} disabled={isAssigning}
-              className="flex-1 py-4 bg-forcall-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
-            >
-              {isAssigning ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                  Asignando...
-                </span>
-              ) : `Asignar todo (${entries.length})`}
-            </button>
-          </div>
-        )}
       </div>
 
       {notification && <NotificationToast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
