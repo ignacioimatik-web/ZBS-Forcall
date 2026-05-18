@@ -53,8 +53,14 @@ const App: React.FC = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const [forceShowLogin, setForceShowLogin] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
+  
+  // Check if we're on the /landing route
+  const isLandingRoute = window.location.pathname === '/landing';
+  
   const [showLanding, setShowLanding] = useState(() => {
-    // Show landing page for the first 10 visits
+    // Always show landing on /landing route
+    if (isLandingRoute) return true;
+    // Show landing page for the first 10 visits on main route
     const visitCount = parseInt(localStorage.getItem('zbsf_landing_visit_count') || '0', 10);
     return visitCount < 10;
   });
