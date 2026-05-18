@@ -54,8 +54,9 @@ const App: React.FC = () => {
   const [forceShowLogin, setForceShowLogin] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
   const [showLanding, setShowLanding] = useState(() => {
-    // Check if user has dismissed landing before in this session
-    return sessionStorage.getItem('zbsf_landing_dismissed') !== 'true';
+    // Show landing page for the first 10 visits
+    const visitCount = parseInt(localStorage.getItem('zbsf_landing_visit_count') || '0', 10);
+    return visitCount < 10;
   });
 
   const { guardias, addGuardia, updateGuardia, deleteGuardia, isLoading: guardiasLoading, refresh: refreshGuardias } = useGuardias();
@@ -414,7 +415,9 @@ const App: React.FC = () => {
     return (
       <LandingPage 
         onEnterApp={() => {
-          sessionStorage.setItem('zbsf_landing_dismissed', 'true');
+          // Increment visit count in localStorage
+          const currentCount = parseInt(localStorage.getItem('zbsf_landing_visit_count') || '0', 10);
+          localStorage.setItem('zbsf_landing_visit_count', String(currentCount + 1));
           setShowLanding(false);
         }} 
       />
