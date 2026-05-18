@@ -5,6 +5,7 @@ import { Dashboard } from './components/Dashboard';
 import { CalendariosView } from './components/CalendariosView';
 import { NotificationToast } from './components/NotificationToast';
 import { LoginScreen } from './components/LoginScreen';
+import { LandingPage } from './components/LandingPage';
 import { AvisosView } from './components/AvisosView';
 import { ChatView } from './components/ChatView';
 import { Footer } from './components/Footer';
@@ -52,6 +53,10 @@ const App: React.FC = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const [forceShowLogin, setForceShowLogin] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
+  const [showLanding, setShowLanding] = useState(() => {
+    // Check if user has dismissed landing before in this session
+    return sessionStorage.getItem('zbsf_landing_dismissed') !== 'true';
+  });
 
   const { guardias, addGuardia, updateGuardia, deleteGuardia, isLoading: guardiasLoading, refresh: refreshGuardias } = useGuardias();
   const { libranzas, addLibranza, updateLibranza, deleteLibranza, isLoading: libranzasLoading, refresh: refreshLibranzas } = useLibranzas();
@@ -402,6 +407,18 @@ const App: React.FC = () => {
   // Show loading spinner while auth initializes (only on first load)
   if (authLoading && !forceShowLogin && !loginAttempted) {
     return <AppLoader onTimeout={() => setForceShowLogin(true)} />;
+  }
+
+  // Show landing page if user hasn't dismissed it and isn't logged in
+  if (showLanding && !user) {
+    return (
+      <LandingPage 
+        onEnterApp={() => {
+          sessionStorage.setItem('zbsf_landing_dismissed', 'true');
+          setShowLanding(false);
+        }} 
+      />
+    );
   }
 
   // Show login screen if not authenticated
