@@ -440,7 +440,7 @@ const App: React.FC = () => {
             <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>
           </div>
         )}
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <main className="flex-1 w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div key={activeTab} className="animate-wave-in animate-stagger">
             {renderContent()}
           </div>

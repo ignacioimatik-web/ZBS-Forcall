@@ -85,6 +85,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [modalMonth, setModalMonth] = useState(new Date());
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 640 && window.innerWidth < 1024);
+  const [isWide, setIsWide] = useState(window.innerWidth >= 1536);
   const [slideEpoch, setSlideEpoch] = useState(0);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
   const touchStartX = useRef<number | null>(null);
@@ -112,6 +113,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
       const w = window.innerWidth;
       setIsMobile(w < 640);
       setIsTablet(w >= 640 && w < 1024);
+      setIsWide(w >= 1536);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -371,7 +373,7 @@ const startingEmptyCells = useMemo(() => {
             <div className="flex items-center gap-1 sm:gap-2">
               <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><span className="material-symbols-outlined text-gray-400">chevron_left</span></button>
               <div className="flex flex-col items-center min-w-[120px] sm:min-w-[180px]">
-                <h2 className="text-sm md:text-lg font-black text-gray-800 uppercase tracking-tighter text-center leading-none">
+                <h2 className="text-sm md:text-lg 2xl:text-xl font-black text-gray-800 uppercase tracking-tighter text-center leading-none">
                   {currentMonth.toLocaleDateString('es-ES', { month: 'long' })}
                 </h2>
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{currentMonth.getFullYear()}</span>
@@ -436,7 +438,7 @@ const startingEmptyCells = useMemo(() => {
       <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 md:gap-0 sm:min-w-[500px] md:min-w-0">
 
         {Array.from({ length: startingEmptyCells }).map((_, i) => (
-          <div key={`empty-${i}`} className="hidden sm:block min-h-[90px] md:min-h-[130px] 3xl:min-h-[150px] bg-gray-50/50 border-b border-r border-gray-100" />
+          <div key={`empty-${i}`} className="hidden sm:block min-h-[90px] md:min-h-[130px] 2xl:min-h-[170px] bg-gray-50/50 border-b border-r border-gray-100" />
         ))}
 {daysInMonth.map((date, i) => {
            const { events, holiday } = getEventsForDay(date);
@@ -457,7 +459,7 @@ const startingEmptyCells = useMemo(() => {
                </div>
             );
             return (
-<div key={i} className={`hidden sm:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[90px] md:min-h-[130px] 3xl:min-h-[150px] bg-white ${canManageActiveCategory ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => handleCellClick(date)}>
+<div key={i} className={`hidden sm:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[90px] md:min-h-[130px] 2xl:min-h-[170px] bg-white ${canManageActiveCategory ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => handleCellClick(date)}>
                  <div className="flex items-center gap-1">
 <span className={`text-sm font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
                     {hasError && <span className="material-symbols-outlined text-[10px] text-red-500" title="Conflicto">warning</span>}
@@ -483,7 +485,7 @@ const startingEmptyCells = useMemo(() => {
               <div 
               key={i} 
               onClick={() => handleCellClick(date)} 
-              className={`flex sm:flex-col gap-1 sm:gap-2 p-2 sm:p-3 border-b border-r border-gray-100 relative group sm:min-h-[90px] md:min-h-[130px] 3xl:min-h-[150px] bg-white transition-colors
+              className={`flex sm:flex-col gap-1 sm:gap-2 p-2 sm:p-3 border-b border-r border-gray-100 relative group sm:min-h-[90px] md:min-h-[130px] 2xl:min-h-[170px] bg-white transition-colors
                 ${isToday ? 'bg-blue-50/40' : ''} 
                 ${isFestivo ? 'bg-red-50/20' : ''} 
                 ${canManageActiveCategory && !swapMode ? 'cursor-pointer hover:bg-gray-50' : ''} 
@@ -509,8 +511,8 @@ const startingEmptyCells = useMemo(() => {
                 {isFestivo && <span className="hidden sm:block w-2 h-2 bg-red-400 rounded-full" title={holiday}></span>}
               </div>
               {events.length > 0 ? (
-                <div className="flex-1 space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
-                  {events.slice(0, isMobile ? 2 : isTablet ? 3 : 4).map((ev: CalendarEvent, idx) => {
+                <div className="flex-1 space-y-0.5 max-h-[300px] 2xl:max-h-[400px] overflow-y-auto scrollbar-thin">
+                  {events.slice(0, isMobile ? 2 : isTablet ? 3 : isWide ? 6 : 4).map((ev: CalendarEvent, idx) => {
                     const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
                     const chipStyle = getEventStyle(ev);
                     const isInteractive = canDelete && !swapMode && !bulkMode;
@@ -521,9 +523,9 @@ const startingEmptyCells = useMemo(() => {
                      </button>
                     );
                   })}
-                  {events.length > (isMobile ? 2 : isTablet ? 3 : 4) && (
+                  {events.length > (isMobile ? 2 : isTablet ? 3 : isWide ? 6 : 4) && (
                     <div className="h-[26px] px-2 rounded-lg text-[10px] font-bold text-gray-400 flex items-center justify-center border border-dashed border-gray-200">
-                      +{events.length - (isMobile ? 2 : isTablet ? 3 : 4)} m&aacute;s
+                      +{events.length - (isMobile ? 2 : isTablet ? 3 : isWide ? 6 : 4)} m&aacute;s
                     </div>
                   )}
                 </div>
