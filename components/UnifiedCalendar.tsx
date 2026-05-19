@@ -83,8 +83,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
   const [showCountsModal, setShowCountsModal] = useState(false);
   const [modalMonth, setModalMonth] = useState(new Date());
-  const [isPhone, setIsPhone] = useState(window.innerWidth < 420);
-  const [isPhoneWide, setIsPhoneWide] = useState(window.innerWidth >= 420 && window.innerWidth < 640);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 640 && window.innerWidth < 1024);
   const [isWide, setIsWide] = useState(window.innerWidth >= 1536);
   const [slideEpoch, setSlideEpoch] = useState(0);
@@ -112,8 +111,7 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   useEffect(() => {
     const handleResize = () => {
       const w = window.innerWidth;
-      setIsPhone(w < 420);
-      setIsPhoneWide(w >= 420 && w < 640);
+      setIsMobile(w < 640);
       setIsTablet(w >= 640 && w < 1024);
       setIsWide(w >= 1536);
     };
@@ -361,8 +359,8 @@ const startingEmptyCells = useMemo(() => {
         .anim-from-left { animation: slideFromLeft 280ms cubic-bezier(0.16, 1, 0.3, 1); }
       `}</style>
       <div className="flex items-stretch gap-0 md:gap-1">
-      {!isPhone && !isPhoneWide && (
-        <button onClick={() => changeMonth(-1)} aria-label="Mes anterior"
+        {!isMobile && (
+          <button onClick={() => changeMonth(-1)} aria-label="Mes anterior"
             className="flex flex-col items-center justify-center w-9 md:w-11 rounded-2xl bg-white border border-gray-200 shadow-sm text-gray-300 hover:text-forcall-600 hover:border-forcall-200 hover:shadow-md active:scale-95 transition-all cursor-pointer"
           >
             <span className="material-symbols-outlined text-lg md:text-xl">chevron_left</span>
@@ -386,7 +384,7 @@ const startingEmptyCells = useMemo(() => {
           )}
           <div className="flex items-center gap-2">
             {selectedProfessional !== 'all' && (
-              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1.5 rounded-lg hidden xs:flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1.5 rounded-lg hidden sm:flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-sm">badge</span>
                 {professionalMonthCount} asignaciones
               </span>
@@ -425,9 +423,9 @@ const startingEmptyCells = useMemo(() => {
       <div key={slideEpoch} className={`${slideEpoch > 0 ? (slideDirection === 'right' ? 'anim-from-right' : 'anim-from-left') : ''} overflow-x-auto`}>
       <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
         {[t('unifiedCalendar.mon'), t('unifiedCalendar.tue'), t('unifiedCalendar.wed'), t('unifiedCalendar.thu'), t('unifiedCalendar.fri'), t('unifiedCalendar.sat'), t('unifiedCalendar.sun')].map(d => (
-          <div key={d} className="text-center text-[10px] xs:text-[8px] font-bold text-gray-500 uppercase tracking-wider py-2.5 xs:py-1.5 border-r border-gray-200 last:border-r-0">
-            <span className="xs:hidden">{d.slice(0, 1)}</span>
-            <span className="hidden xs:inline">{d}</span>
+          <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider py-2.5 border-r border-gray-200 last:border-r-0">
+            <span className="sm:hidden">{d.slice(0, 1)}</span>
+            <span className="hidden sm:inline">{d}</span>
           </div>
         ))}
       </div>
@@ -437,10 +435,10 @@ const startingEmptyCells = useMemo(() => {
           <span className="text-sm font-medium">No hay asignaciones de {selectedProfessional} en este mes.</span>
         </div>
       )}
-      <div className="grid grid-cols-1 xs:grid-cols-7 gap-3 md:gap-0 xs:min-w-[400px] md:min-w-0">
+      <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 md:gap-0 sm:min-w-[500px] md:min-w-0">
 
         {Array.from({ length: startingEmptyCells }).map((_, i) => (
-          <div key={`empty-${i}`} className="hidden xs:block min-h-[90px] xs:min-h-[52px] md:min-h-[130px] 2xl:min-h-[170px] bg-gray-50/50 border-b border-r border-gray-100" />
+          <div key={`empty-${i}`} className="hidden sm:block min-h-[90px] md:min-h-[130px] 2xl:min-h-[170px] bg-gray-50/50 border-b border-r border-gray-100" />
         ))}
 {daysInMonth.map((date, i) => {
            const { events, holiday } = getEventsForDay(date);
@@ -453,15 +451,15 @@ const startingEmptyCells = useMemo(() => {
            const hasWarning = validation && validation.hasWarning;
           
              if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
-              if (isPhone) return (
- <div key={i} className="flex xs:hidden items-center gap-3 px-4 py-2 border-b border-gray-100 bg-white" onClick={() => handleCellClick(date)}>
+              if (isMobile) return (
+<div key={i} className="flex sm:hidden items-center gap-3 px-4 py-2 border-b border-gray-100 bg-white" onClick={() => handleCellClick(date)}>
                  <span className={`text-sm font-semibold w-7 shrink-0 ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-10 shrink-0">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
                  <span className="text-[10px] text-gray-300 italic">—</span>
                </div>
             );
             return (
-<div key={i} className={`hidden xs:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[90px] xs:min-h-[52px] md:min-h-[130px] 2xl:min-h-[170px] bg-white ${canManageActiveCategory ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => handleCellClick(date)}>
+<div key={i} className={`hidden sm:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[90px] md:min-h-[130px] 2xl:min-h-[170px] bg-white ${canManageActiveCategory ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => handleCellClick(date)}>
                  <div className="flex items-center gap-1">
 <span className={`text-sm font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
                     {hasError && <span className="material-symbols-outlined text-[10px] text-red-500" title="Conflicto">warning</span>}
@@ -487,7 +485,7 @@ const startingEmptyCells = useMemo(() => {
               <div 
               key={i} 
               onClick={() => handleCellClick(date)} 
-              className={`flex xs:flex-col gap-1 xs:gap-1 p-1.5 xs:p-2 sm:p-3 border-b border-r border-gray-100 relative group xs:min-h-[52px] sm:min-h-[90px] md:min-h-[130px] 2xl:min-h-[170px] bg-white transition-colors
+              className={`flex sm:flex-col gap-1 sm:gap-2 p-2 sm:p-3 border-b border-r border-gray-100 relative group sm:min-h-[90px] md:min-h-[130px] 2xl:min-h-[170px] bg-white transition-colors
                 ${isToday ? 'bg-blue-50/40' : ''} 
                 ${isFestivo ? 'bg-red-50/20' : ''} 
                 ${canManageActiveCategory && !swapMode ? 'cursor-pointer hover:bg-gray-50' : ''} 
@@ -495,9 +493,9 @@ const startingEmptyCells = useMemo(() => {
             >
               <div className="flex items-center justify-between min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className={`text-sm xs:text-[11px] font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 xs:w-5 h-7 xs:h-5 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
+                  <span className={`text-sm font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
                   {noteDates.includes(date.toDateString()) && (
-                    <span className="hidden xs:inline material-symbols-outlined text-amber-500 text-base ml-0.5">sticky_note_2</span>
+                    <span className="material-symbols-outlined text-amber-500 text-base ml-0.5">sticky_note_2</span>
                   )}
                   {onCellNoteClick && (
                     <button
@@ -505,29 +503,29 @@ const startingEmptyCells = useMemo(() => {
                       className={`p-0.5 rounded transition-all opacity-0 group-hover:opacity-100 ${noteDates.includes(date.toDateString()) ? 'text-amber-500 opacity-100' : 'text-gray-300 hover:text-amber-400'}`}
                       aria-label={noteDates.includes(date.toDateString()) ? 'Editar nota' : 'Añadir nota'}
                     >
-                      <span className="hidden xs:inline material-symbols-outlined text-sm">{noteDates.includes(date.toDateString()) ? 'edit_note' : 'note_add'}</span>
+                      <span className="material-symbols-outlined text-sm">{noteDates.includes(date.toDateString()) ? 'edit_note' : 'note_add'}</span>
                     </button>
                   )}
                 </div>
-                <span className="xs:hidden text-[10px] font-bold text-gray-400 uppercase tracking-wider">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
-                {isFestivo && <span className="hidden xs:block w-2 h-2 bg-red-400 rounded-full" title={holiday}></span>}
+                <span className="sm:hidden text-[10px] font-bold text-gray-400 uppercase tracking-wider">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
+                {isFestivo && <span className="hidden sm:block w-2 h-2 bg-red-400 rounded-full" title={holiday}></span>}
               </div>
               {events.length > 0 ? (
                 <div className="flex-1 space-y-0.5 max-h-[300px] 2xl:max-h-[400px] overflow-y-auto scrollbar-thin">
-                  {events.slice(0, isPhone ? 1 : isPhoneWide ? 2 : isTablet ? 3 : isWide ? 6 : 4).map((ev: CalendarEvent, idx) => {
+                  {events.slice(0, isMobile ? 2 : isTablet ? 3 : isWide ? 6 : 4).map((ev: CalendarEvent, idx) => {
                     const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
                     const chipStyle = getEventStyle(ev);
                     const isInteractive = canDelete && !swapMode && !bulkMode;
                     return (
-<button key={idx} onClick={(e) => handleEntryClick(e, ev)} title={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`} className={`w-full text-left h-[26px] xs:h-[18px] px-1.5 xs:px-1 rounded-lg text-[10px] xs:text-[7px] font-semibold border leading-none flex items-center gap-0.5 transition-all hover:brightness-97 active:scale-[0.98] ${chipStyle} ${isInteractive ? 'cursor-pointer' : ''} ${swapMode ? 'cursor-pointer active:scale-95' : ''} ${selectedProfessional !== 'all' ? (ev.personnelName === selectedProfessional ? 'ring-2 ring-blue-400 ring-inset' : 'opacity-35') : ''}`} aria-label={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`}>
+<button key={idx} onClick={(e) => handleEntryClick(e, ev)} title={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`} className={`w-full text-left h-[26px] px-1.5 rounded-lg text-[10px] font-semibold border leading-none flex items-center gap-0.5 transition-all hover:brightness-97 active:scale-[0.98] ${chipStyle} ${isInteractive ? 'cursor-pointer' : ''} ${swapMode ? 'cursor-pointer active:scale-95' : ''} ${selectedProfessional !== 'all' ? (ev.personnelName === selectedProfessional ? 'ring-2 ring-blue-400 ring-inset' : 'opacity-35') : ''}`} aria-label={`${ev._kind === 'guardia' ? 'Guardia' : ev._kind === 'libranza' ? 'Libranza' : ev._kind === 'dobla' ? 'Refuerzo' : ev._kind === 'meeting' ? 'Reunión' : 'Vacaciones'}: ${ev.personnelName || ev.title}`}>
                        <ShiftBadge kind={ev.kind} type={ev.type} />
                        <span className="flex-auto overflow-hidden">{ev.personnelName || ev.title}</span>
                      </button>
                     );
                   })}
-                  {events.length > (isPhone ? 1 : isPhoneWide ? 2 : isTablet ? 3 : isWide ? 6 : 4) && (
-                    <div className="h-[26px] xs:h-[18px] px-2 rounded-lg text-[10px] xs:text-[7px] font-bold text-gray-400 flex items-center justify-center border border-dashed border-gray-200">
-                      +{events.length - (isPhone ? 1 : isPhoneWide ? 2 : isTablet ? 3 : isWide ? 6 : 4)} m&aacute;s
+                  {events.length > (isMobile ? 2 : isTablet ? 3 : isWide ? 6 : 4) && (
+                    <div className="h-[26px] px-2 rounded-lg text-[10px] font-bold text-gray-400 flex items-center justify-center border border-dashed border-gray-200">
+                      +{events.length - (isMobile ? 2 : isTablet ? 3 : isWide ? 6 : 4)} m&aacute;s
                     </div>
                   )}
                 </div>
@@ -653,7 +651,7 @@ const startingEmptyCells = useMemo(() => {
       )}
     </div>
 
-        {!isPhone && !isPhoneWide && (
+        {!isMobile && (
           <button onClick={() => changeMonth(1)} aria-label="Mes siguiente"
             className="flex flex-col items-center justify-center w-9 md:w-11 rounded-2xl bg-white border border-gray-200 shadow-sm text-gray-300 hover:text-forcall-600 hover:border-forcall-200 hover:shadow-md active:scale-95 transition-all cursor-pointer"
           >
