@@ -81,7 +81,7 @@ base.push({ id: 'Medicina', labelKey: 'calendarios.guardiaM', icon: 'stethoscope
   };
 
   const sidebarContent = (
-    <aside className="flex flex-col min-h-screen w-60 xl:w-64 2xl:w-72 3xl:w-80 shadow-xl" style={{ backgroundColor: sidebarBg || '#0c4a6e' }}>
+    <aside className="flex flex-col flex-1 w-60 xl:w-64 2xl:w-72 3xl:w-80 shadow-xl" style={{ backgroundColor: sidebarBg || '#0c4a6e' }}>
       <div className="p-5 border-b border-white/10 flex items-center gap-3">
         <span className="material-symbols-outlined text-3xl text-earth-100 shrink-0">landscape</span>
         <div className="flex-1 min-w-0">
@@ -158,14 +158,14 @@ base.push({ id: 'Medicina', labelKey: 'calendarios.guardiaM', icon: 'stethoscope
   return (
     <>
       {/* Desktop: always visible */}
-      <div className="hidden md:block shrink-0">
+      <div className="hidden md:flex md:flex-col shrink-0">
         {sidebarContent}
       </div>
       {/* Mobile/tablet: overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCloseSidebar} />
-          <div className="absolute left-0 top-0 bottom-0 shadow-2xl animate-slide-in-left">
+          <div className="absolute left-0 top-0 bottom-0 shadow-2xl animate-slide-in-left flex flex-col">
             {sidebarContent}
           </div>
         </div>
