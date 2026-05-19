@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { useT } from '../lib/i18n';
 import type { User } from '../types';
@@ -9,6 +8,8 @@ interface HeaderProps {
   onLogout: () => void;
   userName?: string;
   user: User | null;
+  onToggleSidebar?: () => void;
+  sidebarOpen?: boolean;
 }
 
 const tabLabels: Record<string, string> = {
@@ -29,7 +30,7 @@ const tabIcons: Record<string, string> = {
   Avisos: 'notifications_active',
 };
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogout, userName, user }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onLogout, userName, user, onToggleSidebar, sidebarOpen }) => {
   const { t } = useT();
   const isAdmin = user?.staffGroup == null;
   const isCoord = user?.role === 'Coordinador';
@@ -53,44 +54,62 @@ const tabs = useMemo(() => ['Unificado', 'Turnos', 'IAassist', 'Chat', 'Dictado'
 
   return (
     <>
-      {/* Desktop header: compact white bar */}
-      <header className="hidden md:flex items-center justify-between h-14 px-6 bg-white border-b border-gray-200 sticky top-0 z-40">
-        <h2 className="text-lg font-bold text-gray-900 tracking-tight">{pageTitle}</h2>
-        <div className="flex items-center gap-4">
+      {/* Desktop header: compact white bar with hamburger */}
+      <header className="hidden md:flex items-center justify-between h-12 lg:h-14 px-4 lg:px-6 xl:px-8 bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="flex items-center gap-3 min-w-0">
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
+              className="lg:hidden p-2 -ml-1 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all"
+              title="Menú"
+            >
+              <span className="material-symbols-outlined text-xl">{sidebarOpen ? 'close' : 'menu'}</span>
+            </button>
+          )}
+          <h2 className="text-base lg:text-lg font-bold text-gray-900 tracking-tight truncate">{pageTitle}</h2>
+        </div>
+        <div className="flex items-center gap-4 shrink-0">
           {userName && (
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <span className="material-symbols-outlined text-lg text-gray-400">person</span>
-              <span className="font-medium">{userName}</span>
+              <span className="font-medium hidden sm:inline">{userName}</span>
               {roleLabel && <span className="text-[10px] font-bold text-forcall-600 bg-forcall-50 px-2 py-0.5 rounded-md uppercase tracking-wider">{roleLabel}</span>}
             </div>
           )}
-          
+
           <button
             onClick={onLogout}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all"
             title={t('header.logout')}
           >
             <span className="material-symbols-outlined text-lg">logout</span>
-            <span>{t('header.exit')}</span>
+            <span className="hidden sm:inline">{t('header.exit')}</span>
           </button>
         </div>
       </header>
 
-      {/* Mobile: gradient top bar + bottom tab nav (unchanged) */}
-      <header className="md:hidden bg-gradient-to-r from-forcall-900 via-forcall-800 to-earth-900 text-white shadow-lg sticky top-0 z-50">
-        <div className="flex justify-between items-center h-14 px-4">
-          <div className="flex items-center gap-2">
+      {/* Mobile: gradient top bar + bottom tab nav */}
+      <header className="md:hidden bg-gradient-to-r from-forcall-900 via-forcall-800 to-earth-900 text-white shadow-lg sticky top-0 z-40">
+        <div className="flex justify-between items-center h-14 px-3">
+          <div className="flex items-center gap-1">
+            {onToggleSidebar && (
+              <button
+                onClick={onToggleSidebar}
+                className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all"
+                title="Menú"
+              >
+                <span className="material-symbols-outlined text-2xl">{sidebarOpen ? 'close' : 'menu'}</span>
+              </button>
+            )}
             <span className="material-symbols-outlined text-2xl text-earth-100">landscape</span>
-            <div>
-              <h1 className="font-bold text-base tracking-tight">{t('header.appName')}</h1>
-            </div>
+            <h1 className="font-bold text-base tracking-tight ml-1">{t('header.appName')}</h1>
           </div>
-          <button 
+          <button
             onClick={onLogout}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-red-200 hover:text-white hover:bg-red-900/40 transition-all"
+            className="flex items-center gap-1 p-2 rounded-lg text-xs font-medium text-red-200 hover:text-white hover:bg-red-900/40 transition-all"
             title={t('header.logout')}
           >
-            <span className="material-symbols-outlined text-lg">logout</span>
+            <span className="material-symbols-outlined text-xl">logout</span>
           </button>
         </div>
 
@@ -101,10 +120,12 @@ const tabs = useMemo(() => ['Unificado', 'Turnos', 'IAassist', 'Chat', 'Dictado'
               role="tab"
               aria-selected={activeTab === tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex flex-col items-center p-1 min-w-[70px] ${activeTab === tab ? 'text-white' : 'text-forcall-300'}`}
+              className={`flex flex-col items-center px-2 min-w-[64px] sm:min-w-[72px] min-h-[48px] justify-center ${
+                activeTab === tab ? 'text-white' : 'text-forcall-300'
+              }`}
             >
-              <span className="material-symbols-outlined text-lg">{tabIcons[tab]}</span>
-              <span className="whitespace-nowrap text-[10px] uppercase font-black tracking-tighter">{t(tabLabels[tab])}</span>
+              <span className="material-symbols-outlined text-lg sm:text-xl">{tabIcons[tab]}</span>
+              <span className="whitespace-nowrap text-[10px] sm:text-[11px] uppercase font-black tracking-tighter mt-0.5">{t(tabLabels[tab])}</span>
             </button>
           ))}
         </div>

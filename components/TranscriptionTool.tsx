@@ -283,7 +283,7 @@ if (error && !errorMessage) {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-[400px]">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col min-h-[200px] md:h-[400px]">
         <div className="px-5 py-3 border-b border-gray-100 flex justify-between items-center no-print">
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('transcription.originalTranscript')}</span>
           <button onClick={saveCurrentPdf} className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[10px] font-black uppercase tracking-wider">
@@ -343,10 +343,10 @@ if (error && !errorMessage) {
                     <p className="text-[10px] text-gray-500 truncate">{record.text.replace(/\n/g, ' ').slice(0, 120)}</p>
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button onClick={() => saveAsPDF(record)} className="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all active:scale-95">
+                    <button onClick={() => saveAsPDF(record)} className="opacity-60 md:opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 bg-gray-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all active:scale-95">
                       <span className="material-symbols-outlined text-[10px] align-middle">download</span> PDF
                     </button>
-                    <button onClick={() => handleDelete(record.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title={t('common.delete')}>
+                    <button onClick={() => handleDelete(record.id)} className="opacity-60 md:opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title={t('common.delete')}>
                       <span className="material-symbols-outlined text-sm">delete</span>
                     </button>
                   </div>

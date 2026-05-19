@@ -293,8 +293,8 @@ export const AvisosView: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 2xl:grid-cols-12 gap-6 items-start">
-        <section className="2xl:col-span-8 space-y-6 relative z-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <section className="lg:col-span-8 space-y-6 relative z-10">
           <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/20 shadow-lg shadow-black/5 overflow-hidden">
             <div className="px-6 py-4 bg-white/40 backdrop-blur-sm border-b border-white/20 flex items-center justify-between gap-4">
               <div>
@@ -401,7 +401,7 @@ export const AvisosView: React.FC = () => {
           </div>
         </section>
 
-        <aside className="2xl:col-span-4 space-y-6 relative z-10">
+        <aside className="lg:col-span-4 space-y-6 relative z-10">
           <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/20 shadow-lg shadow-black/5 overflow-hidden">
             <div className="px-6 py-4 bg-white/40 backdrop-blur-sm border-b border-white/20">
               <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">{t('avisos.teletype')}</p>

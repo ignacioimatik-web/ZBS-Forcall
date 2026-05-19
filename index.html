@@ -21,6 +21,9 @@
       tailwind.config = {
         theme: {
           extend: {
+            screens: {
+              '3xl': '1920px',
+            },
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
             },
@@ -107,6 +110,24 @@
       .animate-stagger > *:nth-child(13) { animation-delay: 0.72s; }
       .animate-stagger > *:nth-child(14) { animation-delay: 0.78s; }
       .animate-stagger > *:nth-child(15) { animation-delay: 0.84s; }
+
+      @keyframes slide-in-left {
+        from { transform: translateX(-100%); }
+        to   { transform: translateX(0); }
+      }
+      .animate-slide-in-left {
+        animation: slide-in-left 0.25s ease-out forwards;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
 
       /* ── Background transition effects ── */
       @keyframes eff-gradient {
@@ -319,13 +340,169 @@
         animation: eff-shimmer 3s ease-in-out infinite reverse;
       }
 
+      /* ── Fire ── */
+      @keyframes eff-fire {
+        0%   { transform: translateY(0) scaleY(1); }
+        50%  { transform: translateY(-4%) scaleY(1.06); }
+        100% { transform: translateY(0) scaleY(1); }
+      }
+      @keyframes eff-fire2 {
+        0%   { transform: translateY(0) scale(1); opacity: 0.3; }
+        50%  { transform: translateY(-6%) scale(1.03); opacity: 0.5; }
+        100% { transform: translateY(0) scale(1); opacity: 0.3; }
+      }
+      .eff-fire .eff-bg {
+        background: linear-gradient(0deg, var(--ec1) 0%, var(--ec2) 40%, transparent 70%);
+        opacity: 0.2;
+      }
+      .eff-fire .eff-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 100%, var(--ec3) 0%, transparent 60%);
+        animation: eff-fire 4s ease-in-out infinite;
+      }
+      .eff-fire .eff-bg > div:nth-child(1) {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 30% 100%, var(--ec2) 0%, transparent 45%);
+        animation: eff-fire2 3.5s ease-in-out infinite;
+      }
+      .eff-fire .eff-bg > div:nth-child(2) {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 70% 100%, var(--ec1) 0%, transparent 40%);
+        animation: eff-fire2 4.5s ease-in-out infinite 1s;
+      }
+
+      /* ── Rain ── */
+      @keyframes eff-rain {
+        0%   { background-position: 0% -200%; }
+        100% { background-position: 0% 200%; }
+      }
+      .eff-rain .eff-bg {
+        background: linear-gradient(180deg, var(--ec3), var(--ec2), var(--ec1));
+        opacity: 0.12;
+      }
+      .eff-rain .eff-bg::after {
+        content: '';
+        position: absolute;
+        inset: -100% 0;
+        height: 300%;
+        background: repeating-linear-gradient(10deg, transparent 0px, transparent 3px, rgba(255,255,255,0.12) 3px, rgba(255,255,255,0.12) 4px);
+        animation: eff-rain 1s linear infinite;
+      }
+      .eff-rain .eff-bg > div:nth-child(1) {
+        position: absolute;
+        inset: -100% 0;
+        height: 300%;
+        background: repeating-linear-gradient(-8deg, transparent 0px, transparent 4px, rgba(255,255,255,0.08) 4px, rgba(255,255,255,0.08) 5px);
+        animation: eff-rain 1.3s linear infinite 0.3s;
+      }
+      .eff-rain .eff-bg > div:nth-child(2) {
+        position: absolute;
+        inset: -100% 0;
+        height: 300%;
+        background: repeating-linear-gradient(20deg, transparent 0px, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 3px);
+        animation: eff-rain 0.8s linear infinite 0.5s;
+      }
+
+      /* ── Waves ── */
+      @keyframes eff-wave {
+        0%   { transform: translateX(-25%) skewY(0deg); }
+        50%  { transform: translateX(-5%) skewY(0.5deg); }
+        100% { transform: translateX(-25%) skewY(0deg); }
+      }
+      @keyframes eff-wave2 {
+        0%   { transform: translateX(15%) skewY(0deg); }
+        50%  { transform: translateX(-5%) skewY(-0.5deg); }
+        100% { transform: translateX(15%) skewY(0deg); }
+      }
+      .eff-waves .eff-bg {
+        background: linear-gradient(180deg, var(--ec1), var(--ec2));
+        opacity: 0.16;
+      }
+      .eff-waves .eff-bg::after {
+        content: '';
+        position: absolute;
+        width: 140%;
+        height: 28%;
+        bottom: 32%;
+        left: -20%;
+        background: var(--ec3);
+        border-radius: 45%;
+        animation: eff-wave 8s ease-in-out infinite;
+        opacity: 0.18;
+      }
+      .eff-waves .eff-bg > div:nth-child(1) {
+        position: absolute;
+        width: 150%;
+        height: 22%;
+        bottom: 16%;
+        left: -25%;
+        background: var(--ec2);
+        border-radius: 40%;
+        animation: eff-wave2 10s ease-in-out infinite;
+        opacity: 0.14;
+      }
+      .eff-waves .eff-bg > div:nth-child(2) {
+        position: absolute;
+        width: 130%;
+        height: 18%;
+        bottom: 4%;
+        left: -15%;
+        background: var(--ec1);
+        border-radius: 40%;
+        animation: eff-wave 7s ease-in-out infinite 2s;
+        opacity: 0.18;
+      }
+
+      /* ── Pulse ── */
+      @keyframes eff-pulse-ring {
+        0%   { transform: scale(0); opacity: 0.5; }
+        100% { transform: scale(3); opacity: 0; }
+      }
+      @keyframes eff-pulse-bg {
+        0%   { background-size: 100% 100%; opacity: 0.14; }
+        50%  { background-size: 160% 160%; opacity: 0.22; }
+        100% { background-size: 100% 100%; opacity: 0.14; }
+      }
+      .eff-pulse .eff-bg {
+        background: radial-gradient(circle at 50% 50%, var(--ec1), var(--ec3));
+        animation: eff-pulse-bg 6s ease-in-out infinite;
+      }
+      .eff-pulse .eff-bg > div {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 28%;
+        height: 28%;
+        margin-left: -14%;
+        margin-top: -14%;
+        border-radius: 50%;
+        border: 2px solid var(--ec2);
+        pointer-events: none;
+      }
+      .eff-pulse .eff-bg > div:nth-child(1) {
+        animation: eff-pulse-ring 3s ease-out infinite;
+      }
+      .eff-pulse .eff-bg > div:nth-child(2) {
+        animation: eff-pulse-ring 3s ease-out infinite 1s;
+      }
+      .eff-pulse .eff-bg > div:nth-child(3) {
+        animation: eff-pulse-ring 3s ease-out infinite 2s;
+      }
+
       /* ── Intensity modifiers ── */
       body.eff-low .eff-bg,
-      body.eff-low .eff-bg > div { opacity: 0.04 !important; }
-      body.eff-low .eff-bg::after { opacity: 0.03 !important; }
+      body.eff-low .eff-bg > div { opacity: 0.03 !important; }
+      body.eff-low .eff-bg::after { opacity: 0.02 !important; }
+      body.eff-medium .eff-bg,
+      body.eff-medium .eff-bg > div { opacity: 0.16 !important; }
+      body.eff-medium .eff-bg::after { opacity: 0.13 !important; }
       body.eff-high .eff-bg,
-      body.eff-high .eff-bg > div { opacity: 0.22 !important; }
-      body.eff-high .eff-bg::after { opacity: 0.2 !important; }
+      body.eff-high .eff-bg > div { opacity: 0.3 !important; }
+      body.eff-high .eff-bg::after { opacity: 0.26 !important; }
 
 @media print {
          .no-print,

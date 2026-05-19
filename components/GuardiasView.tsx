@@ -186,23 +186,24 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
       </div>
 
       {/* Calendario grid */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-x-auto">
         {/* Cabecera días */}
-        <div className="hidden md:grid md:grid-cols-7 bg-gray-50 border-b border-gray-200">
+        <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
           {[
             t('guardias.dayMon'), t('guardias.dayTue'), t('guardias.dayWed'),
             t('guardias.dayThu'), t('guardias.dayFri'), t('guardias.daySat'), t('guardias.daySun')
           ].map(d => (
             <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider py-2.5 border-r border-gray-200 last:border-r-0">
-              {d}
+              <span className="hidden sm:inline">{d}</span>
+              <span className="sm:hidden">{d.slice(0, 1)}</span>
             </div>
           ))}
         </div>
 
         {/* Celdas */}
-        <div className="grid grid-cols-7 gap-0">
+        <div className="grid grid-cols-7 gap-0 min-w-[350px]">
           {Array.from({ length: startingEmptyCells }).map((_, i) => (
-            <div key={`empty-${i}`} className="hidden md:block min-h-[120px] bg-gray-50/50 border-b border-r border-gray-100" />
+            <div key={`empty-${i}`} className="hidden md:block min-h-[80px] md:min-h-[120px] bg-gray-50/50 border-b border-r border-gray-100" />
           ))}
 
           {daysInMonth.map((date, i) => {
@@ -258,16 +259,16 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                          <ShiftBadge kind="guardia" type={g.type} />
                          <span className="whitespace-nowrap">{g.personnelName}</span>
                           {canEdit && (
-                           <button
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               setDeleteTarget(g);
-                             }}
-                             className="ml-auto opacity-0 group-hover:opacity-100 hover:text-red-600 transition-opacity shrink-0"
-                             aria-label="Eliminar guardia"
-                           >
-                             <span className="material-symbols-outlined text-[12px]">close</span>
-                           </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget(g);
+                              }}
+                              className="ml-auto opacity-60 md:opacity-0 group-hover:opacity-100 hover:text-red-600 transition-opacity shrink-0"
+                              aria-label="Eliminar guardia"
+                            >
+                              <span className="material-symbols-outlined text-[12px]">close</span>
+                            </button>
                         )}
                       </div>
                     ))

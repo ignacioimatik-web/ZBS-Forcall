@@ -60,6 +60,7 @@ const App: React.FC = () => {
   const { meetings, addMeeting, updateMeeting, deleteMeeting, isLoading: meetingsLoading, refresh: refreshMeetings } = useMeetings();
 
   const [activeTab, setActiveTab] = useState('Unificado');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [manualHolidays, setManualHolidays] = useState<ManualHoliday[]>([]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [appSettings, setAppSettings] = useState<AppSettings>(loadSettings);
@@ -431,9 +432,9 @@ const App: React.FC = () => {
           {appSettings.effect === 'particles' && <><div /><div /></>}
         </div>
       )}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} guardiaSubCategory={guardiaSub} onGuardiaSubCategoryChange={setGuardiaSub} user={user} userGroup={appUserGroup} sidebarBg={sc.sidebar} />
+      <Sidebar activeTab={activeTab} setActiveTab={(tab) => { setActiveTab(tab); setMobileSidebarOpen(false); }} guardiaSubCategory={guardiaSub} onGuardiaSubCategoryChange={(sub) => { setGuardiaSub(sub); setMobileSidebarOpen(false); }} user={user} userGroup={appUserGroup} sidebarBg={sc.sidebar} sidebarOpen={mobileSidebarOpen} onCloseSidebar={() => setMobileSidebarOpen(false)} />
       <div className="flex-1 min-h-screen flex flex-col relative z-10 eff-content">
-        <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} userName={user?.name} user={user} />
+        <Header activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => handleLogout()} userName={user?.name} user={user} onToggleSidebar={() => setMobileSidebarOpen(prev => !prev)} sidebarOpen={mobileSidebarOpen} />
         {isDataLoading && (
           <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-forcall-100">
             <div className="h-full bg-forcall-600 animate-pulse" style={{ width: '40%', animation: 'pulse 1.5s ease-in-out infinite' }}></div>

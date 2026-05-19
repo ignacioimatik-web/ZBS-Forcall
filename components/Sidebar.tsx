@@ -11,6 +11,8 @@ interface SidebarProps {
   user: User | null;
   userGroup?: 'medico' | 'enfermeria' | 'both';
   sidebarBg?: string;
+  sidebarOpen?: boolean;
+  onCloseSidebar?: () => void;
 }
 
 const tabLabels: Record<string, string> = {
@@ -31,7 +33,7 @@ const tabIcons: Record<string, string> = {
   Avisos: 'notifications_active',
 };
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guardiaSubCategory, onGuardiaSubCategoryChange, user, userGroup, sidebarBg }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, guardiaSubCategory, onGuardiaSubCategoryChange, user, userGroup, sidebarBg, sidebarOpen, onCloseSidebar }) => {
   const { t } = useT();
   const isAdmin = user?.staffGroup == null;
   const isCoord = user?.role === 'Coordinador';
@@ -78,16 +80,19 @@ base.push({ id: 'Medicina', labelKey: 'calendarios.guardiaM', icon: 'stethoscope
     setActiveTab('Turnos');
   };
 
-  return (
-    <aside className="hidden md:flex md:flex-col min-h-screen w-60 z-50 shadow-xl" style={{ backgroundColor: sidebarBg || '#0c4a6e' }}>
-      <div className="p-5 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-3xl text-earth-100">landscape</span>
-          <div>
-            <h1 className="font-bold text-lg text-white tracking-tight leading-none">ZBS Forcall</h1>
-            <p className="text-[10px] text-forcall-300 font-medium mt-0.5">{t('sidebar.subtitle')}</p>
-          </div>
+  const sidebarContent = (
+    <aside className="flex flex-col min-h-screen w-60 xl:w-64 2xl:w-72 3xl:w-80 shadow-xl" style={{ backgroundColor: sidebarBg || '#0c4a6e' }}>
+      <div className="p-5 border-b border-white/10 flex items-center gap-3">
+        <span className="material-symbols-outlined text-3xl text-earth-100 shrink-0">landscape</span>
+        <div className="flex-1 min-w-0">
+          <h1 className="font-bold text-lg text-white tracking-tight leading-none">ZBS Forcall</h1>
+          <p className="text-[10px] text-forcall-300 font-medium mt-0.5">{t('sidebar.subtitle')}</p>
         </div>
+        {onCloseSidebar && (
+          <button onClick={onCloseSidebar} className="md:hidden p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all">
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
+        )}
       </div>
 
       <nav className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
@@ -148,5 +153,23 @@ base.push({ id: 'Medicina', labelKey: 'calendarios.guardiaM', icon: 'stethoscope
         </div>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop: always visible */}
+      <div className="hidden md:block shrink-0">
+        {sidebarContent}
+      </div>
+      {/* Mobile/tablet: overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCloseSidebar} />
+          <div className="absolute left-0 top-0 bottom-0 shadow-2xl animate-slide-in-left">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 };

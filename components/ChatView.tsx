@@ -10,7 +10,7 @@ interface ChatViewProps {
 
 export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   const { t } = useT();
-  const { messagesByChannel, sendMessage, sendImage, sendAudio, deleteMessage, isUploading } = useChat(currentUser?.id);
+  const { messagesByChannel, sendMessage, sendImage, sendAudio, deleteMessage, isLoading, isUploading } = useChat(currentUser?.id);
   const [inputText, setInputText] = useState('');
   const [showAttach, setShowAttach] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
@@ -146,7 +146,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-[600px] max-h-[600px] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
+    <div className="flex flex-col md:flex-row h-[50vh] md:h-[600px] min-h-[350px] max-h-[600px] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
       {/* Sidebar */}
       <div className="w-full md:w-72 bg-earth-50 border-r border-gray-200 flex flex-col overflow-y-auto">
         <div className="p-3 border-b border-gray-200 bg-earth-50">
@@ -261,7 +261,12 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentUser }) => {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50/30" role="log" aria-live="polite" aria-atomic="false">
-          {conversationMessages.length === 0 ? (
+          {isLoading ? (
+            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+              <span className="material-symbols-outlined text-4xl mb-3 animate-spin">progress_activity</span>
+              <p className="text-sm font-medium">Cargando mensajes...</p>
+            </div>
+          ) : conversationMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-50">
               <span className="material-symbols-outlined text-5xl mb-3">forum</span>
               <p className="font-medium">{t('chat.noMessages')}</p>
