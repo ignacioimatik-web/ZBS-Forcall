@@ -193,9 +193,9 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
             t('guardias.dayMon'), t('guardias.dayTue'), t('guardias.dayWed'),
             t('guardias.dayThu'), t('guardias.dayFri'), t('guardias.daySat'), t('guardias.daySun')
           ].map(d => (
-            <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider py-2.5 border-r border-gray-200 last:border-r-0">
-              <span className="hidden sm:inline">{d}</span>
-              <span className="sm:hidden">{d.slice(0, 1)}</span>
+            <div key={d} className="text-center text-[10px] xs:text-[8px] font-bold text-gray-500 uppercase tracking-wider py-2.5 xs:py-1.5 border-r border-gray-200 last:border-r-0">
+              <span className="hidden xs:inline">{d}</span>
+              <span className="xs:hidden">{d.slice(0, 1)}</span>
             </div>
           ))}
         </div>
@@ -203,7 +203,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         {/* Celdas */}
         <div className="grid grid-cols-7 gap-0 min-w-[350px]">
           {Array.from({ length: startingEmptyCells }).map((_, i) => (
-            <div key={`empty-${i}`} className="hidden sm:block min-h-[80px] md:min-h-[120px] 2xl:min-h-[150px] bg-gray-50/50 border-b border-r border-gray-100" />
+            <div key={`empty-${i}`} className="hidden xs:block min-h-[80px] xs:min-h-[52px] md:min-h-[120px] 2xl:min-h-[150px] bg-gray-50/50 border-b border-r border-gray-100" />
           ))}
 
           {daysInMonth.map((date, i) => {
@@ -218,7 +218,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
               <div
                 key={i}
                 onClick={() => handleDayClick(date)}
-                className={`flex flex-col p-3 border-b border-r border-gray-100 relative group md:min-h-[120px] 2xl:min-h-[150px] bg-white transition-colors
+                className={`flex flex-col p-3 xs:p-1.5 border-b border-r border-gray-100 relative group xs:min-h-[52px] md:min-h-[120px] 2xl:min-h-[150px] bg-white transition-colors
                   ${isToday ? 'bg-blue-50/40' : ''}
                   ${isFestivo ? 'bg-red-50/20' : ''}
                   ${isWeekend ? 'bg-gray-50/50' : ''}
@@ -226,9 +226,9 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
               >
                 {/* Número del día */}
                 <div className="flex items-center justify-between min-w-0 mb-1">
-                  <span className={`text-sm leading-none ${
+                  <span className={`text-sm xs:text-[11px] leading-none ${
                     isToday
-                      ? 'bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-[11px]'
+                      ? 'bg-blue-600 text-white w-6 xs:w-5 h-6 xs:h-5 rounded-full flex items-center justify-center text-[11px] xs:text-[9px]'
                       : isFestivo
                       ? 'text-red-500 font-semibold'
                       : isWeekend
@@ -250,11 +250,11 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
                      dayGuardias.map(g => (
                        <div
                          key={g.id}
-                         className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all whitespace-nowrap
-                           ${g.type === 'medica'
-                             ? 'bg-blue-50 text-blue-800 border border-blue-100'
-                             : 'bg-rose-50 text-rose-800 border border-rose-100'
-                           }`}
+                          className={`flex items-center gap-1 px-2 xs:px-1 py-1 xs:py-0.5 rounded-lg text-[10px] xs:text-[7px] font-semibold transition-all whitespace-nowrap
+                            ${g.type === 'medica'
+                              ? 'bg-blue-50 text-blue-800 border border-blue-100'
+                              : 'bg-rose-50 text-rose-800 border border-rose-100'
+                            }`}
                        >
                          <ShiftBadge kind="guardia" type={g.type} />
                          <span className="whitespace-nowrap">{g.personnelName}</span>
