@@ -340,14 +340,13 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   };
 
   const noteDates = useMemo(() => {
-    if (!isPlanningCategory) return [];
     const month = currentMonth.getMonth();
     const year = currentMonth.getFullYear();
     return Object.keys(notes).filter(k => {
       const d = new Date(k);
       return d.getMonth() === month && d.getFullYear() === year;
     });
-  }, [notes, isPlanningCategory, currentMonth]);
+  }, [notes, currentMonth]);
 
   const userTypeFilter = userGroup === 'medico' ? 'medica' : userGroup;
   const filteredLibranzas = useMemo(() => userGroup !== 'both' ? libranzas.filter(l => l.type === userTypeFilter) : libranzas, [libranzas, userGroup]);
@@ -471,7 +470,7 @@ const isInMonth = useCallback((date: Date) => {
               id="calendario-principal"
               getPersonnelType={(name) => nurses.includes(name) ? 'enfermeria' : 'medica'}
               noteDates={noteDates}
-              onCellNoteClick={isPlanningCategory ? (date) => { setNoteModalDate(date); setNoteText(notes[date.toDateString()] || ''); } : undefined}
+              onCellNoteClick={(date) => { setNoteModalDate(date); setNoteText(notes[date.toDateString()] || ''); }}
               onSelectDay={handleSelectDay}
               onProfessionalChange={setSelectedProfessional}
             />
@@ -610,13 +609,16 @@ const isInMonth = useCallback((date: Date) => {
               user={props.user}
               selectedProfessional={selectedProfessional}
               onClearProfessionalFilter={() => setSelectedProfessional('all')}
+              notes={notes}
+              canWriteNotes={canWriteNotes}
+              onSaveNote={saveNote}
             />
             <CalendarLegend />
           </div>
         </div>
 
-        {/* Notes section for planning categories */}
-        {isPlanningCategory && (
+        {/* Notes section for all categories */}
+        {noteDates.length > 0 && (
           <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden no-print">
             <div className="p-6 md:p-8 bg-gray-50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-4">
@@ -624,7 +626,7 @@ const isInMonth = useCallback((date: Date) => {
                   <span className="material-symbols-outlined">sticky_note_2</span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{t('calendarios.notesOf')} {activeSub === 'Libranzas' ? t('calendarios.libranzas') : t('calendarios.refuerzo')}</h3>
+                  <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">{t('calendarios.notesOf')} {activeSub === 'Libranzas' ? t('calendarios.libranzas') : activeSub === 'Refuerzo' ? t('calendarios.refuerzo') : activeSub === 'Vacaciones' ? t('calendarios.vacaciones') : t('calendarios.guardiaM')}</h3>
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
                     {canWriteNotes ? t('calendarios.canWriteNotes') : t('calendarios.readOnlyNote')}
                   </p>

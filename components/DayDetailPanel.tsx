@@ -15,6 +15,9 @@ interface DayDetailPanelProps {
   user?: { name: string } | null;
   selectedProfessional?: string;
   onClearProfessionalFilter?: () => void;
+  notes?: Record<string, string>;
+  canWriteNotes?: boolean;
+  onSaveNote?: (date: Date, text: string) => void;
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -54,6 +57,9 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
   user,
   selectedProfessional = 'all',
   onClearProfessionalFilter,
+  notes = {},
+  canWriteNotes = false,
+  onSaveNote,
 }) => {
   const { t } = useT();
 
@@ -170,6 +176,19 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
           <div className="flex flex-col items-center justify-center py-8 text-gray-400">
             <span className="material-symbols-outlined text-3xl mb-2">info</span>
             <p className="text-sm font-medium">{t('dayDetail.noAssignments')}</p>
+          </div>
+        )}
+
+        {/* Note for selected day */}
+        {notes[selectedDate.toDateString()] && (
+          <div className="border-t border-gray-100 pt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="material-symbols-outlined text-amber-500 text-base">sticky_note_2</span>
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Nota</span>
+            </div>
+            <div className="px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+              <p className="text-sm font-medium text-amber-900 whitespace-pre-wrap">{notes[selectedDate.toDateString()]}</p>
+            </div>
           </div>
         )}
       </div>
