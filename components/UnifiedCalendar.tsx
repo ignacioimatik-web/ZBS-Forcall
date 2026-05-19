@@ -1,8 +1,8 @@
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Meeting, MeetingType, Guardia, User, Libranza, Dobla, Vacacion } from '../types';
 import { getHolidayName } from '../utils';
-import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType, canManageVacaciones } from '../lib/guardiaPermissions';
+import { canManageGuardiaCategory, canManageGuardiaType, canManagePlanningType, canManageVacaciones, isMedicineCoordinator, isNursingCoordinator } from '../lib/guardiaPermissions';
 import { ConfirmationModal } from './ConfirmationModal';
 import { ShiftBadge } from './ShiftBadge';
 import { useT } from '../lib/i18n';
@@ -81,7 +81,10 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   const [firstSwapTarget, setFirstSwapTarget] = useState<CalendarEvent | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<string>('all');
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showCountsModal, setShowCountsModal] = useState(false);
+  const [modalMonth, setModalMonth] = useState(new Date());
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 640 && window.innerWidth < 1024);
   const [slideEpoch, setSlideEpoch] = useState(0);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
   const touchStartX = useRef<number | null>(null);
@@ -105,7 +108,11 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   };
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      const w = window.innerWidth;
+      setIsMobile(w < 640);
+      setIsTablet(w >= 640 && w < 1024);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -134,19 +141,78 @@ export const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({
   }, [currentMonth]);
 
   const allProfessionals = useMemo(() => {
-    return USERS
-      .filter(u => u.category !== 'Administrativos')
-      .map(u => u.name)
-      .sort((a, b) => a.localeCompare(b));
-  }, []);
+    let filtered = USERS.filter(u => u.category !== 'Administrativos');
+
+    const isMedCoord = isMedicineCoordinator(currentUser);
+    const isNursCoord = isNursingCoordinator(currentUser);
+
+    if (activeCategory === 'Medicina') {
+      filtered = filtered.filter(u => u.category === 'Medicina');
+    } else if (activeCategory === 'enfermeria') {
+      filtered = filtered.filter(u => u.category === 'enfermeria');
+    } else if (isMedCoord && !isNursCoord) {
+      filtered = filtered.filter(u => u.category === 'Medicina');
+    } else if (isNursCoord && !isMedCoord) {
+      filtered = filtered.filter(u => u.category === 'enfermeria');
+    }
+
+    return filtered.map(u => u.name).sort((a, b) => a.localeCompare(b));
+  }, [currentUser, activeCategory]);
+
+  const getCategoryFilteredEvents = useCallback((userName?: string, dateOverride?: Date) => {
+    const targetDate = dateOverride ?? currentMonth;
+    const month = targetDate.getMonth();
+    const year = targetDate.getFullYear();
+
+    const byDate = (arr: { date: Date }[]) =>
+      arr.filter(e => e.date.getMonth() === month && e.date.getFullYear() === year);
+
+    const byName = (arr: { personnelName: string }[]) =>
+      userName ? arr.filter(e => e.personnelName === userName) : arr;
+
+    if (activeCategory === 'Medicina') {
+      return byName(byDate(guardias.filter(g => g.type === 'medica')));
+    }
+    if (activeCategory === 'enfermeria') {
+      return byName(byDate(guardias.filter(g => g.type === 'enfermeria')));
+    }
+    if (activeCategory === 'Libranzas') {
+      return byName(byDate(libranzas));
+    }
+    if (activeCategory === 'Refuerzo') {
+      return byName(byDate(doblas));
+    }
+    if (activeCategory === 'Vacaciones') {
+      return byName(byDate(vacaciones));
+    }
+    // 'Todo' — count all event types
+    const all = [
+      ...byDate(guardias),
+      ...byDate(libranzas),
+      ...byDate(doblas),
+      ...byDate(vacaciones),
+    ] as { personnelName: string; date: Date }[];
+    return userName ? all.filter(e => e.personnelName === userName) : all;
+  }, [currentMonth, activeCategory, guardias, libranzas, doblas, vacaciones]);
 
   const professionalMonthCount = useMemo(() => {
     if (selectedProfessional === 'all') return 0;
-    const month = currentMonth.getMonth();
-    const year = currentMonth.getFullYear();
-    const all = [...guardias, ...libranzas, ...doblas, ...vacaciones] as { personnelName: string; date: Date }[];
-    return all.filter(ev => ev.personnelName === selectedProfessional && ev.date.getMonth() === month && ev.date.getFullYear() === year).length;
-  }, [selectedProfessional, currentMonth, guardias, libranzas, doblas, vacaciones]);
+    return getCategoryFilteredEvents(selectedProfessional).length;
+  }, [selectedProfessional, getCategoryFilteredEvents]);
+
+  const perUserCounts = useMemo(() => {
+    return allProfessionals.map(name => ({
+      name,
+      count: getCategoryFilteredEvents(name).length,
+    })).sort((a, b) => b.count - a.count);
+  }, [allProfessionals, getCategoryFilteredEvents]);
+
+  const modalCounts = useMemo(() => {
+    return allProfessionals.map(name => ({
+      name,
+      count: getCategoryFilteredEvents(name, modalMonth).length,
+    })).sort((a, b) => b.count - a.count);
+  }, [allProfessionals, getCategoryFilteredEvents, modalMonth]);
 
 const startingEmptyCells = useMemo(() => {
      const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
@@ -270,11 +336,8 @@ const startingEmptyCells = useMemo(() => {
 
   const filteredMonthEvents = useMemo(() => {
     if (selectedProfessional === 'all') return null;
-    const m = currentMonth.getMonth();
-    const y = currentMonth.getFullYear();
-    const all = [...guardias, ...libranzas, ...doblas, ...vacaciones] as { personnelName: string; date: Date }[];
-    return all.filter(ev => ev.personnelName === selectedProfessional && ev.date.getMonth() === m && ev.date.getFullYear() === y);
-  }, [selectedProfessional, currentMonth, guardias, libranzas, doblas, vacaciones]);
+    return getCategoryFilteredEvents(selectedProfessional);
+  }, [selectedProfessional, getCategoryFilteredEvents]);
   const hasFilterNoResults = selectedProfessional !== 'all' && filteredMonthEvents && filteredMonthEvents.length === 0;
 
   const changeMonth = (offset: number) => {
@@ -301,7 +364,7 @@ const startingEmptyCells = useMemo(() => {
             <span className="material-symbols-outlined text-lg md:text-xl">chevron_left</span>
           </button>
         )}
-        <div id={id} className="relative group w-full bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden" style={{ touchAction: 'pan-y' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+        <div id={id} className="relative group w-full bg-white border border-gray-200 rounded-2xl shadow-sm overflow-clip" style={{ touchAction: 'pan-y' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {!hideHeader && (
         <div className="flex flex-col sm:flex-row items-center justify-between bg-white px-4 py-3 border-b border-gray-200 no-print sticky top-0 z-40 gap-3">
           {!hideMonthNav && (
@@ -338,6 +401,13 @@ const startingEmptyCells = useMemo(() => {
               </select>
               <span className="material-symbols-outlined text-sm text-gray-400 absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
             </div>
+            <button
+              onClick={() => { setShowCountsModal(true); setModalMonth(new Date(currentMonth)); }}
+              className="p-1.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-400 hover:text-forcall-600 hover:border-forcall-200 hover:bg-forcall-50 transition-all"
+              title="Ver asignaciones por profesional"
+            >
+              <span className="material-symbols-outlined text-sm">bar_chart</span>
+            </button>
              {swapMode && (
                 <button onClick={() => { setFirstSwapTarget(null); onCancelSwap?.(); }} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95">{t('unifiedCalendar.cancelSwap')}</button>
              )}
@@ -348,10 +418,13 @@ const startingEmptyCells = useMemo(() => {
         </div>
       )}
 
-      <div key={slideEpoch} className={slideEpoch > 0 ? (slideDirection === 'right' ? 'anim-from-right' : 'anim-from-left') : ''}>
-      <div className="hidden md:grid md:grid-cols-7 bg-gray-50 border-b border-gray-200">
+      <div key={slideEpoch} className={`${slideEpoch > 0 ? (slideDirection === 'right' ? 'anim-from-right' : 'anim-from-left') : ''} overflow-x-auto`}>
+      <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
         {[t('unifiedCalendar.mon'), t('unifiedCalendar.tue'), t('unifiedCalendar.wed'), t('unifiedCalendar.thu'), t('unifiedCalendar.fri'), t('unifiedCalendar.sat'), t('unifiedCalendar.sun')].map(d => (
-          <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider py-2.5 border-r border-gray-200 last:border-r-0">{d}</div>
+          <div key={d} className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-wider py-2.5 border-r border-gray-200 last:border-r-0">
+            <span className="sm:hidden">{d.slice(0, 1)}</span>
+            <span className="hidden sm:inline">{d}</span>
+          </div>
         ))}
       </div>
       {hasFilterNoResults && (
@@ -360,10 +433,10 @@ const startingEmptyCells = useMemo(() => {
           <span className="text-sm font-medium">No hay asignaciones de {selectedProfessional} en este mes.</span>
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-3 md:gap-0">
+      <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 md:gap-0 sm:min-w-[500px] md:min-w-0">
 
         {Array.from({ length: startingEmptyCells }).map((_, i) => (
-          <div key={`empty-${i}`} className="hidden md:block min-h-[130px] bg-gray-50/50 border-b border-r border-gray-100" />
+          <div key={`empty-${i}`} className="hidden sm:block min-h-[90px] md:min-h-[130px] 3xl:min-h-[150px] bg-gray-50/50 border-b border-r border-gray-100" />
         ))}
 {daysInMonth.map((date, i) => {
            const { events, holiday } = getEventsForDay(date);
@@ -375,16 +448,16 @@ const startingEmptyCells = useMemo(() => {
            const hasError = validation && validation.hasOverlap;
            const hasWarning = validation && validation.hasWarning;
           
-            if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
-             if (isMobile) return (
-<div key={i} className="flex md:hidden items-center gap-3 px-4 py-2 border-b border-gray-100 bg-white" onClick={() => handleCellClick(date)}>
-                <span className={`text-sm font-semibold w-7 shrink-0 ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-10 shrink-0">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
-                <span className="text-[10px] text-gray-300 italic">—</span>
-              </div>
+             if (events.length === 0 && !canManageActiveCategory && !bulkMode) {
+              if (isMobile) return (
+<div key={i} className="flex sm:hidden items-center gap-3 px-4 py-2 border-b border-gray-100 bg-white" onClick={() => handleCellClick(date)}>
+                 <span className={`text-sm font-semibold w-7 shrink-0 ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
+                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-10 shrink-0">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
+                 <span className="text-[10px] text-gray-300 italic">—</span>
+               </div>
             );
             return (
-<div key={i} className={`hidden md:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[130px] bg-white ${canManageActiveCategory ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => handleCellClick(date)}>
+<div key={i} className={`hidden sm:flex flex-col items-center pt-3 pb-2 border-b border-r border-gray-100 min-h-[90px] md:min-h-[130px] 3xl:min-h-[150px] bg-white ${canManageActiveCategory ? 'cursor-pointer hover:bg-gray-50' : ''}`} onClick={() => handleCellClick(date)}>
                  <div className="flex items-center gap-1">
 <span className={`text-sm font-semibold leading-none ${isToday ? 'bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center' : isFestivo ? 'text-red-500' : isWeekend ? 'text-gray-400' : 'text-gray-700'}`}>{date.getDate()}</span>
                     {hasError && <span className="material-symbols-outlined text-[10px] text-red-500" title="Conflicto">warning</span>}
@@ -407,10 +480,10 @@ const startingEmptyCells = useMemo(() => {
           }
           
           return (
-            <div 
+              <div 
               key={i} 
               onClick={() => handleCellClick(date)} 
-              className={`flex md:flex-col gap-1 md:gap-2 p-2 md:p-3 border-b border-r border-gray-100 relative group md:min-h-[130px] bg-white transition-colors
+              className={`flex sm:flex-col gap-1 sm:gap-2 p-2 sm:p-3 border-b border-r border-gray-100 relative group sm:min-h-[90px] md:min-h-[130px] 3xl:min-h-[150px] bg-white transition-colors
                 ${isToday ? 'bg-blue-50/40' : ''} 
                 ${isFestivo ? 'bg-red-50/20' : ''} 
                 ${canManageActiveCategory && !swapMode ? 'cursor-pointer hover:bg-gray-50' : ''} 
@@ -432,12 +505,12 @@ const startingEmptyCells = useMemo(() => {
                     </button>
                   )}
                 </div>
-                <span className="md:hidden text-[10px] font-bold text-gray-400 uppercase tracking-wider">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
-                {isFestivo && <span className="hidden md:block w-2 h-2 bg-red-400 rounded-full" title={holiday}></span>}
+                <span className="sm:hidden text-[10px] font-bold text-gray-400 uppercase tracking-wider">{date.toLocaleDateString('es', {weekday: 'short'})}</span>
+                {isFestivo && <span className="hidden sm:block w-2 h-2 bg-red-400 rounded-full" title={holiday}></span>}
               </div>
               {events.length > 0 ? (
                 <div className="flex-1 space-y-0.5 max-h-[300px] overflow-y-auto scrollbar-thin">
-                  {events.slice(0, isMobile ? 2 : 4).map((ev: CalendarEvent, idx) => {
+                  {events.slice(0, isMobile ? 2 : isTablet ? 3 : 4).map((ev: CalendarEvent, idx) => {
                     const canDelete = ((ev._kind === 'guardia' && canManageGuardiaType(currentUser, ev.type)) || ((ev._kind === 'libranza' || ev._kind === 'dobla') && canManagePlanningType(currentUser, ev.type)));
                     const chipStyle = getEventStyle(ev);
                     const isInteractive = canDelete && !swapMode && !bulkMode;
@@ -448,9 +521,9 @@ const startingEmptyCells = useMemo(() => {
                      </button>
                     );
                   })}
-                  {events.length > (isMobile ? 2 : 4) && (
+                  {events.length > (isMobile ? 2 : isTablet ? 3 : 4) && (
                     <div className="h-[26px] px-2 rounded-lg text-[10px] font-bold text-gray-400 flex items-center justify-center border border-dashed border-gray-200">
-                      +{events.length - (isMobile ? 2 : 4)} m&aacute;s
+                      +{events.length - (isMobile ? 2 : isTablet ? 3 : 4)} m&aacute;s
                     </div>
                   )}
                 </div>
@@ -500,6 +573,80 @@ const startingEmptyCells = useMemo(() => {
         }}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {showCountsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm no-print">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full p-6 animate-slide-in-up">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                <span className="material-symbols-outlined text-forcall-600">bar_chart</span>
+                Asignaciones
+              </h3>
+              <button
+                onClick={() => setShowCountsModal(false)}
+                className="p-1.5 rounded-xl bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Month navigator */}
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <button
+                onClick={() => setModalMonth(prev => { const d = new Date(prev); d.setMonth(d.getMonth() - 1); return d; })}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-forcall-600 transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg">chevron_left</span>
+              </button>
+              <div className="flex flex-col items-center min-w-[140px]">
+                <span className="text-sm font-black text-gray-800 uppercase tracking-tight leading-none">
+                  {modalMonth.toLocaleDateString('es-ES', { month: 'long' })}
+                </span>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{modalMonth.getFullYear()}</span>
+              </div>
+              <button
+                onClick={() => setModalMonth(prev => { const d = new Date(prev); d.setMonth(d.getMonth() + 1); return d; })}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-forcall-600 transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg">chevron_right</span>
+              </button>
+            </div>
+
+            <div className="max-h-[50vh] overflow-y-auto space-y-1">
+              {modalCounts.map(({ name, count }) => (
+                <div
+                  key={name}
+                  className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-bold ${
+                    name === selectedProfessional
+                      ? 'bg-blue-50 text-blue-800 ring-1 ring-blue-200'
+                      : 'bg-gray-50 text-gray-700'
+                  }`}
+                  onClick={() => { setSelectedProfessional(name); onProfessionalChange?.(name); }}
+                >
+                  <span>{name}</span>
+                  <span className={`text-xs font-black tabular-nums ${
+                    count === 0 ? 'text-gray-300' : 'text-forcall-600'
+                  }`}>
+                    {count} {count === 1 ? 'asignación' : 'asignaciones'}
+                  </span>
+                </div>
+              ))}
+              {modalCounts.length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-6">No hay profesionales disponibles.</p>
+              )}
+            </div>
+            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-[10px] font-bold text-gray-400">
+              <span>Total: {modalCounts.reduce((s, p) => s + p.count, 0)}</span>
+              <button
+                onClick={() => setShowCountsModal(false)}
+                className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
 
         {!isMobile && (

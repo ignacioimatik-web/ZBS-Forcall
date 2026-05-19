@@ -8,8 +8,8 @@ import { canManageGuardiaCategory, canManagePlanningType, canManageVacaciones } 
 import { useAuditLogs } from '../hooks/useAuditLogs';
 import { useT } from '../lib/i18n';
 import { PageHeader } from './PageHeader';
-import { StatusSummary } from './StatusSummary';
 import { DayDetailPanel } from './DayDetailPanel';
+import { CalendarLegend } from './CalendarLegend';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import { EmptyState } from './EmptyState';
 import { ConfirmationModal } from './ConfirmationModal';
@@ -316,6 +316,7 @@ export const CalendariosView: React.FC<CalendariosViewProps> = (props) => {
   };
 
   const [undoTarget, setUndoTarget] = useState<AuditLog | null>(null);
+  const [deleteEntryTarget, setDeleteEntryTarget] = useState<AuditLog | null>(null);
   const permutaHistory = useMemo(() => auditLogs.filter(log => log.type === 'PERMUTA'), [auditLogs]);
 
   const canWriteNotes = props.user?.name === 'Xelo García' || props.user?.name === 'Elena Benages';
@@ -368,14 +369,7 @@ const isInMonth = useCallback((date: Date) => {
      return date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear();
    }, [currentMonth]);
 
-   const metrics = useMemo(() => [
-     { count: guardias.filter(g => g.type === 'medica' && isInMonth(g.date)).length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
-     { count: guardias.filter(g => g.type === 'enfermeria' && isInMonth(g.date)).length, label: t('dashboard.enf'), accentColor: 'bg-red-500' },
-     { count: libranzas.filter(l => isInMonth(l.date)).length, label: t('dashboard.lib'), accentColor: 'bg-green-500' },
-     { count: vacaciones.filter(v => isInMonth(v.date)).length, label: t('dashboard.vac'), accentColor: 'bg-purple-400' },
-   ], [guardias, libranzas, vacaciones, currentMonth, isInMonth, t]);
-
-  const statusSummary = useMemo(() => {
+   const statusSummary = useMemo(() => {
     const year = currentMonth.getFullYear();
     const m = currentMonth.getMonth();
     const totalDays = new Date(year, m + 1, 0).getDate();
@@ -402,6 +396,14 @@ const isInMonth = useCallback((date: Date) => {
     }
     return { totalDays, coveredDays: coveredSet.size, gaps, overlaps };
   }, [currentMonth, guardias, libranzas, doblas, meetings]);
+
+   const metrics = useMemo(() => [
+     { count: guardias.filter(g => g.type === 'medica' && isInMonth(g.date)).length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
+     { count: guardias.filter(g => g.type === 'enfermeria' && isInMonth(g.date)).length, label: t('dashboard.enf'), accentColor: 'bg-red-500' },
+     { count: libranzas.filter(l => isInMonth(l.date)).length, label: t('dashboard.lib'), accentColor: 'bg-green-500' },
+     { count: vacaciones.filter(v => isInMonth(v.date)).length, label: t('dashboard.vac'), accentColor: 'bg-purple-400' },
+      { count: permutaHistory.length, label: t('statusSummary.swaps'), accentColor: 'bg-red-500' },
+   ], [guardias, libranzas, vacaciones, currentMonth, isInMonth, t, statusSummary, permutaHistory]);
 
   const isLoading = props.isDataLoading && guardias.length === 0 && libranzas.length === 0;
   const currentMonthEvents = useMemo(() => {
@@ -434,62 +436,10 @@ const isInMonth = useCallback((date: Date) => {
         </div>
       ) : (
       <div className="space-y-4">
-        <StatusSummary
-          totalDays={statusSummary.totalDays}
-          coveredDays={statusSummary.coveredDays}
-          gaps={statusSummary.gaps}
-          swapCount={permutaHistory.length}
-        />
-
-        {/* Assignment bar: visible when selection mode is active with days selected */}
-        {selectionMode && bulkDates.length > 0 && (
-          <div className="border rounded-2xl px-3 sm:px-4 py-3 shadow-sm transition-all bg-emerald-50/30 border-emerald-200">
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
-                <span className="material-symbols-outlined text-sm text-emerald-600">select_check_box</span>
-                {`${bulkDates.length} ${t('calendarios.daysSelected')}`}
-              </span>
-
-              <select
-                    value={bulkPersonnel || ''}
-                    onChange={(e) => setBulkPersonnel(e.target.value || null)}
-                    className="flex-1 sm:flex-none sm:min-w-[160px] px-4 py-2 bg-white border border-gray-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-50"
-                  >
-                    <option value="">{t('calendarios.selectProfessional')}</option>
-                    {currentPersonnel.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-
-                  <button
-                    onClick={() => setBulkDates([])}
-                    className="px-3 py-2 bg-white text-gray-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                    {t('common.clear')}
-                  </button>
-
-                  <button
-                    onClick={handleSaveBulk}
-                    disabled={isBulkSaving || !bulkPersonnel}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-black transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isBulkSaving ? t('common.saving') : t('calendarios.confirmAssignment')}
-                  </button>
-
-                  {bulkDeletableEvents.length > 0 && (
-                    <button
-                      onClick={() => setBulkDeleteTarget(bulkDeletableEvents.length)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-red-700 transition-colors active:scale-95 flex items-center gap-1.5"
-                    >
-                      <span className="material-symbols-outlined text-sm">delete</span>
-                      {t('calendarios.bulkDelete')} ({bulkDeletableEvents.length})
-                    </button>
-                  )}
-                </div>
-          </div>
-        )}
 
         {/* Main layout: calendar + day detail panel */}
-        <div className="flex flex-col lg:flex-row gap-3 lg:gap-6">
-          <div className="flex-1 min-w-0 -mx-3 sm:-mx-4 md:mx-0">
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 3xl:gap-8">
+          <div className="flex-1 min-w-0 -mx-3 sm:-mx-4 md:mx-0 overflow-x-auto">
             <UnifiedCalendar
               key={activeSub}
               meetings={meetings}
@@ -526,7 +476,7 @@ const isInMonth = useCallback((date: Date) => {
             />
           </div>
 
-          <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0 lg:sticky lg:top-20 lg:self-start space-y-3">
+          <div className="w-full lg:w-[280px] xl:w-[300px] 2xl:w-[340px] 3xl:w-[360px] flex-shrink-0 lg:sticky lg:top-20 lg:self-start space-y-3">
             <div className="bg-white border border-gray-200 rounded-2xl px-3 sm:px-4 py-3 shadow-sm">
               <div className="flex flex-col gap-2">
                 <button onClick={() => setCurrentMonth(new Date())} className="w-full px-4 py-2 bg-forcall-50 text-forcall-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-forcall-200 hover:bg-forcall-100 transition-all">
@@ -576,6 +526,47 @@ const isInMonth = useCallback((date: Date) => {
                   </span>
                 )}
 
+                {selectionMode && bulkDates.length > 0 && (
+                  <div className="flex flex-col gap-2 bg-emerald-50/30 border border-emerald-200 rounded-xl px-3 py-3">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-500">
+                      <span className="material-symbols-outlined text-sm text-emerald-600">select_check_box</span>
+                      {`${bulkDates.length} ${t('calendarios.daysSelected')}`}
+                    </span>
+                    <select
+                      value={bulkPersonnel || ''}
+                      onChange={(e) => setBulkPersonnel(e.target.value || null)}
+                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl font-bold text-xs focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-gray-50"
+                    >
+                      <option value="">{t('calendarios.selectProfessional')}</option>
+                      {currentPersonnel.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setBulkDates([])}
+                        className="flex-1 px-3 py-2 bg-white text-gray-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-200 hover:bg-gray-50 transition-colors"
+                      >
+                        {t('common.clear')}
+                      </button>
+                      <button
+                        onClick={handleSaveBulk}
+                        disabled={isBulkSaving || !bulkPersonnel}
+                        className="flex-1 px-3 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-black transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isBulkSaving ? t('common.saving') : t('calendarios.confirmAssignment')}
+                      </button>
+                    </div>
+                    {bulkDeletableEvents.length > 0 && (
+                      <button
+                        onClick={() => setBulkDeleteTarget(bulkDeletableEvents.length)}
+                        className="w-full px-3 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-red-700 transition-colors active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                        {t('calendarios.bulkDelete')} ({bulkDeletableEvents.length})
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 {props.user && (
                   <button
                     onClick={handleDownloadUserCalendar}
@@ -583,7 +574,7 @@ const isInMonth = useCallback((date: Date) => {
                     title={t('calendarios.downloadMyCalendar')}
                   >
                     <span className="material-symbols-outlined text-sm">calendar_today</span>
-                    ICS
+                    Importar mi calendario ICS
                   </button>
                 )}
               </div>
@@ -619,6 +610,7 @@ const isInMonth = useCallback((date: Date) => {
               selectedProfessional={selectedProfessional}
               onClearProfessionalFilter={() => setSelectedProfessional('all')}
             />
+            <CalendarLegend />
           </div>
         </div>
 
@@ -760,12 +752,20 @@ const isInMonth = useCallback((date: Date) => {
                       <td className="px-6 py-5 text-right"><span className="text-xs font-black text-gray-600 uppercase tracking-tighter">{log.user}</span></td>
                       <td className="px-6 py-5 text-right">
                         {canManageActiveCategory && props.onUndoSwap && (
-                          <button
-                            onClick={() => setUndoTarget(log)}
-                            className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition-all active:scale-95"
-                          >
-                            {t('calendarios.undo')}
-                          </button>
+                          <div className="flex items-center gap-2 justify-end">
+                            <button
+                              onClick={() => setDeleteEntryTarget(log)}
+                              className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-gray-100 text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-200 transition-all active:scale-95"
+                            >
+                              {t('calendarios.deleteEntry')}
+                            </button>
+                            <button
+                              onClick={() => setUndoTarget(log)}
+                              className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition-all active:scale-95"
+                            >
+                              {t('calendarios.undo')}
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -791,6 +791,18 @@ const isInMonth = useCallback((date: Date) => {
             setUndoTarget(null);
           }}
           onCancel={() => setUndoTarget(null)}
+        />
+        <ConfirmationModal
+          isOpen={!!deleteEntryTarget}
+          title={t('calendarios.deleteEntry')}
+          message={t('calendarios.deleteEntryConfirm')}
+          confirmLabel={t('calendarios.deleteEntry')}
+          onConfirm={async () => {
+            if (!deleteEntryTarget) return;
+            await deleteLog(deleteEntryTarget.id);
+            setDeleteEntryTarget(null);
+          }}
+          onCancel={() => setDeleteEntryTarget(null)}
         />
         <ConfirmationModal
           isOpen={bulkDeleteTarget !== null}

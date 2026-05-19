@@ -203,7 +203,7 @@ export const GuardiasView: React.FC<GuardiasViewProps> = ({ guardias, onAddGuard
         {/* Celdas */}
         <div className="grid grid-cols-7 gap-0 min-w-[350px]">
           {Array.from({ length: startingEmptyCells }).map((_, i) => (
-            <div key={`empty-${i}`} className="hidden md:block min-h-[80px] md:min-h-[120px] bg-gray-50/50 border-b border-r border-gray-100" />
+            <div key={`empty-${i}`} className="hidden sm:block min-h-[80px] md:min-h-[120px] bg-gray-50/50 border-b border-r border-gray-100" />
           ))}
 
           {daysInMonth.map((date, i) => {
