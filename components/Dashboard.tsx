@@ -5,8 +5,8 @@ import { UnifiedCalendar } from './UnifiedCalendar';
 import { CalendarListView } from './CalendarListView';
 import { PageHeader } from './PageHeader';
 import { CalendarToolbar } from './CalendarToolbar';
-import { StatusSummary } from './StatusSummary';
 import { DayDetailPanel } from './DayDetailPanel';
+import { CalendarLegend } from './CalendarLegend';
 import { downloadCalendarPDF, PDFCalendarData } from '../lib/pdfExport';
 import { useT } from '../lib/i18n';
 import { validateMonth, getMonthValidationSummary, type DayValidationStatus } from '../lib/calendarValidation';
@@ -116,21 +116,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return date.getMonth() === calendarMonth.getMonth() && date.getFullYear() === calendarMonth.getFullYear();
   }, [calendarMonth]);
 
+  const status = useMemo(
+    () => computeStatusMetrics(calendarMonth, guardias, libranzas, doblas, meetings),
+    [calendarMonth, guardias, libranzas, doblas, meetings],
+  );
+
 const monthMetrics = useMemo(() => [
      { count: guardias.filter(g => g.type === 'medica' && isInMonth(g.date)).length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
      { count: guardias.filter(g => g.type === 'enfermeria' && isInMonth(g.date)).length, label: t('dashboard.enf'), accentColor: 'bg-red-500' },
      { count: libranzas.filter(l => isInMonth(l.date)).length, label: t('dashboard.lib'), accentColor: 'bg-green-500' },
+     { count: doblas.filter(d => isInMonth(d.date)).length, label: t('dashboard.ref'), accentColor: 'bg-amber-500' },
      { count: vacaciones.filter(v => isInMonth(v.date)).length, label: t('dashboard.vac'), accentColor: 'bg-purple-400' },
-   ], [guardias, libranzas, vacaciones, isInMonth, t]);
+      { count: permutaCount, label: t('statusSummary.swaps'), accentColor: 'bg-red-500' },
+   ], [guardias, libranzas, doblas, vacaciones, isInMonth, t, status, permutaCount]);
 
   const validation = useMemo(
     () => getMonthValidationSummary(validateMonth(calendarMonth, guardias, libranzas, doblas, vacaciones, meetings)),
     [calendarMonth, guardias, libranzas, doblas, vacaciones, meetings],
-  );
-
-  const status = useMemo(
-    () => computeStatusMetrics(calendarMonth, guardias, libranzas, doblas, meetings),
-    [calendarMonth, guardias, libranzas, doblas, meetings],
   );
 
   const handleDownloadActiveCalendar = () => {
@@ -207,15 +209,6 @@ const monthMetrics = useMemo(() => [
 
       <div className="space-y-4">
         <div className="print-hide">
-          <StatusSummary
-            totalDays={status.totalDays}
-            coveredDays={status.coveredDays}
-            gaps={status.gaps}
-            swapCount={permutaCount}
-          />
-        </div>
-
-        <div className="print-hide">
           <CalendarToolbar
             currentMonth={calendarMonth}
             onPrevMonth={() => changeMonth(-1)}
@@ -235,8 +228,8 @@ const monthMetrics = useMemo(() => [
 
         <div className="print-day-only">
           {viewMode === 'month' ? (
-            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-              <div className="flex-1 min-w-0 -mx-4 md:mx-0">
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 3xl:gap-8">
+              <div className="flex-1 min-w-0 -mx-3 sm:-mx-4 md:mx-0">
                 <UnifiedCalendar
                   id="dashboard-calendar"
                   meetings={meetings}
@@ -261,7 +254,7 @@ const monthMetrics = useMemo(() => [
                 />
               </div>
 
-              <div className="w-full lg:w-[280px] xl:w-[300px] flex-shrink-0">
+              <div className="w-full lg:w-[280px] xl:w-[300px] 2xl:w-[340px] 3xl:w-[360px] flex-shrink-0 space-y-3">
                 <DayDetailPanel
                   selectedDate={selectedDate}
                   guardias={guardias}
@@ -274,6 +267,7 @@ const monthMetrics = useMemo(() => [
                   selectedProfessional={selectedProfessional}
                   onClearProfessionalFilter={() => setSelectedProfessional('all')}
                 />
+                <CalendarLegend />
               </div>
             </div>
           ) : (

@@ -401,9 +401,10 @@ const isInMonth = useCallback((date: Date) => {
      { count: guardias.filter(g => g.type === 'medica' && isInMonth(g.date)).length, label: t('dashboard.med'), accentColor: 'bg-blue-500' },
      { count: guardias.filter(g => g.type === 'enfermeria' && isInMonth(g.date)).length, label: t('dashboard.enf'), accentColor: 'bg-red-500' },
      { count: libranzas.filter(l => isInMonth(l.date)).length, label: t('dashboard.lib'), accentColor: 'bg-green-500' },
+     { count: doblas.filter(d => isInMonth(d.date)).length, label: t('dashboard.ref'), accentColor: 'bg-amber-500' },
      { count: vacaciones.filter(v => isInMonth(v.date)).length, label: t('dashboard.vac'), accentColor: 'bg-purple-400' },
       { count: permutaHistory.length, label: t('statusSummary.swaps'), accentColor: 'bg-red-500' },
-   ], [guardias, libranzas, vacaciones, currentMonth, isInMonth, t, statusSummary, permutaHistory]);
+   ], [guardias, libranzas, doblas, vacaciones, currentMonth, isInMonth, t, statusSummary, permutaHistory]);
 
   const isLoading = props.isDataLoading && guardias.length === 0 && libranzas.length === 0;
   const currentMonthEvents = useMemo(() => {
